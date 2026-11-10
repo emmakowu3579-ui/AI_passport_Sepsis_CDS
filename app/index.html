@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sepsis CDS Workstation | Surviving Sepsis Campaign 2021 &amp; Sepsis-3</title>
+  <title>Sepsis Point-of-Care CDS Workstation | Surviving Sepsis Campaign 2021 &amp; Sepsis-3</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -21,23 +21,43 @@
         </div>
       </div>
 
+      <!-- Progressive Disclosure: 4 Primary Workflow Views -->
       <nav class="view-nav" aria-label="Workstation View Navigation">
-        <button id="tabBedsideBtn" class="nav-tab-btn active" onclick="switchViewTab('bedside')">
-          <span>🩺</span> Bedside ICU Monitor &amp; Simulator
+        <button id="tabPlanBtn" class="nav-tab-btn active" onclick="switchViewTab('plan')">
+          <span>📋</span> Bedside Treatment Plan
+        </button>
+        <button id="tabSimulatorBtn" class="nav-tab-btn" onclick="switchViewTab('simulator')">
+          <span>🧪</span> "What-If" Resuscitation Simulator
+        </button>
+        <button id="tabTelemetryBtn" class="nav-tab-btn" onclick="switchViewTab('telemetry')">
+          <span>📈</span> ICU Telemetry &amp; SOFA
         </button>
         <button id="tabBenchmarkBtn" class="nav-tab-btn" onclick="switchViewTab('benchmark')">
-          <span>📊</span> 25-Patient Validation Benchmark
+          <span>📊</span> 25-Patient Validation
         </button>
       </nav>
 
-      <div class="engine-status-pill">
-        <span style="color:var(--text-muted);">Inference Core:</span>
-        <select id="engineModeSelect" onchange="changeEngineMode(this.value)">
-          <option value="EXTRACTIVE_RAG">Framework 2A: Instant Extractive RAG (CPU &lt; 5ms)</option>
-          <option value="WEBGPU">Framework 1: WebGPU WebLLM (In-Browser GPU)</option>
-          <option value="OLLAMA">Framework 2B: Local CPU LLM (Ollama 127.0.0.1)</option>
-        </select>
-        <span id="gpuStatusIndicator" style="font-size:12px; font-weight:700;">🔍 Auto-detecting</span>
+      <!-- System Controls & Theme Switcher -->
+      <div class="header-actions">
+        <div class="engine-status-pill">
+          <span style="color:var(--text-muted);">Inference:</span>
+          <select id="engineModeSelect" onchange="changeEngineMode(this.value)">
+            <option value="EXTRACTIVE_RAG">Framework 2A: Instant Extractive RAG (&lt; 5ms)</option>
+            <option value="WEBGPU">Framework 1: WebGPU WebLLM (In-Browser GPU)</option>
+            <option value="OLLAMA">Framework 2B: Local CPU LLM (Ollama 127.0.0.1)</option>
+          </select>
+          <span id="gpuStatusIndicator" style="font-size:11px; font-weight:700;">🔍 Auto-detecting</span>
+        </div>
+
+        <!-- 1-Click Clinical Day / Night Theme Toggle -->
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Day Mode / Night Shift Mode">
+          <span id="themeIcon">☀️</span> <span id="themeLabel">Day Mode</span>
+        </button>
+
+        <!-- 1-Click Copy Consultation Note to EHR -->
+        <button class="scrub-btn" style="background:var(--accent-primary); border-color:var(--accent-primary); color:#ffffff; font-weight:700;" onclick="copyConsultNoteToClipboard()">
+          <span>📋</span> Copy Note
+        </button>
       </div>
     </div>
   </header>
@@ -50,7 +70,7 @@
     <div class="patient-demographics-card">
       <div class="patient-avatar-box">
         <span id="patientInitials">ICU</span>
-        <span id="patientBed" style="font-size:0.6rem; color:#94a3b8;">BED 04</span>
+        <span id="patientBed" style="font-size:0.6rem; opacity:0.85;">BED 04</span>
       </div>
 
       <div class="patient-meta-details">
@@ -59,7 +79,7 @@
           <select id="patientSelect" class="patient-select-input" onchange="onPatientSelect(this.value)">
             <option value="">Loading Curated ICU Cohort...</option>
           </select>
-          <span id="sepsisStatusBadge" class="sepsis-classification-badge bg-emerald-950 text-emerald-300 border-emerald-600">
+          <span id="sepsisStatusBadge" class="sepsis-classification-badge badge-normal">
             <span aria-hidden="true">●</span> Non-Sepsis / SIRS
           </span>
         </div>
@@ -80,381 +100,493 @@
       <button class="scrub-btn" onclick="stepTimeline(1)" title="Next ICU Hour">Next ▶</button>
       <div id="hourBadge" class="hour-indicator-tag">ICU Hr: 1</div>
     </div>
-
-    <!-- 1-Click Copy Consultation Note to EHR -->
-    <button class="scrub-btn" style="background:#0284c7; border-color:#38bdf8; color:#fff;" onclick="copyConsultNoteToClipboard()">
-      <span>📋</span> Copy Note to EHR
-    </button>
   </section>
 
   <!-- ======================================================================
-       3. Main 3-Column Ergonomic Bedside Workstation
+       3. Pinned Telemetry Quick-Bar (Always Visible Telemetry Anchor)
        ====================================================================== -->
-  <main id="bedsideView" class="clinical-workspace">
-
-    <!-- ------------------------------------------------------------------
-         COLUMN 1: Real-Time Telemetry & Sequential Organ Failure (SOFA)
-         ------------------------------------------------------------------ -->
-    <section class="clinical-card" aria-labelledby="telemetryHeader">
-      <div class="card-header-bar">
-        <h2 id="telemetryHeader" class="card-header-title">
-          <span>📈</span> Vital Signs &amp; Trajectory
-        </h2>
-        <span style="font-size:0.68rem; color:var(--text-muted);">12h Real-time Trend</span>
+  <section class="telemetry-quick-bar">
+    <div class="quick-bar-items">
+      <div class="quick-stat-item">
+        <span class="quick-stat-label">MAP:</span>
+        <span id="quickMap" class="quick-stat-val">--</span>
+        <span style="font-size:0.7rem; color:var(--text-muted);">mmHg</span>
       </div>
+      <div class="quick-stat-item">
+        <span class="quick-stat-label">Heart Rate:</span>
+        <span id="quickHr" class="quick-stat-val">--</span>
+        <span style="font-size:0.7rem; color:var(--text-muted);">bpm</span>
+      </div>
+      <div class="quick-stat-item">
+        <span class="quick-stat-label">Resp:</span>
+        <span id="quickResp" class="quick-stat-val">--</span>
+        <span style="font-size:0.7rem; color:var(--text-muted);">/min</span>
+      </div>
+      <div class="quick-stat-item">
+        <span class="quick-stat-label">Lactate:</span>
+        <span id="quickLact" class="quick-stat-val">--</span>
+        <span style="font-size:0.7rem; color:var(--text-muted);">mmol/L</span>
+      </div>
+      <div class="quick-stat-item">
+        <span class="quick-stat-label">Creatinine:</span>
+        <span id="quickCr" class="quick-stat-val">--</span>
+        <span style="font-size:0.7rem; color:var(--text-muted);">mg/dL</span>
+      </div>
+      <div class="quick-stat-item">
+        <span class="quick-stat-label">Total SOFA:</span>
+        <span id="quickSofa" class="quick-stat-val" style="color:var(--accent-primary);">--</span>
+      </div>
+    </div>
+    <div class="quick-stat-item">
+      <span class="quick-stat-label">Simulated MAP:</span>
+      <span id="quickSimMap" class="quick-stat-val target-text">-- mmHg</span>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       4. TAB 1: Bedside Treatment Plan (Default Focused View)
+       ====================================================================== -->
+  <main id="viewPlan" class="view-panel active">
+    <div class="treatment-plan-layout">
+      
+      <!-- Primary Clinical Decision Support Plan Column -->
+      <section class="clinical-card" aria-labelledby="recommendationHeader">
+        <div class="card-header-bar">
+          <h2 id="recommendationHeader" class="card-header-title">
+            <span>📋</span> Evidence-Based SBAR Consultation Note &amp; Dosing Regimen
+          </h2>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span id="confidencePill" class="sepsis-classification-badge badge-sepsis" style="padding:3px 10px; font-size:0.74rem;">High Confidence</span>
+            <span id="latencyBadge" style="font-family:var(--font-mono); font-size:0.74rem; color:var(--accent-primary);">&lt; 5ms</span>
+          </div>
+        </div>
+
+        <!-- Structured SBAR Note Container -->
+        <div id="recommendationBox" style="display:flex; flex-direction:column; gap:16px;">
+          <div style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:30px;">
+            Initializing clinical knowledge base and synthesizing recommendation note...
+          </div>
+        </div>
+      </section>
+
+      <!-- Verifiable Evidence & Quick Action Drawer -->
+      <aside class="clinical-card" style="height:fit-content; position:sticky; top:80px;" aria-labelledby="citationHeader">
+        <div class="card-header-bar">
+          <h3 id="citationHeader" class="card-header-title">
+            <span>📖</span> Verifiable Citation Inspector
+          </h3>
+          <span style="font-size:0.7rem; color:var(--text-muted);">Click any [CHUNK-ID]</span>
+        </div>
+
+        <div id="citationDrawer" class="citation-inspector-drawer">
+          <p style="color:var(--text-dim); font-size:0.8rem;">
+            Click on any inline citation button (e.g., <span class="citation-pill">[SSC-2021-BUNDLE-01]</span> or <span class="citation-pill">[DOSE-VANC-01]</span>) to inspect verbatim guideline text, publication source, and evidence recommendation grade.
+          </p>
+        </div>
+
+        <!-- Quick Bedside Safety Summary -->
+        <div class="card-header-bar" style="margin-top:8px;">
+          <h3 class="card-header-title">
+            <span>🛡️</span> Organ Safety Gates
+          </h3>
+          <span id="safetyAlertsSummaryBadge" style="font-size:0.74rem; font-weight:800; color:var(--status-normal);">0 Warnings</span>
+        </div>
+        <div id="safetySummaryList" style="display:flex; flex-direction:column; gap:8px;">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Rapid Actions -->
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+          <button class="scrub-btn" style="justify-content:center; padding:9px; background:var(--accent-primary); color:#ffffff; font-weight:700;" onclick="copyConsultNoteToClipboard()">
+            📋 Copy Complete Note to EHR Clipboard
+          </button>
+          <button class="scrub-btn" style="justify-content:center; padding:9px;" onclick="switchViewTab('simulator')">
+            🧪 Open "What-If" Resuscitation Simulator ➔
+          </button>
+          <button class="scrub-btn" style="justify-content:center; padding:9px;" onclick="switchViewTab('telemetry')">
+            📈 View Full Telemetry &amp; SOFA Trends ➔
+          </button>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       5. TAB 2: "What-If" Resuscitation Simulator & Perfusion Workspace
+       ====================================================================== -->
+  <main id="viewSimulator" class="view-panel">
+    <div class="simulator-layout">
+
+      <!-- Left Column: Interactive Resuscitation Controls & Drug Select -->
+      <section class="clinical-card" aria-labelledby="controlsHeader">
+        <div class="card-header-bar">
+          <h2 id="controlsHeader" class="card-header-title">
+            <span>🧪</span> Hemodynamic &amp; Pharmacologic Intervention Controls
+          </h2>
+          <span style="font-size:0.72rem; color:var(--status-normal); font-weight:700;">Sub-millisecond Feedback</span>
+        </div>
+
+        <!-- Crystalloid Bolus Slider -->
+        <div class="intervention-group">
+          <div class="slider-label-row">
+            <span>IV Balanced Crystalloid Bolus:</span>
+            <span class="slider-readout"><span id="valFluidBolus">30</span> mL/kg (<span id="valFluidTotalMl">2100</span> mL)</span>
+          </div>
+          <input type="range" id="fluidSlider" class="clinical-slider" min="0" max="40" step="5" value="30" oninput="onSimulationInput()">
+          <span style="font-size:0.72rem; color:var(--text-muted);">SSC 2021 recommends &ge; 30 mL/kg within initial 3 hours for sepsis-induced hypoperfusion.</span>
+        </div>
+
+        <!-- Norepinephrine Titration Slider -->
+        <div class="intervention-group">
+          <div class="slider-label-row">
+            <span>Norepinephrine Titration:</span>
+            <span class="slider-readout"><span id="valNorepi">0.05</span> &mu;g/kg/min</span>
+          </div>
+          <input type="range" id="norepiSlider" class="clinical-slider" min="0" max="0.5" step="0.02" value="0.05" oninput="onSimulationInput()">
+          <span style="font-size:0.72rem; color:var(--text-muted);">First-line vasopressor to target MAP &ge; 65 mmHg.</span>
+        </div>
+
+        <!-- Vasopressin Second-Line Toggle -->
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-inset); padding:10px 14px; border-radius:6px; border:1px solid var(--border-subtle);">
+          <div>
+            <div style="font-size:0.82rem; font-weight:700;">Vasopressin 0.03 units/min (Second-Line)</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">Initiate when norepinephrine requirements are escalating.</div>
+          </div>
+          <input type="checkbox" id="checkVaso" style="width:20px; height:20px; cursor:pointer;" onchange="onSimulationInput()">
+        </div>
+
+        <!-- Antimicrobial Prescribing Selection Panel -->
+        <div class="intervention-group" style="margin-top:6px;">
+          <div class="slider-label-row">
+            <span>Empiric Antimicrobial Prescribing Panel:</span>
+            <span style="font-size:0.72rem; color:var(--text-muted);">5-Drug Protocol</span>
+          </div>
+          <div class="drug-pill-grid">
+            <label class="drug-pill-label">
+              <input type="checkbox" id="drugVanc" value="vancomycin" checked onchange="onSimulationInput()">
+              <span>Vancomycin (MRSA)</span>
+            </label>
+            <label class="drug-pill-label">
+              <input type="checkbox" id="drugPipTazo" value="piperacillin_tazobactam" checked onchange="onSimulationInput()">
+              <span>Pip-Tazo (Zosyn)</span>
+            </label>
+            <label class="drug-pill-label">
+              <input type="checkbox" id="drugCefepime" value="cefepime" onchange="onSimulationInput()">
+              <span>Cefepime (Maxipime)</span>
+            </label>
+            <label class="drug-pill-label">
+              <input type="checkbox" id="drugMero" value="meropenem" onchange="onSimulationInput()">
+              <span>Meropenem (Merrem)</span>
+            </label>
+            <label class="drug-pill-label" style="grid-column: 1 / -1;">
+              <input type="checkbox" id="drugGent" value="gentamicin" onchange="onSimulationInput()">
+              <span>Gentamicin (Aminoglycoside Synergy)</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Hemodynamic Forecast & Safety Alerts -->
+      <section class="clinical-card" aria-labelledby="forecastHeader">
+        <div class="card-header-bar">
+          <h2 id="forecastHeader" class="card-header-title">
+            <span>📊</span> Simulated Perfusion &amp; Safety Trajectory
+          </h2>
+          <span id="targetStatusPill" class="forecast-target-pill badge-normal">TARGET MET ✅</span>
+        </div>
+
+        <!-- Hemodynamic Forecast Box -->
+        <div class="hemodynamic-forecast-box">
+          <div class="forecast-row">
+            <span style="color:var(--text-muted);">Simulated Post-Resuscitation MAP:</span>
+            <span id="simMapVal" style="font-family:var(--font-mono); font-size:1.35rem; font-weight:900; color:var(--accent-primary);">-- mmHg</span>
+          </div>
+          <div class="forecast-row">
+            <span style="color:var(--text-muted);">Target MAP Threshold (&ge; 65 mmHg):</span>
+            <span id="simTargetMetLabel" style="font-weight:700;">Goal Achieved</span>
+          </div>
+          <div class="forecast-row">
+            <span style="color:var(--text-muted);">Expected Lactate Clearance (2–4h):</span>
+            <span id="simLactVal" style="font-family:var(--font-mono); font-weight:700; color:var(--status-normal);">-- mmol/L</span>
+          </div>
+          <div class="forecast-row">
+            <span style="color:var(--text-muted);">Volume Overload / Pulmonary Edema Risk:</span>
+            <span id="simOverloadVal" style="font-family:var(--font-mono); font-weight:700; color:var(--status-warning);">0%</span>
+          </div>
+        </div>
+
+        <!-- Real-Time Safety & Contraindication Alerts -->
+        <div class="card-header-bar" style="margin-top:6px;">
+          <h3 class="card-header-title">
+            <span>⚠️</span> Active Organ Contraindication Warnings
+          </h3>
+          <span id="alertCountBadge" style="font-size:0.75rem; font-weight:800; color:var(--status-critical);">0 Alerts</span>
+        </div>
+
+        <div id="contraindicationList" style="display:flex; flex-direction:column; gap:8px;">
+          <!-- Contraindication cards inserted here dynamically -->
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       6. TAB 3: ICU Telemetry & Sequential Organ Failure (SOFA)
+       ====================================================================== -->
+  <main id="viewTelemetry" class="view-panel">
+    <div class="telemetry-dashboard-layout">
 
       <!-- Vital Signs Grid with SVG Sparklines -->
-      <div class="telemetry-grid">
-        <!-- Mean Arterial Pressure -->
-        <div id="tileMap" class="vital-tile">
-          <div class="vital-header">
-            <span class="vital-label">MAP</span>
-            <span class="vital-ref-range">Target &ge; 65</span>
-          </div>
-          <div class="vital-value-row">
-            <span class="vital-num" id="valMap">--</span>
-            <span class="vital-unit">mmHg</span>
-          </div>
-          <svg id="sparkMap" class="sparkline-svg" viewBox="0 0 100 24"></svg>
+      <section class="clinical-card" aria-labelledby="vitalsGridHeader">
+        <div class="card-header-bar">
+          <h2 id="vitalsGridHeader" class="card-header-title">
+            <span>📈</span> Bedside Vital Signs (12-Hour Historical Trajectory)
+          </h2>
+          <span style="font-size:0.72rem; color:var(--text-muted);">Continuous ICU Bedside Telemetry</span>
         </div>
 
-        <!-- Heart Rate -->
-        <div id="tileHr" class="vital-tile">
-          <div class="vital-header">
-            <span class="vital-label">Heart Rate</span>
-            <span class="vital-ref-range">60-100</span>
+        <div class="telemetry-row-4">
+          <!-- Mean Arterial Pressure -->
+          <div id="tileMap" class="vital-tile">
+            <div class="vital-header">
+              <span class="vital-label">MAP</span>
+              <span class="vital-ref-range">Target &ge; 65</span>
+            </div>
+            <div class="vital-value-row">
+              <span class="vital-num" id="valMap">--</span>
+              <span class="vital-unit">mmHg</span>
+            </div>
+            <svg id="sparkMap" class="sparkline-svg" viewBox="0 0 100 24"></svg>
           </div>
-          <div class="vital-value-row">
-            <span class="vital-num" id="valHr">--</span>
-            <span class="vital-unit">bpm</span>
+
+          <!-- Heart Rate -->
+          <div id="tileHr" class="vital-tile">
+            <div class="vital-header">
+              <span class="vital-label">Heart Rate</span>
+              <span class="vital-ref-range">60–100</span>
+            </div>
+            <div class="vital-value-row">
+              <span class="vital-num" id="valHr">--</span>
+              <span class="vital-unit">bpm</span>
+            </div>
+            <svg id="sparkHr" class="sparkline-svg" viewBox="0 0 100 24"></svg>
           </div>
-          <svg id="sparkHr" class="sparkline-svg" viewBox="0 0 100 24"></svg>
+
+          <!-- Respiratory Rate -->
+          <div id="tileResp" class="vital-tile">
+            <div class="vital-header">
+              <span class="vital-label">Resp Rate</span>
+              <span class="vital-ref-range">12–20</span>
+            </div>
+            <div class="vital-value-row">
+              <span class="vital-num" id="valResp">--</span>
+              <span class="vital-unit">/min</span>
+            </div>
+            <svg id="sparkResp" class="sparkline-svg" viewBox="0 0 100 24"></svg>
+          </div>
+
+          <!-- Temperature -->
+          <div id="tileTemp" class="vital-tile">
+            <div class="vital-header">
+              <span class="vital-label">Temperature</span>
+              <span class="vital-ref-range">36.5–37.5</span>
+            </div>
+            <div class="vital-value-row">
+              <span class="vital-num" id="valTemp">--</span>
+              <span class="vital-unit">&deg;C</span>
+            </div>
+            <svg id="sparkTemp" class="sparkline-svg" viewBox="0 0 100 24"></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- Critical Organ Laboratory Metrics -->
+      <section class="clinical-card" aria-labelledby="labsGridHeader">
+        <div class="card-header-bar">
+          <h2 id="labsGridHeader" class="card-header-title">
+            <span>🧪</span> Critical Organ Laboratory Telemetry
+          </h2>
+          <span style="font-size:0.72rem; color:var(--accent-primary); font-weight:700;">Dual Lactate Normalization</span>
         </div>
 
-        <!-- Respiratory Rate -->
-        <div id="tileResp" class="vital-tile">
-          <div class="vital-header">
-            <span class="vital-label">Resp Rate</span>
-            <span class="vital-ref-range">12-20</span>
+        <div class="telemetry-row-4">
+          <!-- Serum Lactate -->
+          <div id="tileLactate" class="vital-tile">
+            <div class="vital-header">
+              <span class="vital-label">Lactate</span>
+              <span class="vital-ref-range">&lt; 2.0 mmol/L</span>
+            </div>
+            <div class="vital-value-row">
+              <span class="vital-num" id="valLactMmol">--</span>
+              <span class="vital-unit">mmol/L</span>
+            </div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;">
+              Raw: <strong id="valLactMgDl" style="color:var(--text-primary);">--</strong> mg/dL
+            </div>
+            <svg id="sparkLact" class="sparkline-svg" viewBox="0 0 100 24"></svg>
+            <div id="staleLactate" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
           </div>
-          <div class="vital-value-row">
-            <span class="vital-num" id="valResp">--</span>
-            <span class="vital-unit">/min</span>
-          </div>
-          <svg id="sparkResp" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-        </div>
 
-        <!-- Temperature -->
-        <div id="tileTemp" class="vital-tile">
-          <div class="vital-header">
-            <span class="vital-label">Temperature</span>
-            <span class="vital-ref-range">36.5-37.5</span>
+          <!-- Serum Creatinine -->
+          <div id="tileCreatinine" class="vital-tile">
+            <div class="vital-header">
+              <span class="vital-label">Creatinine</span>
+              <span class="vital-ref-range">0.7–1.3</span>
+            </div>
+            <div class="vital-value-row">
+              <span class="vital-num" id="valCr">--</span>
+              <span class="vital-unit">mg/dL</span>
+            </div>
+            <svg id="sparkCr" class="sparkline-svg" viewBox="0 0 100 24"></svg>
+            <div id="staleCr" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
           </div>
-          <div class="vital-value-row">
-            <span class="vital-num" id="valTemp">--</span>
-            <span class="vital-unit">&deg;C</span>
-          </div>
-          <svg id="sparkTemp" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-        </div>
-      </div>
 
-      <!-- Laboratory Organ Function Telemetry -->
-      <div class="card-header-bar" style="margin-top:2px;">
-        <h3 class="card-header-title">
-          <span>🧪</span> Critical Organ Labs
-        </h3>
-        <span style="font-size:0.68rem; color:var(--accent-cyan);">Dual Normalization</span>
-      </div>
+          <!-- Platelets -->
+          <div id="tilePlatelets" class="vital-tile">
+            <div class="vital-header">
+              <span class="vital-label">Platelets</span>
+              <span class="vital-ref-range">&ge; 150</span>
+            </div>
+            <div class="vital-value-row">
+              <span class="vital-num" id="valPlt">--</span>
+              <span class="vital-unit">k/&mu;L</span>
+            </div>
+            <div id="stalePlt" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
+          </div>
 
-      <div class="telemetry-grid">
-        <!-- Serum Lactate -->
-        <div id="tileLactate" class="vital-tile">
-          <div class="vital-header">
-            <span class="vital-label">Lactate</span>
-            <span class="vital-ref-range">&lt; 2.0 mmol/L</span>
+          <!-- Total Bilirubin -->
+          <div id="tileBili" class="vital-tile">
+            <div class="vital-header">
+              <span class="vital-label">Bilirubin</span>
+              <span class="vital-ref-range">&lt; 1.2</span>
+            </div>
+            <div class="vital-value-row">
+              <span class="vital-num" id="valBili">--</span>
+              <span class="vital-unit">mg/dL</span>
+            </div>
+            <div id="staleBili" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
           </div>
-          <div class="vital-value-row">
-            <span class="vital-num" id="valLactMmol">--</span>
-            <span class="vital-unit">mmol/L</span>
-          </div>
-          <div style="font-size:0.68rem; color:var(--text-muted); margin-top:2px;">
-            Raw: <span id="valLactMgDl" style="color:#e2e8f0; font-weight:700;">--</span> mg/dL
-          </div>
-          <svg id="sparkLact" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-          <div id="staleLactate" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
         </div>
-
-        <!-- Serum Creatinine -->
-        <div id="tileCreatinine" class="vital-tile">
-          <div class="vital-header">
-            <span class="vital-label">Creatinine</span>
-            <span class="vital-ref-range">0.7 - 1.3</span>
-          </div>
-          <div class="vital-value-row">
-            <span class="vital-num" id="valCr">--</span>
-            <span class="vital-unit">mg/dL</span>
-          </div>
-          <svg id="sparkCr" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-          <div id="staleCr" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
-        </div>
-
-        <!-- Platelets -->
-        <div id="tilePlatelets" class="vital-tile">
-          <div class="vital-header">
-            <span class="vital-label">Platelets</span>
-            <span class="vital-ref-range">&ge; 150</span>
-          </div>
-          <div class="vital-value-row">
-            <span class="vital-num" id="valPlt">--</span>
-            <span class="vital-unit">k/&mu;L</span>
-          </div>
-          <div id="stalePlt" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
-        </div>
-
-        <!-- Total Bilirubin -->
-        <div id="tileBili" class="vital-tile">
-          <div class="vital-header">
-            <span class="vital-label">Bilirubin</span>
-            <span class="vital-ref-range">&lt; 1.2</span>
-          </div>
-          <div class="vital-value-row">
-            <span class="vital-num" id="valBili">--</span>
-            <span class="vital-unit">mg/dL</span>
-          </div>
-          <div id="staleBili" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
-        </div>
-      </div>
+      </section>
 
       <!-- Deterministic SOFA Matrix -->
-      <div class="sofa-matrix-card">
+      <section class="sofa-matrix-card" aria-labelledby="sofaMatrixHeader">
         <div class="sofa-headline">
           <div>
-            <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Total SOFA Score</div>
-            <div style="font-size:0.65rem; color:var(--text-dim);">Sepsis-3 Acute Threshold &ge; 2</div>
+            <h2 id="sofaMatrixHeader" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); text-transform:uppercase;">
+              Sequential Organ Failure Assessment (SOFA) Matrix
+            </h2>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+              Sepsis-3 Acute Threshold: Acute $\Delta \text{SOFA} \ge 2$ points attributed to infection
+            </div>
           </div>
-          <div id="sofaTotalVal" class="sofa-big-score">0</div>
+          <div style="text-align:right;">
+            <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Total SOFA Score</div>
+            <div id="sofaTotalVal" class="sofa-big-score">0</div>
+          </div>
         </div>
 
         <div class="sofa-sub-matrix">
           <div class="sofa-col">
-            <div class="sofa-col-name">RESP</div>
+            <div class="sofa-col-name">Respiration (PaO2/FiO2)</div>
             <div id="sofaRespVal" class="sofa-col-val">0</div>
           </div>
           <div class="sofa-col">
-            <div class="sofa-col-name">COAG</div>
+            <div class="sofa-col-name">Coagulation (Platelets)</div>
             <div id="sofaCoagVal" class="sofa-col-val">0</div>
           </div>
           <div class="sofa-col">
-            <div class="sofa-col-name">LIVER</div>
+            <div class="sofa-col-name">Liver (Bilirubin)</div>
             <div id="sofaLiverVal" class="sofa-col-val">0</div>
           </div>
           <div class="sofa-col">
-            <div class="sofa-col-name">CARDIO</div>
+            <div class="sofa-col-name">Cardiovascular (MAP/Pressor)</div>
             <div id="sofaCvVal" class="sofa-col-val">0</div>
           </div>
           <div class="sofa-col">
-            <div class="sofa-col-name">RENAL</div>
+            <div class="sofa-col-name">Renal (Creatinine)</div>
             <div id="sofaRenalVal" class="sofa-col-val">0</div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ------------------------------------------------------------------
-         COLUMN 2: "What-If" Resuscitation Workspace & Pharmacotherapy
-         ------------------------------------------------------------------ -->
-    <section class="clinical-card" aria-labelledby="simulatorHeader">
-      <div class="card-header-bar">
-        <h2 id="simulatorHeader" class="card-header-title">
-          <span>🧪</span> "What-If" Resuscitation Simulator
-        </h2>
-        <span style="font-size:0.68rem; color:var(--status-normal); font-weight:700;">&lt; 5ms Real-time</span>
-      </div>
-
-      <!-- Crystalloid Bolus Slider -->
-      <div class="intervention-group">
-        <div class="slider-label-row">
-          <span>IV Balanced Crystalloid Bolus:</span>
-          <span class="slider-readout"><span id="valFluidBolus">30</span> mL/kg (<span id="valFluidTotalMl">2100</span> mL)</span>
-        </div>
-        <input type="range" id="fluidSlider" class="clinical-slider" min="0" max="40" step="5" value="30" oninput="onSimulationInput()">
-      </div>
-
-      <!-- Norepinephrine Titration Slider -->
-      <div class="intervention-group">
-        <div class="slider-label-row">
-          <span>Norepinephrine Titration:</span>
-          <span class="slider-readout"><span id="valNorepi">0.05</span> &mu;g/kg/min</span>
-        </div>
-        <input type="range" id="norepiSlider" class="clinical-slider" min="0" max="0.5" step="0.02" value="0.05" oninput="onSimulationInput()">
-      </div>
-
-      <!-- Vasopressin & Epinephrine Add-ons -->
-      <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-inset); padding:8px 12px; border-radius:6px; border:1px solid var(--border-subtle);">
-        <span style="font-size:0.78rem; font-weight:600;">Vasopressin 0.03 units/min (Second-Line):</span>
-        <input type="checkbox" id="checkVaso" style="width:18px; height:18px; cursor:pointer;" onchange="onSimulationInput()">
-      </div>
-
-      <!-- Hemodynamic Perfusion Forecast -->
-      <div class="hemodynamic-forecast-box">
-        <div class="forecast-row">
-          <span style="color:var(--text-muted);">Simulated Post-Resuscitation MAP:</span>
-          <span id="simMapVal" style="font-family:var(--font-mono); font-size:1.15rem; font-weight:900; color:var(--accent-cyan);">-- mmHg</span>
-        </div>
-        <div class="forecast-row">
-          <span style="color:var(--text-muted);">Perfusion Goal (&ge; 65 mmHg):</span>
-          <span id="targetStatusPill" class="forecast-target-pill bg-emerald-950 text-emerald-300 border border-emerald-600">TARGET MET ✅</span>
-        </div>
-        <div class="forecast-row">
-          <span style="color:var(--text-muted);">Expected Lactate Clearance:</span>
-          <span id="simLactVal" style="font-family:var(--font-mono); font-weight:700; color:#a7f3d0;">-- mmol/L</span>
-        </div>
-        <div class="forecast-row">
-          <span style="color:var(--text-muted);">Volume Overload / Pulmonary Edema Risk:</span>
-          <span id="simOverloadVal" style="font-family:var(--font-mono); font-weight:700; color:#fbbf24;">0%</span>
-        </div>
-      </div>
-
-      <!-- Empiric Antimicrobial Order Review -->
-      <div class="intervention-group">
-        <div class="slider-label-row">
-          <span>Empiric Antimicrobial Prescribing Panel:</span>
-          <span style="font-size:0.68rem; color:var(--text-muted);">5-Drug Protocol</span>
-        </div>
-        <div class="drug-pill-grid">
-          <label class="drug-pill-label">
-            <input type="checkbox" id="drugVanc" value="vancomycin" checked onchange="onSimulationInput()">
-            <span>Vancomycin (MRSA)</span>
-          </label>
-          <label class="drug-pill-label">
-            <input type="checkbox" id="drugPipTazo" value="piperacillin_tazobactam" checked onchange="onSimulationInput()">
-            <span>Pip-Tazo (Zosyn)</span>
-          </label>
-          <label class="drug-pill-label">
-            <input type="checkbox" id="drugCefepime" value="cefepime" onchange="onSimulationInput()">
-            <span>Cefepime (Maxipime)</span>
-          </label>
-          <label class="drug-pill-label">
-            <input type="checkbox" id="drugMero" value="meropenem" onchange="onSimulationInput()">
-            <span>Meropenem (Merrem)</span>
-          </label>
-          <label class="drug-pill-label" style="grid-column: 1 / -1;">
-            <input type="checkbox" id="drugGent" value="gentamicin" onchange="onSimulationInput()">
-            <span>Gentamicin (Aminoglycoside Synergy)</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Real-Time Safety & Contraindication Alerts -->
-      <div class="card-header-bar" style="margin-top:2px;">
-        <h3 class="card-header-title">
-          <span>⚠️</span> Proactive Safety Alerts
-        </h3>
-        <span id="alertCountBadge" style="font-size:0.75rem; font-weight:700; color:var(--status-critical);">0 Alerts</span>
-      </div>
-
-      <div id="contraindicationList" class="alerts-scroll-area">
-        <!-- Contraindication cards inserted here dynamically -->
-      </div>
-    </section>
-
-    <!-- ------------------------------------------------------------------
-         COLUMN 3: Synthesized Bedside Recommendation & Verifiable Citations
-         ------------------------------------------------------------------ -->
-    <section class="clinical-card" aria-labelledby="recommendationHeader">
-      <div class="card-header-bar">
-        <h2 id="recommendationHeader" class="card-header-title">
-          <span>📋</span> Evidence-Based Consultation Note
-        </h2>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <span id="confidencePill" class="sepsis-classification-badge bg-blue-950 text-blue-300 border-blue-600" style="padding:3px 10px; font-size:0.72rem;">High Confidence</span>
-          <span id="latencyBadge" style="font-family:var(--font-mono); font-size:0.72rem; color:var(--accent-cyan);">&lt; 5ms</span>
-        </div>
-      </div>
-
-      <!-- Structured SBAR Consultation Note Box -->
-      <div id="recommendationBox" class="sbar-note-container">
-        <div style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:40px;">
-          Initializing clinical knowledge base and synthesizing recommendation note...
-        </div>
-      </div>
-
-      <!-- Verifiable Literature Citation Inspector Drawer -->
-      <div class="card-header-bar" style="margin-top:2px;">
-        <h3 class="card-header-title">
-          <span>📖</span> Verifiable Citation Inspector
-        </h3>
-        <span style="font-size:0.68rem; color:var(--text-muted);">Click any [CHUNK-ID] above</span>
-      </div>
-      <div id="citationDrawer" class="citation-inspector-drawer">
-        <div style="color:var(--text-dim); font-size:0.76rem;">Select an inline citation pill to inspect verbatim guideline text, grade of recommendation, and exact publication reference.</div>
-      </div>
-    </section>
-
+    </div>
   </main>
 
   <!-- ======================================================================
-       4. 25-Patient Validation Benchmark View (Initially Hidden)
+       7. TAB 4: 25-Patient Validation Benchmark
        ====================================================================== -->
-  <section id="benchmarkView" class="benchmark-suite-view" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <h2 style="font-size:1.3rem; font-weight:900; color:#fff;">PhysioNet 2019 ICU Cohort Validation Benchmark</h2>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Automated stress-testing of deterministic SOFA math, retrieval precision@3, and contraindication recall across all 25 patient trajectories.</p>
+  <main id="viewBenchmark" class="view-panel">
+    <div class="clinical-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 style="font-size:1.25rem; font-weight:800; color:var(--text-primary);">
+            PhysioNet 2019 ICU Cohort Validation Benchmark
+          </h2>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+            Automated stress-testing of deterministic SOFA math, retrieval precision@3, and contraindication recall across all 25 patient trajectories.
+          </p>
+        </div>
+        <button id="runBenchmarkBtn" class="scrub-btn" style="background:var(--accent-primary); color:#ffffff; font-weight:800; padding:9px 20px;" onclick="executeFullBenchmark()">
+          ▶ Run Full Benchmark Suite
+        </button>
       </div>
-      <button id="runBenchmarkBtn" class="scrub-btn" style="background:#0284c7; color:#fff; font-weight:800; padding:8px 18px;" onclick="executeFullBenchmark()">
-        ▶ Run Full Benchmark Suite
-      </button>
-    </div>
 
-    <!-- Summary KPI Cards -->
-    <div class="audit-metrics-row">
-      <div class="audit-kpi-card">
-        <div class="vital-label">Contraindication Recall</div>
-        <div id="benchRecallVal" class="audit-kpi-num" style="color:var(--status-normal);">100%</div>
-        <div style="font-size:0.7rem; color:var(--status-normal); margin-top:4px;">Zero Missed AKI/Toxicity Warnings</div>
+      <!-- Summary KPI Cards -->
+      <div class="audit-metrics-row">
+        <div class="audit-kpi-card">
+          <div class="vital-label">Contraindication Recall</div>
+          <div id="benchRecallVal" class="audit-kpi-num" style="color:var(--status-normal);">100%</div>
+          <div style="font-size:0.72rem; color:var(--status-normal); margin-top:4px;">Zero Missed AKI/Toxicity Warnings</div>
+        </div>
+        <div class="audit-kpi-card">
+          <div class="vital-label">Retrieval Precision@3</div>
+          <div id="benchPrecisionVal" class="audit-kpi-num">99.5%</div>
+          <div style="font-size:0.72rem; color:var(--accent-primary); margin-top:4px;">SSC Bundles &amp; Renal Chunks</div>
+        </div>
+        <div class="audit-kpi-card">
+          <div class="vital-label">Avg Engine Latency</div>
+          <div id="benchLatencyVal" class="audit-kpi-num" style="color:var(--status-normal);">0.09 ms</div>
+          <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Pure Client-Side In-Browser</div>
+        </div>
+        <div class="audit-kpi-card">
+          <div class="vital-label">Total ICU Hours Evaluated</div>
+          <div id="benchHoursVal" class="audit-kpi-num">1,313 hrs</div>
+          <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Across 4 Clinical Archetypes</div>
+        </div>
       </div>
-      <div class="audit-kpi-card">
-        <div class="vital-label">Retrieval Precision@3</div>
-        <div id="benchPrecisionVal" class="audit-kpi-num">99.5%</div>
-        <div style="font-size:0.7rem; color:var(--accent-cyan); margin-top:4px;">SSC Bundles &amp; Renal Chunks</div>
-      </div>
-      <div class="audit-kpi-card">
-        <div class="vital-label">Avg Engine Latency</div>
-        <div id="benchLatencyVal" class="audit-kpi-num" style="color:#a7f3d0;">0.09 ms</div>
-        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Pure Client-Side In-Browser</div>
-      </div>
-      <div class="audit-kpi-card">
-        <div class="vital-label">Total ICU Hours Evaluated</div>
-        <div id="benchHoursVal" class="audit-kpi-num">1,313 hrs</div>
-        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Across 4 Clinical Archetypes</div>
-      </div>
-    </div>
 
-    <!-- Patient Trajectory Breakdown Table -->
-    <h3 style="font-size:0.9rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-top:20px;">Patient Trajectory Audit Log</h3>
-    <table class="audit-table">
-      <thead>
-        <tr>
-          <th>Patient ID</th>
-          <th>Archetype Category</th>
-          <th>ICU Stay (Hours)</th>
-          <th>Max SOFA</th>
-          <th>Retrieval Precision</th>
-          <th>Detected Alerts</th>
-          <th>Audit Status</th>
-        </tr>
-      </thead>
-      <tbody id="benchmarkTableBody">
-        <tr>
-          <td colspan="7" style="text-align:center; color:var(--text-dim); padding:20px;">Click "Run Full Benchmark Suite" to evaluate all 25 patient trajectories.</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+      <!-- Patient Trajectory Breakdown Table -->
+      <h3 style="font-size:0.9rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-top:16px;">
+        Patient Trajectory Audit Log
+      </h3>
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Patient ID</th>
+            <th>Archetype Category</th>
+            <th>ICU Stay (Hours)</th>
+            <th>Max SOFA</th>
+            <th>Retrieval Precision</th>
+            <th>Detected Alerts</th>
+            <th>Audit Status</th>
+          </tr>
+        </thead>
+        <tbody id="benchmarkTableBody">
+          <tr>
+            <td colspan="7" style="text-align:center; color:var(--text-dim); padding:24px;">
+              Click "Run Full Benchmark Suite" to evaluate all 25 patient trajectories.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 
   <!-- ======================================================================
-       5. Application Logic Modules & Live Telemetry Sparklines
+       8. Application Logic & Modules
        ====================================================================== -->
   <script type="module">
     import { calculateSofaScores, classifySepsisStatus, extractActiveTriggers } from "./js/sofaEngine.js";
@@ -463,6 +595,7 @@
     import { simulateHemodynamics } from "./js/whatIfSimulator.js";
     import { ClinicalSynthesizer } from "./js/llmSynthesis.js";
     import { runCohortBenchmark } from "./js/benchmarkSuite.js";
+    import { renderClinicalMarkdown, renderAntimicrobialTable } from "./js/markdownRenderer.js";
 
     // Application Global State
     let vectorIndex = null;
@@ -471,22 +604,26 @@
     let activePatient = null;
     let activeHourIndex = 0;
     let playTimer = null;
+    let currentTheme = localStorage.getItem("sepsis_cds_theme") || "light";
 
     window.addEventListener("DOMContentLoaded", async () => {
-      console.log("[CDS Workstation] Booting Clinical Decision Support Station...");
+      console.log("[CDS Workstation] Initializing Sepsis Point-of-Care Support Engine...");
 
-      // 1. Initialize Vector Search Index
+      // 1. Initialize Theme
+      applyTheme(currentTheme);
+
+      // 2. Initialize Vector Search Index
       vectorIndex = new LocalVectorIndex();
       await vectorIndex.load("data/knowledge_index.json");
 
-      // 2. Initialize Synthesizer & Detect WebGPU
+      // 3. Initialize Synthesizer & Detect WebGPU
       synthesizer = new ClinicalSynthesizer(vectorIndex);
       updateGpuBadge();
 
-      // 3. Load PhysioNet 2019 Cohort
+      // 4. Load PhysioNet 2019 Cohort
       await loadPhysioNetCohort();
 
-      // 4. Bind Global Functions for User Actions
+      // 5. Bind Global Handlers
       window.onPatientSelect = onPatientSelect;
       window.onTimelineInput = onTimelineInput;
       window.stepTimeline = stepTimeline;
@@ -497,7 +634,40 @@
       window.executeFullBenchmark = executeFullBenchmark;
       window.inspectCitation = inspectCitation;
       window.copyConsultNoteToClipboard = copyConsultNoteToClipboard;
+      window.toggleTheme = toggleTheme;
     });
+
+    // Theme Management (Light Mode Default with 1-Click Dark Mode Toggle)
+    function applyTheme(theme) {
+      currentTheme = theme;
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("sepsis_cds_theme", theme);
+
+      const icon = document.getElementById("themeIcon");
+      const label = document.getElementById("themeLabel");
+      if (theme === "dark") {
+        icon.textContent = "🌙";
+        label.textContent = "Night Shift";
+      } else {
+        icon.textContent = "☀️";
+        label.textContent = "Day Mode";
+      }
+    }
+
+    function toggleTheme() {
+      applyTheme(currentTheme === "dark" ? "light" : "dark");
+    }
+
+    // View Navigation Switcher
+    function switchViewTab(tabKey) {
+      const tabs = ["plan", "simulator", "telemetry", "benchmark"];
+      for (const t of tabs) {
+        const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Btn`);
+        const panel = document.getElementById(`view${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (btn) btn.classList.toggle("active", t === tabKey);
+        if (panel) panel.classList.toggle("active", t === tabKey);
+      }
+    }
 
     async function loadPhysioNetCohort() {
       try {
@@ -583,7 +753,7 @@
             return;
           }
           stepTimeline(1);
-        }, 1100);
+        }, 1200);
       }
     }
 
@@ -612,9 +782,7 @@
       });
 
       const pathData = coords.join(" ");
-      svg.innerHTML = `
-        <polyline class="sparkline-path ${isCritical ? 'critical' : ''}" points="${pathData}" />
-      `;
+      svg.innerHTML = `<polyline class="sparkline-path ${isCritical ? 'critical' : ''}" points="${pathData}" />`;
     }
 
     function renderCurrentState() {
@@ -627,10 +795,26 @@
 
       // 1. Vital Signs Display
       const vitals = record.vitals;
-      document.getElementById("valMap").textContent = vitals.map !== null ? vitals.map : "--";
-      document.getElementById("valHr").textContent = vitals.hr !== null ? vitals.hr : "--";
-      document.getElementById("valResp").textContent = vitals.resp !== null ? vitals.resp : "--";
-      document.getElementById("valTemp").textContent = vitals.temp_c !== null ? vitals.temp_c : "--";
+      const mapVal = vitals.map !== null ? vitals.map : "--";
+      const hrVal = vitals.hr !== null ? vitals.hr : "--";
+      const respVal = vitals.resp !== null ? vitals.resp : "--";
+      const tempVal = vitals.temp_c !== null ? vitals.temp_c : "--";
+
+      document.getElementById("valMap").textContent = mapVal;
+      document.getElementById("valHr").textContent = hrVal;
+      document.getElementById("valResp").textContent = respVal;
+      document.getElementById("valTemp").textContent = tempVal;
+
+      // Pinned Telemetry Quick-Bar
+      const quickMap = document.getElementById("quickMap");
+      quickMap.textContent = mapVal;
+      quickMap.className = `quick-stat-val ${vitals.map !== null && vitals.map < 65 ? 'alert-text' : 'target-text'}`;
+
+      const quickHr = document.getElementById("quickHr");
+      quickHr.textContent = hrVal;
+      quickHr.className = `quick-stat-val ${vitals.hr !== null && vitals.hr > 100 ? 'alert-text' : ''}`;
+
+      document.getElementById("quickResp").textContent = respVal;
 
       const tileMap = document.getElementById("tileMap");
       if (vitals.map !== null && vitals.map < 65) {
@@ -639,7 +823,7 @@
         tileMap.classList.remove("alert-active");
       }
 
-      // Generate 12-Hour Historical Trajectory Sparklines
+      // Generate 12-Hour Historical Sparklines
       const historySlice = activePatient.timeline.slice(Math.max(0, activeHourIndex - 11), activeHourIndex + 1);
       renderSparkline("sparkMap", historySlice.map(h => h.vitals.map), vitals.map !== null && vitals.map < 65);
       renderSparkline("sparkHr", historySlice.map(h => h.vitals.hr), vitals.hr !== null && vitals.hr > 100);
@@ -648,11 +832,26 @@
 
       // 2. Laboratory Metrics Display
       const labs = record.labs;
-      document.getElementById("valLactMmol").textContent = labs.lactate_mmol_l !== null ? labs.lactate_mmol_l : "--";
-      document.getElementById("valLactMgDl").textContent = labs.lactate_mg_dl !== null ? labs.lactate_mg_dl : "--";
-      document.getElementById("valCr").textContent = labs.creatinine_mg_dl !== null ? labs.creatinine_mg_dl : "--";
-      document.getElementById("valPlt").textContent = labs.platelets_k_ul !== null ? labs.platelets_k_ul : "--";
-      document.getElementById("valBili").textContent = labs.bilirubin_total_mg_dl !== null ? labs.bilirubin_total_mg_dl : "--";
+      const lactMmol = labs.lactate_mmol_l !== null ? labs.lactate_mmol_l : "--";
+      const lactMgDl = labs.lactate_mg_dl !== null ? labs.lactate_mg_dl : "--";
+      const crVal = labs.creatinine_mg_dl !== null ? labs.creatinine_mg_dl : "--";
+      const pltVal = labs.platelets_k_ul !== null ? labs.platelets_k_ul : "--";
+      const biliVal = labs.bilirubin_total_mg_dl !== null ? labs.bilirubin_total_mg_dl : "--";
+
+      document.getElementById("valLactMmol").textContent = lactMmol;
+      document.getElementById("valLactMgDl").textContent = lactMgDl;
+      document.getElementById("valCr").textContent = crVal;
+      document.getElementById("valPlt").textContent = pltVal;
+      document.getElementById("valBili").textContent = biliVal;
+
+      // Pinned Telemetry Quick-Bar
+      const quickLact = document.getElementById("quickLact");
+      quickLact.textContent = lactMmol;
+      quickLact.className = `quick-stat-val ${labs.lactate_mmol_l >= 2.0 ? 'alert-text' : ''}`;
+
+      const quickCr = document.getElementById("quickCr");
+      quickCr.textContent = crVal;
+      quickCr.className = `quick-stat-val ${labs.creatinine_mg_dl >= 1.5 ? 'alert-text' : ''}`;
 
       renderSparkline("sparkLact", historySlice.map(h => h.labs.lactate_mmol_l), labs.lactate_mmol_l >= 2.0);
       renderSparkline("sparkCr", historySlice.map(h => h.labs.creatinine_mg_dl), labs.creatinine_mg_dl >= 1.5);
@@ -684,6 +883,7 @@
       // 4. Deterministic SOFA Engine Calculation
       const sofa = calculateSofaScores(vitals, labs, { norepinephrine: norepi });
       document.getElementById("sofaTotalVal").textContent = sofa.total;
+      document.getElementById("quickSofa").textContent = sofa.total;
       document.getElementById("sofaRespVal").textContent = sofa.resp;
       document.getElementById("sofaCoagVal").textContent = sofa.coag;
       document.getElementById("sofaLiverVal").textContent = sofa.liver;
@@ -697,7 +897,14 @@
       // 5. Classify Sepsis Status
       const status = classifySepsisStatus(sofa, vitals, labs, { norepinephrine: norepi });
       const statusBadge = document.getElementById("sepsisStatusBadge");
-      statusBadge.className = `sepsis-classification-badge ${status.badgeColor}`;
+      
+      let badgeClass = "badge-normal";
+      if (status.status.includes("Septic Shock")) {
+        badgeClass = "badge-septic-shock";
+      } else if (status.status.includes("Sepsis")) {
+        badgeClass = "badge-sepsis";
+      }
+      statusBadge.className = `sepsis-classification-badge ${badgeClass}`;
       statusBadge.innerHTML = `<span aria-hidden="true">●</span> ${status.status}`;
 
       // 6. Run What-If Hemodynamic Simulation
@@ -708,16 +915,22 @@
       });
 
       document.getElementById("simMapVal").textContent = `${sim.simulatedMap} mmHg (${sim.deltaMap >= 0 ? "+" + sim.deltaMap : sim.deltaMap})`;
+      document.getElementById("quickSimMap").textContent = `${sim.simulatedMap} mmHg ${sim.isMapTargetAchieved ? '✅' : '❌'}`;
       document.getElementById("simLactVal").textContent = `${sim.simulatedLactate} mmol/L`;
       document.getElementById("simOverloadVal").textContent = `${sim.overloadRiskPercentage}%`;
 
       const targetPill = document.getElementById("targetStatusPill");
+      const targetLabel = document.getElementById("simTargetMetLabel");
       if (sim.isMapTargetAchieved) {
-        targetPill.className = "forecast-target-pill bg-emerald-950 text-emerald-300 border border-emerald-600";
+        targetPill.className = "forecast-target-pill badge-normal";
         targetPill.textContent = "TARGET MET (MAP >= 65) ✅";
+        targetLabel.textContent = "Goal Achieved (MAP >= 65)";
+        targetLabel.style.color = "var(--status-normal)";
       } else {
-        targetPill.className = "forecast-target-pill bg-red-950 text-red-300 border border-red-600";
+        targetPill.className = "forecast-target-pill badge-septic-shock";
         targetPill.textContent = "BELOW TARGET (< 65) ❌";
+        targetLabel.textContent = "Hypoperfusion Warning (< 65 mmHg)";
+        targetLabel.style.color = "var(--status-critical)";
       }
 
       // 7. Deterministic Organ Contraindication Checks
@@ -737,20 +950,29 @@
 
       const retrievedChunks = vectorIndex ? vectorIndex.search(null, activeTriggers, 4) : [];
 
-      // 9. Clinical Synthesis Note Generation
-      renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim);
+      // 9. Clinical Synthesis Note Generation & Formatted Markdown
+      renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs);
     }
 
     function renderContraindications(alerts) {
       const container = document.getElementById("contraindicationList");
       const badge = document.getElementById("alertCountBadge");
+      const summaryList = document.getElementById("safetySummaryList");
+      const summaryBadge = document.getElementById("safetyAlertsSummaryBadge");
+      
       container.innerHTML = "";
+      summaryList.innerHTML = "";
 
       badge.textContent = `${alerts.length} Alert${alerts.length === 1 ? "" : "s"}`;
       badge.style.color = alerts.length > 0 ? "var(--status-critical)" : "var(--status-normal)";
+      
+      summaryBadge.textContent = `${alerts.length} Warning${alerts.length === 1 ? "" : "s"}`;
+      summaryBadge.style.color = alerts.length > 0 ? "var(--status-critical)" : "var(--status-normal)";
 
       if (alerts.length === 0) {
-        container.innerHTML = `<div style="color:var(--text-dim); font-size:0.75rem; padding:10px; text-align:center;">No acute organ toxicities or drug contraindications detected for current regimen.</div>`;
+        const emptyMsg = `<div style="color:var(--text-dim); font-size:0.78rem; padding:12px; text-align:center; background:var(--bg-inset); border-radius:6px;">No acute organ toxicities or drug contraindications detected for current regimen.</div>`;
+        container.innerHTML = emptyMsg;
+        summaryList.innerHTML = emptyMsg;
         return;
       }
 
@@ -760,16 +982,20 @@
         div.innerHTML = `
           <div class="alert-title-row">
             <span>⚠️ ${al.title}</span>
-            <span style="font-size:0.68rem; font-weight:800; text-transform:uppercase;">[${al.badge}]</span>
+            <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase;">[${al.badge}]</span>
           </div>
           <div class="alert-body-text">${al.message}</div>
           <div class="alert-action-line">👉 Mandatory Action: ${al.recommendation}</div>
         `;
         container.appendChild(div);
+
+        // Cloned compact banner for drawer summary
+        const clone = div.cloneNode(true);
+        summaryList.appendChild(clone);
       }
     }
 
-    function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim) {
+    function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs) {
       if (!synthesizer) return;
 
       const synth = synthesizer.synthesizeExtractiveNote(
@@ -786,26 +1012,38 @@
 
       // Update Confidence Pill
       const conf = document.getElementById("confidencePill");
-      conf.className = `sepsis-classification-badge ${synth.confidence.color}`;
+      let confClass = "badge-sepsis";
+      if (synth.confidence.color.includes("emerald")) {
+        confClass = "badge-normal";
+      } else if (synth.confidence.color.includes("red")) {
+        confClass = "badge-septic-shock";
+      }
+      conf.className = `sepsis-classification-badge ${confClass}`;
       conf.textContent = synth.confidence.label;
       document.getElementById("latencyBadge").textContent = `${synth.elapsedMs}ms (${synth.mode})`;
 
-      // Render Structured SBAR Sections
+      // Render Structured SBAR Sections with Markdown & Tabular Prescribing
       const box = document.getElementById("recommendationBox");
       box.innerHTML = "";
 
-      for (const sec of synth.sections) {
+      for (let i = 0; i < synth.sections.length; i++) {
+        const sec = synth.sections[i];
         const secDiv = document.createElement("div");
-        secDiv.className = "sbar-section";
+        secDiv.className = "clinical-section-block";
 
-        // Convert inline citations [SSC-2021-...] into clickable citation pills
-        const htmlBody = sec.body.replace(/\[([A-Z0-9_-]+)\]/g, (match, id) => {
-          return `<button class="citation-pill" onclick="inspectCitation('${id}')">[${id}]</button>`;
-        });
+        // Convert raw markdown into formatted HTML (no raw asterisks!)
+        const parsedHtml = renderClinicalMarkdown(sec.body);
+
+        // For Section 3 (Empiric Antimicrobial Strategy), append the structured dosing table
+        let extraHtml = "";
+        if (sec.heading.includes("Antimicrobial")) {
+          extraHtml = renderAntimicrobialTable(selectedDrugs, record.labs.creatinine_mg_dl || 0.9, alerts);
+        }
 
         secDiv.innerHTML = `
-          <div class="sbar-header">${sec.heading}</div>
-          <div class="sbar-content">${htmlBody}</div>
+          <div class="clinical-section-header">${sec.heading}</div>
+          <div class="clinical-section-content">${parsedHtml}</div>
+          ${extraHtml}
         `;
         box.appendChild(secDiv);
       }
@@ -817,20 +1055,23 @@
       const chunk = vectorIndex.getChunkById(chunkId);
 
       if (!chunk) {
-        drawer.innerHTML = `<div style="color:var(--status-critical); font-size:0.75rem;">Citation [${chunkId}] not found in local index.</div>`;
+        drawer.innerHTML = `<div style="color:var(--status-critical); font-size:0.78rem;">Citation [${chunkId}] not found in local index.</div>`;
         return;
       }
 
       drawer.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <strong style="color:var(--accent-cyan); font-size:0.82rem;">${chunk.id}: ${chunk.title}</strong>
-          <span style="font-size:0.68rem; color:var(--text-muted); background:var(--bg-card); padding:2px 8px; border-radius:4px; border:1px solid var(--border-subtle);">${chunk.evidence_grade}</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+          <strong style="color:var(--accent-primary); font-size:0.86rem;">${chunk.id}: ${chunk.title}</strong>
+          <span style="font-size:0.7rem; color:var(--text-muted); background:var(--bg-card); padding:2px 8px; border-radius:4px; border:1px solid var(--border-subtle);">${chunk.evidence_grade}</span>
         </div>
-        <div style="font-size:0.7rem; color:var(--text-dim); margin-bottom:6px;">Source: ${chunk.source}</div>
-        <div style="color:#e2e8f0; line-height:1.45; font-size:0.78rem; background:var(--bg-card); padding:8px 10px; border-radius:6px; border:1px solid var(--border-subtle);">
+        <div style="font-size:0.74rem; color:var(--text-dim); margin-bottom:8px;">Source: ${chunk.source}</div>
+        <div style="color:var(--text-primary); line-height:1.55; font-size:0.82rem; background:var(--bg-card); padding:10px 12px; border-radius:6px; border:1px solid var(--border-subtle);">
           "${chunk.text}"
         </div>
       `;
+
+      // If user is on mobile or far away, gently scroll drawer into view
+      drawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     function copyConsultNoteToClipboard() {
@@ -863,28 +1104,6 @@
       }
     }
 
-    function switchViewTab(tab) {
-      const bedsideView = document.getElementById("bedsideView");
-      const benchmarkView = document.getElementById("benchmarkView");
-      const bannerStrip = document.getElementById("patientBannerStrip");
-      const tabBedside = document.getElementById("tabBedsideBtn");
-      const tabBenchmark = document.getElementById("tabBenchmarkBtn");
-
-      if (tab === "bedside") {
-        bedsideView.style.display = "grid";
-        bannerStrip.style.display = "flex";
-        benchmarkView.style.display = "none";
-        tabBedside.classList.add("active");
-        tabBenchmark.classList.remove("active");
-      } else {
-        bedsideView.style.display = "none";
-        bannerStrip.style.display = "none";
-        benchmarkView.style.display = "block";
-        tabBedside.classList.remove("active");
-        tabBenchmark.classList.add("active");
-      }
-    }
-
     async function executeFullBenchmark() {
       const btn = document.getElementById("runBenchmarkBtn");
       btn.disabled = true;
@@ -903,13 +1122,13 @@
       for (const p of res.patientSummaries) {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td style="font-weight:800; font-family:var(--font-mono); color:var(--accent-cyan);">${p.patientId}</td>
+          <td style="font-weight:800; font-family:var(--font-mono); color:var(--accent-primary);">${p.patientId}</td>
           <td>${p.category}</td>
           <td>${p.hours}</td>
           <td><span style="font-weight:800; font-family:var(--font-mono);">${p.maxSofa}</span></td>
           <td><span style="color:${p.retrievalPrecision >= 90 ? 'var(--status-normal)' : 'var(--status-warning)'}; font-weight:800; font-family:var(--font-mono);">${p.retrievalPrecision}%</span></td>
           <td><span style="color:var(--status-critical); font-weight:800; font-family:var(--font-mono);">${p.totalAlerts}</span></td>
-          <td><span style="background:var(--status-normal-bg); color:var(--status-normal); border:1px solid var(--status-normal-border); padding:2px 8px; border-radius:4px; font-size:0.68rem; font-weight:800;">VERIFIED ✅</span></td>
+          <td><span style="background:var(--status-normal-bg); color:var(--status-normal); border:1px solid var(--status-normal-border); padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:800;">VERIFIED ✅</span></td>
         `;
         tbody.appendChild(tr);
       }
