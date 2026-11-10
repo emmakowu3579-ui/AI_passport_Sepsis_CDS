@@ -77,6 +77,8 @@ export class ClinicalSynthesizer {
 
     // 1. Diagnostic Summary
     sections.push({
+      id: "diagSec",
+      tab: "sofaTab",
       heading: "1. Clinical Assessment & Sepsis-3 Diagnostic Classification",
       body: `Patient is a ${age}yo ${gender.toLowerCase()} presenting at ICU Hour ${currentHour} with **${status.status}** ([SEPSIS3-DEF-01]). Total SOFA Score: **${sofa.total}** (Respiration: ${sofa.resp}, Coagulation: ${sofa.coag}, Liver: ${sofa.liver}, Cardiovascular: ${sofa.cv}, Renal: ${sofa.renal} [SEPSIS3-SOFA-CV], [SEPSIS3-SOFA-RENAL]). Mean Arterial Pressure: **${mapVal} mmHg**, Serum Lactate: **${lactMmol !== null ? lactMmol + " mmol/L (" + lactMgDl + " mg/dL)" : "Not drawn"}** ([SSC-2021-BUNDLE-01]).`
     });
@@ -93,6 +95,8 @@ export class ClinicalSynthesizer {
     bundleActions.push(`• **Empiric Antimicrobial Administration:** Initiate broad-spectrum IV coverage immediately (within 1 hour) ([SSC-2021-BUNDLE-03], [SSC-2021-ANTIMIC-01]).`);
     
     sections.push({
+      id: "bundleSec",
+      tab: "bundleTab",
       heading: "2. Immediate Surviving Sepsis Campaign (SSC) 1-Hour Bundle Actions",
       body: bundleActions.join("\n")
     });
@@ -106,25 +110,18 @@ export class ClinicalSynthesizer {
       for (const al of criticalDosingAlerts) {
         drugPlan.push(`⚠️ **${al.drug} (${al.badge}):** ${al.message} *Recommended Action:* ${al.recommendation} [${al.citation}]`);
       }
-      drugPlan.push("\n**ANTIMICROBIAL DOSING REGIMEN:**");
+      drugPlan.push("");
     }
 
-    if (cr >= 1.5) {
-      drugPlan.push(`• **Renal Dosing Adjustments Required (Creatinine ${cr.toFixed(1)} mg/dL):**`);
-      drugPlan.push(`  - **Vancomycin:** Administer full loading dose of 25-30 mg/kg actual body weight (infusion rate <= 1 g/hr), followed by renal maintenance (15 mg/kg IV q24h) with AUC24/MIC monitoring ([DOSE-VANC-01], [DOSE-VANC-02]).`);
-      drugPlan.push(`  - **Cefepime:** Administer 2 g IV loading dose, then reduce maintenance to 2 g IV every 12 hours (extended 3-4 hr infusion) to avoid life-threatening cefepime-induced neurotoxicity ([DOSE-CEFEPIME-01], [DOSE-CEFEPIME-02], [DOSE-CEFEPIME-CONTRA-01]).`);
-      drugPlan.push(`  - **Meropenem:** 1 g IV every 12 hours (extended 3 hr infusion) ([DOSE-MEROPENEM-01], [DOSE-MEROPENEM-02]).`);
-      drugPlan.push(`  - **Gentamicin:** Contraindicated in acute kidney injury. Discontinue or withhold ([DOSE-GENT-CONTRA-01]).`);
-    } else {
-      drugPlan.push(`• **Standard Preserved-Renal Dosing:**`);
-      drugPlan.push(`  - **Vancomycin:** 25-30 mg/kg loading dose, then 15-20 mg/kg IV q8-12h ([DOSE-VANC-01], [DOSE-VANC-02]).`);
-      drugPlan.push(`  - **Piperacillin-Tazobactam:** 4.5 g IV every 6 hours extended infusion ([DOSE-PIPTAZO-01]).`);
-      drugPlan.push(`  - **Cefepime:** 2 g IV every 8 hours extended infusion ([DOSE-CEFEPIME-01]).`);
-    }
+    drugPlan.push("**ANTIMICROBIAL DOSING REGIMEN:**");
+    drugPlan.push(`Empiric broad-spectrum antibiotic regimens below are individualized for baseline organ function (Serum Creatinine: **${cr.toFixed(1)} mg/dL**). Extended infusions (3–4 hours) are recommended to maximize beta-lactam pharmacodynamics (time above MIC) ([DOSE-PIPTAZO-01], [DOSE-CEFEPIME-01]).`);
 
     sections.push({
+      id: "antimicrobialSec",
+      tab: "antimicrobialTab",
       heading: "3. Empiric Antimicrobial Strategy & Renal Safety Adjustments",
-      body: drugPlan.join("\n")
+      body: drugPlan.join("\n"),
+      showTable: true
     });
 
     // 4. Hemodynamics, Vasopressors & "What-If" Simulation Trajectory
@@ -144,12 +141,16 @@ export class ClinicalSynthesizer {
     hemoPlan.push(`• **Simulated Response:** Baseline MAP ${simulation.baselineMap} mmHg ➔ Simulated Post-Intervention MAP **${simulation.simulatedMap} mmHg** (${simulation.isMapTargetAchieved ? "TARGET >= 65 ACHIEVED ✅" : "BELOW TARGET ❌"}).`);
 
     sections.push({
+      id: "hemoSec",
+      tab: "hemoTab",
       heading: "4. Hemodynamic Resuscitation & Simulation Trajectory",
       body: hemoPlan.join("\n")
     });
 
     // 5. Monitoring & Re-evaluation Triggers
     sections.push({
+      id: "monitorSec",
+      tab: "bundleTab",
       heading: "5. Monitoring, Escalation & De-Escalation Milestones",
       body: `• **Repeat Lactate:** Re-measure serum lactate in 2 to 4 hours to verify clearance >= 10-20% ([SSC-2021-BUNDLE-01]).\n• **Renal Function:** Check serum creatinine and urine output every 8-12 hours in acute kidney injury.\n• **Antimicrobial Review:** Perform daily antibiotic time-out at 48 hours for culture-guided de-escalation ([SSC-2021-ANTIMIC-04]).`
     });
@@ -199,7 +200,7 @@ export class ClinicalSynthesizer {
         mode: "OLLAMA_CPU",
         confidence: extractive.confidence,
         rawText: resJson.response,
-        sections: extractive.sections, // Fallback structured layout with LLM enhancement
+        sections: extractive.sections,
         elapsedMs: Math.round(elapsedMs),
         retrievedChunks
       };
