@@ -127,8 +127,8 @@ export class ClinicalChartEngine {
       const onsetX = hourX(onsetIdx);
       elements.push(`
         <line x1="${onsetX}" y1="${padTop}" x2="${onsetX}" y2="${padTop + plotH}" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5,3" />
-        <rect x="${onsetX - 45}" y="${padTop - 28}" width="90" height="22" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5" />
-        <text x="${onsetX}" y="${padTop - 13}" fill="#991b1b" font-size="11" font-weight="800" text-anchor="middle">🚨 Sepsis Onset</text>
+        <rect x="${onsetX - 50}" y="${padTop - 28}" width="100" height="22" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5" />
+        <text x="${onsetX}" y="${padTop - 13}" fill="#991b1b" font-size="11" font-weight="800" text-anchor="middle">SEPSIS-3 ONSET</text>
       `);
     }
 
@@ -222,7 +222,7 @@ export class ClinicalChartEngine {
           <div>Serum Lactate: <strong style="color:#f59e0b;">${lact} mmol/L</strong></div>
           <div>Heart Rate: <strong>${hr} bpm</strong></div>
           <div>Total SOFA: <strong style="color:var(--text-primary);">${sofa} pts</strong></div>
-          <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">👉 Click point to scrub timeline</div>
+          <div style="font-size:10px; color:var(--text-muted); margin-top:3px;"><i class="bi bi-cursor-fill" style="margin-right:3px;"></i>Click point to scrub timeline</div>
         `;
         this.hoverTooltip.style.display = "block";
         this.hoverTooltip.style.left = `${e.clientX + 14}px`;

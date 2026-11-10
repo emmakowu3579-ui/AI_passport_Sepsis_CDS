@@ -19,7 +19,7 @@ export const TOUR_STEPS = [
     subSelector: ".timeline-scrubber-box",
     title: "2. Hourly ICULOS Timeline Scrubber",
     badge: "Step 2 of 7",
-    content: "Scrub hour-by-hour through the patient's entire admission or press <strong>▶ Play</strong> to observe vitals, lab trends, and sepsis progression unfold dynamically.",
+    content: "Scrub hour-by-hour through the patient's entire admission or press <strong><i class='bi bi-play-fill'></i> Play</strong> to observe vitals, lab trends, and sepsis progression unfold dynamically.",
     position: "bottom"
   },
   {
@@ -42,7 +42,7 @@ export const TOUR_STEPS = [
     targetId: "hemodynamicTrajectorySvg",
     title: "5. Longitudinal Trajectory & Target Plots",
     badge: "Step 5 of 7",
-    content: "Continuous hemodynamic curves displaying <strong>Mean Arterial Pressure (MAP)</strong> with the <strong>65 mmHg target goal line</strong>, shaded red <strong>Hypoperfusion Danger Zone</strong>, Serum Lactate curve, and <strong>🚨 Sepsis-3 Onset</strong> marker. <em>Click anywhere on the curve to scrub to that hour!</em>",
+    content: "Continuous hemodynamic curves displaying <strong>Mean Arterial Pressure (MAP)</strong> with the <strong>65 mmHg target goal line</strong>, shaded red <strong>Hypoperfusion Danger Zone</strong>, Serum Lactate curve, and <strong>Sepsis-3 Onset</strong> marker. <em>Click anywhere on the curve to scrub to that hour!</em>",
     position: "top"
   },
   {
@@ -165,9 +165,9 @@ export class TourGuide {
           Skip Tour
         </button>
         <div style="display:flex; gap:8px;">
-          ${!isFirst ? `<button class="tour-btn tour-btn-secondary" onclick="window.tourGuideInstance.prev()">◀ Back</button>` : ''}
+          ${!isFirst ? `<button class="tour-btn tour-btn-secondary" onclick="window.tourGuideInstance.prev()"><i class="bi bi-arrow-left" style="margin-right:4px;"></i>Back</button>` : ''}
           <button class="tour-btn tour-btn-primary" onclick="window.tourGuideInstance.next()">
-            ${isLast ? 'Finish & Explore ➔' : 'Next Step ➔'}
+            ${isLast ? 'Finish &amp; Explore <i class="bi bi-check2-circle" style="margin-left:4px;"></i>' : 'Next Step <i class="bi bi-arrow-right" style="margin-left:4px;"></i>'}
           </button>
         </div>
       </div>

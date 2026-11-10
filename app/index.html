@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Local RAG-Powered Sepsis Clinical Treatment Recommender | Point-of-Care CDS</title>
+  <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/5/5b/Star_of_life2.svg">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -14,7 +16,9 @@
   <div id="authModalBackdrop" class="auth-modal-backdrop" style="display:none;">
     <div class="auth-modal-card">
       <div class="auth-modal-header">
-        <div style="font-size:1.8rem;">✚</div>
+        <div style="display:flex; justify-content:center; align-items:center; margin-bottom:8px;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Star_of_life2.svg" alt="Clinical Medical Emblem" style="width:40px; height:40px; filter:brightness(0) invert(1);" onerror="this.outerHTML='<i class=\'bi bi-hospital-fill\' style=\'font-size:2rem;\'></i>'">
+        </div>
         <h2>Clinical CDS Authorization</h2>
         <p>Grounded Sepsis Decision Support • 100% Client-Side Privacy</p>
       </div>
@@ -22,13 +26,13 @@
       <!-- Auth Navigation Tabs -->
       <div class="auth-tabs-row">
         <button id="authTabSignInBtn" class="auth-tab-btn active" onclick="switchAuthTab('signin')">
-          Sign In
+          <i class="bi bi-box-arrow-in-right" style="margin-right:4px;"></i>Sign In
         </button>
         <button id="authTabSignUpBtn" class="auth-tab-btn" onclick="switchAuthTab('signup')">
-          Create Account
+          <i class="bi bi-person-plus-fill" style="margin-right:4px;"></i>Create Account
         </button>
         <button id="authTabDemoBtn" class="auth-tab-btn" onclick="switchAuthTab('demo')">
-          ⚡ Demo / Evaluator
+          <i class="bi bi-lightning-charge-fill" style="margin-right:4px;"></i>Demo / Evaluator
         </button>
       </div>
 
@@ -47,7 +51,7 @@
         </div>
 
         <button type="submit" class="auth-submit-btn">
-          Sign In to Bedside Workstation ➔
+          Sign In to Bedside Workstation <i class="bi bi-arrow-right" style="margin-left:6px;"></i>
         </button>
 
         <div style="font-size:0.82rem; color:var(--text-muted); text-align:center; margin-top:4px;">
@@ -92,7 +96,7 @@
         </div>
 
         <button type="submit" class="auth-submit-btn">
-          Register &amp; Access Clinical CDS ➔
+          Register &amp; Access Clinical CDS <i class="bi bi-arrow-right" style="margin-left:6px;"></i>
         </button>
       </form>
 
@@ -105,20 +109,20 @@
 
         <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
           <button type="button" class="action-btn action-btn-primary" style="padding:12px; font-size:0.95rem; justify-content:center;" onclick="handleQuickDemoLogin('eval')">
-            🎓 One-Click Academic Supervisor / Evaluator Login
+            <i class="bi bi-mortarboard-fill"></i> One-Click Academic Supervisor / Evaluator Login
           </button>
           
           <button type="button" class="action-btn" style="padding:12px; font-size:0.95rem; justify-content:center; border-color:var(--border-strong);" onclick="handleQuickDemoLogin('attending')">
-            🩺 Dr. Sarah Chen, MD (Attending Intensivist)
+            <i class="bi bi-person-badge-fill" style="color:var(--clinical-blue);"></i> Dr. Sarah Chen, MD (Attending Intensivist)
           </button>
 
           <button type="button" class="action-btn" style="padding:12px; font-size:0.95rem; justify-content:center; border-color:var(--border-strong);" onclick="handleQuickDemoLogin('pharmacist')">
-            💊 Dr. Marcus Vance, PharmD (Clinical Pharmacist)
+            <i class="bi bi-capsule" style="color:var(--status-normal);"></i> Dr. Marcus Vance, PharmD (Clinical Pharmacist)
           </button>
         </div>
 
         <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px; text-align:center;">
-          🔒 All credentials and session data are stored securely in local browser memory (zero server dependencies).
+          <i class="bi bi-shield-lock-fill" style="color:var(--status-normal); margin-right:4px;"></i>All credentials and session data are stored securely in local browser memory (zero server dependencies).
         </div>
       </div>
 
@@ -131,7 +135,9 @@
   <header class="clinical-header">
     <div class="header-inner">
       <div class="brand-group">
-        <div class="brand-badge" aria-hidden="true">✚</div>
+        <div class="brand-badge" aria-hidden="true">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Star_of_life2.svg" alt="Star of Life" style="width:24px; height:24px; filter:brightness(0) invert(1);" onerror="this.outerHTML='<i class=\'bi bi-heart-pulse-fill\'></i>'">
+        </div>
         <div class="brand-titles">
           <h1>Local RAG-Powered Sepsis Clinical Treatment Recommender</h1>
           <p>SURVIVING SEPSIS CAMPAIGN 2021 • SEPSIS-3 CONSENSUS • 5-DRUG ORGAN SAFETY ENGINE</p>
@@ -141,10 +147,10 @@
       <!-- Mode Switcher: Point-of-Care Workstation vs 25-Patient Validation -->
       <nav class="mode-nav" aria-label="Application Mode">
         <button id="modeWorkstationBtn" class="mode-tab-btn active" onclick="switchAppMode('workstation')">
-          <span>🩺</span> Point-of-Care CDS Workstation
+          <i class="bi bi-heart-pulse-fill"></i> Point-of-Care CDS Workstation
         </button>
         <button id="modeBenchmarkBtn" class="mode-tab-btn" onclick="switchAppMode('benchmark')">
-          <span>📊</span> 25-Patient Validation Benchmark
+          <i class="bi bi-bar-chart-line-fill"></i> 25-Patient Validation Benchmark
         </button>
       </nav>
 
@@ -153,7 +159,7 @@
         
         <!-- Interactive Step-by-Step Tour Guide Button -->
         <button id="startTourBtn" class="action-btn" style="background:#f0fdf4; color:#047857; border-color:#86efac; font-weight:800;" onclick="startGuidedTour()" title="Launch interactive step-by-step clinical walkthrough">
-          <span>🎓</span> Interactive Tour
+          <i class="bi bi-mortarboard-fill"></i> Interactive Tour
         </button>
 
         <div class="engine-select-pill">
@@ -163,15 +169,15 @@
             <option value="WEBGPU">Framework 1: WebGPU WebLLM (In-Browser GPU)</option>
             <option value="OLLAMA">Framework 2B: Local CPU LLM (Ollama 127.0.0.1)</option>
           </select>
-          <span id="gpuStatusIndicator" style="font-size:0.78rem; font-weight:800; color:#7dd3fc;">🟢 CPU Fast</span>
+          <span id="gpuStatusIndicator" style="font-size:0.78rem; font-weight:800; color:#7dd3fc;"><i class="bi bi-cpu-fill"></i> CPU Fast</span>
         </div>
 
         <button id="themeToggleBtn" class="action-btn" onclick="toggleTheme()" title="Switch between Clinical Day Mode and ICU Night Mode">
-          <span id="themeIcon">☀️</span> <span id="themeLabel">Day Mode</span>
+          <i id="themeIcon" class="bi bi-sun-fill"></i> <span id="themeLabel">Day Mode</span>
         </button>
 
         <button class="action-btn action-btn-primary" onclick="copyConsultNoteToClipboard()">
-          <span>📋</span> Copy Note to EHR
+          <i class="bi bi-clipboard2-check-fill"></i> Copy Note to EHR
         </button>
 
         <!-- Authenticated Clinician Profile Badge -->
@@ -195,14 +201,14 @@
     <div class="patient-control-inner">
       <div class="patient-selector-group">
         <label for="patientSelect" style="font-size:0.85rem; font-weight:800; text-transform:uppercase; color:var(--text-muted);">
-          PhysioNet ICU Patient:
+          <i class="bi bi-person-vcard-fill" style="color:var(--clinical-blue); margin-right:4px;"></i>PhysioNet ICU Patient:
         </label>
         <select id="patientSelect" class="patient-dropdown" onchange="onPatientSelect(this.value)">
           <option value="">Loading 25 Curated ICU Trajectories...</option>
         </select>
 
         <span id="sepsisStatusBadge" class="sepsis-status-pill status-normal">
-          <span aria-hidden="true">●</span> Non-Sepsis / SIRS
+          <i class="bi bi-circle-fill" style="font-size:0.55rem;" aria-hidden="true"></i> Non-Sepsis / SIRS
         </span>
 
         <div class="meta-tag">
@@ -218,10 +224,10 @@
 
       <!-- Hourly ICULOS Scrubber -->
       <div class="timeline-scrubber-box">
-        <button class="scrub-control-btn" onclick="stepTimeline(-1)" title="Previous ICU Hour">◀ Prev</button>
-        <button id="playPauseBtn" class="scrub-control-btn" onclick="togglePlayTimeline()" title="Play Hourly Progression">▶ Play</button>
+        <button class="scrub-control-btn" onclick="stepTimeline(-1)" title="Previous ICU Hour"><i class="bi bi-skip-start-fill"></i> Prev</button>
+        <button id="playPauseBtn" class="scrub-control-btn" onclick="togglePlayTimeline()" title="Play Hourly Progression"><i class="bi bi-play-fill"></i> Play</button>
         <input type="range" id="hourSlider" class="clinical-slider" min="1" max="50" value="1" oninput="onTimelineInput(this.value)">
-        <button class="scrub-control-btn" onclick="stepTimeline(1)" title="Next ICU Hour">Next ▶</button>
+        <button class="scrub-control-btn" onclick="stepTimeline(1)" title="Next ICU Hour">Next <i class="bi bi-skip-end-fill"></i></button>
         <div id="hourBadge" class="iculos-badge">ICU Hr: 1</div>
       </div>
     </div>
@@ -234,22 +240,22 @@
     <div class="workflow-guide-inner">
       <div class="workflow-steps">
         <span style="font-size:0.82rem; font-weight:800; text-transform:uppercase; color:var(--text-muted);">
-          🧭 Clinical Workflow:
+          <i class="bi bi-compass-fill" style="color:var(--clinical-blue); margin-right:4px;"></i>Clinical Workflow:
         </span>
         <button class="workflow-step-pill" onclick="scrollToSection('step1Card')">
           <span class="step-num-circle">1</span> Review Telemetry, SOFA &amp; Trajectory Plots
         </button>
-        <span style="color:var(--text-dim);">➔</span>
+        <i class="bi bi-chevron-right" style="color:var(--text-dim); font-size:0.8rem;"></i>
         <button class="workflow-step-pill" onclick="scrollToSection('step2Card')">
           <span class="step-num-circle">2</span> Simulate "What-If" Fluids, Pressors &amp; 5-Drug Safety
         </button>
-        <span style="color:var(--text-dim);">➔</span>
+        <i class="bi bi-chevron-right" style="color:var(--text-dim); font-size:0.8rem;"></i>
         <button class="workflow-step-pill" onclick="scrollToSection('step3Card')">
           <span class="step-num-circle">3</span> Inspect RAG Treatment Plan &amp; Verifiable Citations
         </button>
       </div>
       <div style="font-size:0.82rem; color:var(--text-muted);">
-        🔒 <strong>100% Client-Side Privacy:</strong> 0 bytes patient data transmitted externally
+        <i class="bi bi-shield-lock-fill" style="color:var(--status-normal); margin-right:4px;"></i><strong>100% Client-Side Privacy:</strong> 0 bytes patient data transmitted externally
       </div>
     </div>
   </nav>
@@ -282,11 +288,11 @@
           </div>
 
           <!-- Vital Signs 4-Box Grid -->
-          <div class="metrics-section-label">📈 Hourly Vital Signs</div>
+          <div class="metrics-section-label"><i class="bi bi-activity" style="color:var(--clinical-blue); margin-right:6px;"></i>Hourly Vital Signs</div>
           <div class="vitals-labs-grid">
             <div id="tileMap" class="metric-box">
               <div class="metric-top-row">
-                <span class="metric-name">MAP</span>
+                <span class="metric-name"><i class="bi bi-heart-pulse" style="margin-right:4px;"></i>MAP</span>
                 <span class="metric-ref">Target &ge; 65</span>
               </div>
               <div class="metric-val-row">
@@ -297,7 +303,7 @@
 
             <div id="tileHr" class="metric-box">
               <div class="metric-top-row">
-                <span class="metric-name">Heart Rate</span>
+                <span class="metric-name"><i class="bi bi-heart-fill" style="margin-right:4px;"></i>Heart Rate</span>
                 <span class="metric-ref">60–100</span>
               </div>
               <div class="metric-val-row">
@@ -308,7 +314,7 @@
 
             <div id="tileResp" class="metric-box">
               <div class="metric-top-row">
-                <span class="metric-name">Resp Rate</span>
+                <span class="metric-name"><i class="bi bi-lungs" style="margin-right:4px;"></i>Resp Rate</span>
                 <span class="metric-ref">12–20</span>
               </div>
               <div class="metric-val-row">
@@ -319,7 +325,7 @@
 
             <div id="tileTemp" class="metric-box">
               <div class="metric-top-row">
-                <span class="metric-name">Temperature</span>
+                <span class="metric-name"><i class="bi bi-thermometer-half" style="margin-right:4px;"></i>Temperature</span>
                 <span class="metric-ref">36.5–37.5</span>
               </div>
               <div class="metric-val-row">
@@ -330,11 +336,11 @@
           </div>
 
           <!-- Organ Function Labs 4-Box Grid -->
-          <div class="metrics-section-label">🧪 Critical Organ Function Labs (Dual-Unit Normalized)</div>
+          <div class="metrics-section-label"><i class="bi bi-eyedropper" style="color:var(--clinical-blue); margin-right:6px;"></i>Critical Organ Function Labs (Dual-Unit Normalized)</div>
           <div class="vitals-labs-grid">
             <div id="tileLactate" class="metric-box">
               <div class="metric-top-row">
-                <span class="metric-name">Serum Lactate</span>
+                <span class="metric-name"><i class="bi bi-droplet-fill" style="margin-right:4px;"></i>Serum Lactate</span>
                 <span class="metric-ref">&lt; 2.0 mmol/L</span>
               </div>
               <div class="metric-val-row">
@@ -344,48 +350,48 @@
               <div class="metric-subtext">
                 Raw: <strong id="valLactMgDl">--</strong> mg/dL
               </div>
-              <div id="staleLactate" class="stale-badge" style="display:none;">⏳ &gt;6h Stale (LOCF)</div>
+              <div id="staleLactate" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
             </div>
 
             <div id="tileCreatinine" class="metric-box">
               <div class="metric-top-row">
-                <span class="metric-name">Creatinine</span>
+                <span class="metric-name"><i class="bi bi-filter-circle" style="margin-right:4px;"></i>Creatinine</span>
                 <span class="metric-ref">0.7–1.3</span>
               </div>
               <div class="metric-val-row">
                 <span id="valCr" class="metric-number">--</span>
                 <span class="metric-unit">mg/dL</span>
               </div>
-              <div id="staleCr" class="stale-badge" style="display:none;">⏳ &gt;6h Stale (LOCF)</div>
+              <div id="staleCr" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
             </div>
 
             <div id="tilePlatelets" class="metric-box">
               <div class="metric-top-row">
-                <span class="metric-name">Platelets</span>
+                <span class="metric-name"><i class="bi bi-droplet-half" style="margin-right:4px;"></i>Platelets</span>
                 <span class="metric-ref">&ge; 150</span>
               </div>
               <div class="metric-val-row">
                 <span id="valPlt" class="metric-number">--</span>
                 <span class="metric-unit">k/&mu;L</span>
               </div>
-              <div id="stalePlt" class="stale-badge" style="display:none;">⏳ &gt;6h Stale (LOCF)</div>
+              <div id="stalePlt" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
             </div>
 
             <div id="tileBili" class="metric-box">
               <div class="metric-top-row">
-                <span class="metric-name">Total Bilirubin</span>
+                <span class="metric-name"><i class="bi bi-clipboard2-pulse" style="margin-right:4px;"></i>Total Bilirubin</span>
                 <span class="metric-ref">&lt; 1.2</span>
               </div>
               <div class="metric-val-row">
                 <span id="valBili" class="metric-number">--</span>
                 <span class="metric-unit">mg/dL</span>
               </div>
-              <div id="staleBili" class="stale-badge" style="display:none;">⏳ &gt;6h Stale (LOCF)</div>
+              <div id="staleBili" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
             </div>
           </div>
 
           <!-- Deterministic SOFA Scorecard Strip (Automatically Calculated) -->
-          <div class="metrics-section-label">🧮 Deterministic Sepsis-3 SOFA Scorecard (Auto-Computed from EHR Data)</div>
+          <div class="metrics-section-label"><i class="bi bi-calculator-fill" style="color:var(--clinical-blue); margin-right:6px;"></i>Deterministic Sepsis-3 SOFA Scorecard (Auto-Computed from EHR Data)</div>
           <div class="sofa-scorecard-strip">
             <div class="sofa-total-block">
               <div id="sofaTotalVal" class="sofa-total-num">0</div>
@@ -397,23 +403,23 @@
 
             <div class="sofa-organs-row">
               <div id="pillSofaResp" class="sofa-organ-pill">
-                <div class="sofa-organ-name">Respiration</div>
+                <div class="sofa-organ-name"><i class="bi bi-lungs" style="margin-right:3px;"></i>Respiration</div>
                 <div id="sofaRespVal" class="sofa-organ-val">0</div>
               </div>
               <div id="pillSofaCoag" class="sofa-organ-pill">
-                <div class="sofa-organ-name">Coagulation</div>
+                <div class="sofa-organ-name"><i class="bi bi-droplet-half" style="margin-right:3px;"></i>Coagulation</div>
                 <div id="sofaCoagVal" class="sofa-organ-val">0</div>
               </div>
               <div id="pillSofaLiver" class="sofa-organ-pill">
-                <div class="sofa-organ-name">Liver</div>
+                <div class="sofa-organ-name"><i class="bi bi-shield-plus" style="margin-right:3px;"></i>Liver</div>
                 <div id="sofaLiverVal" class="sofa-organ-val">0</div>
               </div>
               <div id="pillSofaCv" class="sofa-organ-pill">
-                <div class="sofa-organ-name">Cardiovascular</div>
+                <div class="sofa-organ-name"><i class="bi bi-heart-pulse" style="margin-right:3px;"></i>Cardiovascular</div>
                 <div id="sofaCvVal" class="sofa-organ-val">0</div>
               </div>
               <div id="pillSofaRenal" class="sofa-organ-pill">
-                <div class="sofa-organ-name">Renal</div>
+                <div class="sofa-organ-name"><i class="bi bi-filter-circle" style="margin-right:3px;"></i>Renal</div>
                 <div id="sofaRenalVal" class="sofa-organ-val">0</div>
               </div>
             </div>
@@ -423,27 +429,27 @@
           <div style="margin-top:20px;">
             <div class="chart-view-toggle-row">
               <div class="metrics-section-label" style="margin-bottom:0;">
-                📊 Longitudinal ICU Physiology (Click any hour to scrub timeline)
+                <i class="bi bi-graph-up-arrow" style="color:var(--clinical-blue); margin-right:6px;"></i>Longitudinal ICU Physiology (Click any hour to scrub timeline)
               </div>
               <div class="chart-toggle-pills" role="radiogroup" aria-label="Trajectory chart selection">
                 <button id="toggleBtnHemo" class="chart-toggle-pill active" onclick="switchChartView('hemo')">
-                  📈 MAP &amp; Lactate Perfusion
+                  <i class="bi bi-activity"></i> MAP &amp; Lactate Perfusion
                 </button>
                 <button id="toggleBtnSofa" class="chart-toggle-pill" onclick="switchChartView('sofa')">
-                  📉 SOFA Organ Failure
+                  <i class="bi bi-bar-chart-steps"></i> SOFA Organ Failure
                 </button>
                 <button id="toggleBtnBoth" class="chart-toggle-pill" onclick="switchChartView('both')">
-                  📊 Both Charts
+                  <i class="bi bi-layout-split"></i> Both Charts
                 </button>
               </div>
             </div>
 
             <div id="hemoChartContainer">
               <div style="display:flex; justify-content:flex-end; gap:14px; font-size:0.8rem; font-weight:700; margin-bottom:6px;">
-                <span style="color:#0284c7;">● MAP (mmHg)</span>
+                <span style="color:#0284c7;"><i class="bi bi-circle-fill" style="font-size:0.55rem; margin-right:4px;"></i>MAP (mmHg)</span>
                 <span style="color:#10b981;">--- Target &ge; 65 mmHg</span>
-                <span style="color:#f59e0b;">● Lactate (mmol/L)</span>
-                <span style="color:#ef4444;">🚨 Sepsis-3 Onset</span>
+                <span style="color:#f59e0b;"><i class="bi bi-circle-fill" style="font-size:0.55rem; margin-right:4px;"></i>Lactate (mmol/L)</span>
+                <span style="color:#ef4444;"><i class="bi bi-exclamation-triangle-fill" style="margin-right:4px;"></i>Sepsis-3 Onset</span>
               </div>
               <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px;">
                 <svg id="hemodynamicTrajectorySvg" style="width:100%; height:auto; min-height:220px; display:block;" role="img" aria-label="Longitudinal MAP and Lactate Trajectory Plot"></svg>
@@ -451,7 +457,7 @@
             </div>
 
             <div id="sofaChartContainer" style="margin-top:16px; display:none;">
-              <div class="metrics-section-label">📉 Longitudinal SOFA Organ Failure Progression</div>
+              <div class="metrics-section-label"><i class="bi bi-bar-chart-steps" style="color:var(--clinical-blue); margin-right:6px;"></i>Longitudinal SOFA Organ Failure Progression</div>
               <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px;">
                 <svg id="sofaProgressionSvg" style="width:100%; height:auto; min-height:160px; display:block;" role="img" aria-label="Longitudinal SOFA Score Progression Plot"></svg>
               </div>
@@ -473,7 +479,7 @@
                 Adjust IV crystalloid boluses, titrate vasopressors, and select empiric antibiotics to evaluate physiological response and organ safety gates in &lt; 5 ms.
               </p>
             </div>
-            <span id="targetStatusPill" class="sepsis-status-pill status-normal">TARGET MET ✅</span>
+            <span id="targetStatusPill" class="sepsis-status-pill status-normal"><i class="bi bi-check-circle-fill"></i> TARGET MET</span>
           </div>
 
           <div class="simulator-two-col">
@@ -510,7 +516,7 @@
               </div>
 
               <!-- 5-Drug Empiric Antimicrobial Selector -->
-              <div class="metrics-section-label">💊 5-Drug Empiric Antimicrobial Selector</div>
+              <div class="metrics-section-label"><i class="bi bi-capsule" style="color:var(--clinical-blue); margin-right:6px;"></i>5-Drug Empiric Antimicrobial Selector</div>
               <div class="drug-checkbox-grid">
                 <label class="drug-check-card">
                   <input type="checkbox" id="drugVanc" value="vancomycin" checked onchange="onSimulationInput()">
@@ -538,7 +544,7 @@
             <!-- Right Side: Perfusion Gauge & Contraindication Alerts -->
             <div>
               <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px; margin-bottom:12px;">
-                <div class="metrics-section-label" style="margin-bottom:4px;">Hemodynamic Response Forecast Gauge</div>
+                <div class="metrics-section-label" style="margin-bottom:4px;"><i class="bi bi-speedometer2" style="color:var(--clinical-blue); margin-right:6px;"></i>Hemodynamic Response Forecast Gauge</div>
                 <svg id="simComparisonSvg" style="width:100%; height:145px; display:block;"></svg>
               </div>
 
@@ -559,7 +565,7 @@
 
               <!-- Deterministic Contraindication Alerts -->
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
-                <span class="metrics-section-label" style="margin-bottom:0;">⚠️ Proactive Organ Safety Gates</span>
+                <span class="metrics-section-label" style="margin-bottom:0;"><i class="bi bi-shield-exclamation" style="color:var(--status-warning); margin-right:6px;"></i>Proactive Organ Safety Gates</span>
                 <span id="alertCountBadge" style="font-size:0.82rem; font-weight:800; color:var(--status-critical);">0 Alerts</span>
               </div>
               <div id="contraindicationList">
@@ -620,22 +626,22 @@
           <!-- Progressive Disclosure Tabs Strip -->
           <div class="rag-tabs-strip" role="tablist" aria-label="Recommendation sections">
             <button id="tabBtnBundle" class="rag-tab-btn active" role="tab" aria-selected="true" onclick="switchRagTab('bundleTab')">
-              ⚡ 1-Hr Bundle
+              <i class="bi bi-lightning-charge-fill"></i> 1-Hr Bundle
             </button>
             <button id="tabBtnAntimicrobial" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('antimicrobialTab')">
-              💊 Dosing Matrix
+              <i class="bi bi-table"></i> Dosing Matrix
             </button>
             <button id="tabBtnHemo" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('hemoTab')">
-              💉 Resuscitation
+              <i class="bi bi-heart-pulse-fill"></i> Resuscitation
             </button>
             <button id="tabBtnSofa" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('sofaTab')">
-              📋 SOFA Criteria
+              <i class="bi bi-clipboard2-data-fill"></i> SOFA Criteria
             </button>
             <button id="tabBtnNote" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('consultNoteTab')">
-              📄 EHR Consult Note
+              <i class="bi bi-file-earmark-medical-fill"></i> EHR Consult Note
             </button>
             <button id="tabBtnAll" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('allTab')" title="View all sections continuously">
-              ☰ All
+              <i class="bi bi-list-ul"></i> All
             </button>
           </div>
 
@@ -653,18 +659,18 @@
             <div class="citation-inspector-section">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <span style="font-size:0.85rem; font-weight:800; text-transform:uppercase; color:var(--clinical-blue); display:flex; align-items:center; gap:6px;">
-                  📖 Verifiable Citation Inspector
+                  <i class="bi bi-journal-medical"></i> Verifiable Citation Inspector
                 </span>
                 <span style="font-size:0.75rem; color:var(--text-muted);">Click any [CHUNK-ID]</span>
               </div>
               <div id="citationDrawer" class="citation-drawer-box">
-                Click any inline citation pill (e.g., <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-BUNDLE-01')">[SSC-2021-BUNDLE-01]</button> or <button type="button" class="citation-pill" onclick="inspectCitation('DOSE-VANC-01')">[DOSE-VANC-01]</button>) to inspect the verbatim guideline excerpt, evidence grade, and source publication.
+                Click any inline citation pill (e.g., <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-BUNDLE-01')"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>SSC-2021-BUNDLE-01</button> or <button type="button" class="citation-pill" onclick="inspectCitation('DOSE-VANC-01')"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>DOSE-VANC-01</button>) to inspect the verbatim guideline excerpt, evidence grade, and source publication.
               </div>
             </div>
 
             <!-- Copy Note Button -->
             <button class="action-btn action-btn-primary" style="width:100%; justify-content:center; padding:12px; font-size:0.95rem;" onclick="copyConsultNoteToClipboard()">
-              <span>📋</span> Copy Complete Consultation Note to EHR
+              <i class="bi bi-clipboard2-check-fill"></i> Copy Complete Consultation Note to EHR
             </button>
 
           </div>
@@ -688,7 +694,7 @@
           </p>
         </div>
         <button id="runBenchmarkBtn" class="action-btn action-btn-primary" style="padding:10px 20px; font-size:0.95rem;" onclick="executeFullBenchmark()">
-          ▶ Run Full 25-Patient Benchmark
+          <i class="bi bi-play-fill"></i> Run Full 25-Patient Benchmark
         </button>
       </div>
 
@@ -928,11 +934,11 @@
       const icon = document.getElementById("themeIcon");
       const label = document.getElementById("themeLabel");
       if (theme === "dark") {
-        icon.textContent = "🌙";
-        label.textContent = "Night Mode";
+        if (icon) icon.className = "bi bi-moon-stars-fill";
+        if (label) label.textContent = "Night Mode";
       } else {
-        icon.textContent = "☀️";
-        label.textContent = "Day Mode";
+        if (icon) icon.className = "bi bi-sun-fill";
+        if (label) label.textContent = "Day Mode";
       }
     }
 
@@ -1047,14 +1053,14 @@
       if (playTimer) {
         clearInterval(playTimer);
         playTimer = null;
-        btn.innerHTML = "▶ Play";
+        btn.innerHTML = '<i class="bi bi-play-fill"></i> Play';
       } else {
-        btn.innerHTML = "⏸ Pause";
+        btn.innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
         playTimer = setInterval(() => {
           if (!activePatient || activeHourIndex >= activePatient.timeline.length - 1) {
             clearInterval(playTimer);
             playTimer = null;
-            btn.innerHTML = "▶ Play";
+            btn.innerHTML = '<i class="bi bi-play-fill"></i> Play';
             return;
           }
           stepTimeline(1);
@@ -1137,7 +1143,7 @@
       if (status.status.includes("Septic Shock")) statusClass = "status-critical";
       else if (status.status.includes("Sepsis")) statusClass = "status-warning";
       statusBadge.className = `sepsis-status-pill ${statusClass}`;
-      statusBadge.innerHTML = `<span aria-hidden="true">●</span> ${status.status}`;
+      statusBadge.innerHTML = `<i class="bi bi-circle-fill" style="font-size:0.55rem;" aria-hidden="true"></i> ${status.status}`;
 
       // 6. Run "What-If" Hemodynamic Simulation
       const sim = simulateHemodynamics(vitals, labs, {
@@ -1153,10 +1159,10 @@
       const targetPill = document.getElementById("targetStatusPill");
       if (sim.isMapTargetAchieved) {
         targetPill.className = "sepsis-status-pill status-normal";
-        targetPill.textContent = "MAP TARGET MET (≥ 65) ✅";
+        targetPill.innerHTML = '<i class="bi bi-check-circle-fill"></i> MAP TARGET MET (&ge; 65)';
       } else {
         targetPill.className = "sepsis-status-pill status-critical";
-        targetPill.textContent = "BELOW TARGET (< 65) ❌";
+        targetPill.innerHTML = '<i class="bi bi-x-circle-fill"></i> BELOW TARGET (&lt; 65)';
       }
 
       // 7. Deterministic Organ Contraindication Engine
@@ -1219,7 +1225,7 @@
       if (alerts.length === 0) {
         container.innerHTML = `
           <div style="background:var(--status-normal-bg); color:var(--status-normal); border:1px solid var(--status-normal-border); border-radius:6px; padding:10px 12px; font-size:0.86rem; margin-top:8px; font-weight:700;">
-            ✅ No organ contraindications or nephrotoxic drug synergies detected for current selection.
+            <i class="bi bi-check-circle-fill" style="margin-right:4px;"></i>No organ contraindications or nephrotoxic drug synergies detected for current selection.
           </div>
         `;
         return;
@@ -1230,11 +1236,11 @@
         div.className = `contraindication-banner ${al.level === "CRITICAL_HAZARD" ? "danger" : "warning"}`;
         div.innerHTML = `
           <div style="display:flex; justify-content:space-between; font-weight:800; color:var(--text-primary);">
-            <span>⚠️ ${al.title}</span>
+            <span><i class="bi bi-exclamation-triangle-fill" style="color:var(--status-warning); margin-right:5px;"></i>${al.title}</span>
             <span style="font-size:0.75rem; text-transform:uppercase;">[${al.badge}]</span>
           </div>
           <div style="color:var(--text-secondary); margin-top:4px; line-height:1.45;">${al.message}</div>
-          <div style="color:var(--clinical-blue); font-weight:800; margin-top:4px;">👉 Action: ${al.recommendation}</div>
+          <div style="color:var(--clinical-blue); font-weight:800; margin-top:4px;"><i class="bi bi-arrow-right-circle-fill" style="margin-right:4px;"></i>Action: ${al.recommendation}</div>
         `;
         container.appendChild(div);
       }
@@ -1314,9 +1320,9 @@
 
         consultWrapper.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <strong style="color:var(--clinical-navy); font-size:0.95rem;">📄 Complete EHR Consultation Note</strong>
+            <strong style="color:var(--clinical-navy); font-size:0.95rem;"><i class="bi bi-file-earmark-medical-fill" style="margin-right:4px;"></i>Complete EHR Consultation Note</strong>
             <button class="action-btn action-btn-primary" style="padding:6px 14px; font-size:0.82rem;" onclick="copyConsultNoteToClipboard()">
-              📋 Copy Raw Text
+              <i class="bi bi-clipboard2-check-fill"></i> Copy Raw Text
             </button>
           </div>
           <pre class="ehr-note-pre">${noteText}</pre>
@@ -1431,7 +1437,7 @@
       }
 
       navigator.clipboard.writeText(noteText).then(() => {
-        alert("✅ Clean Grounded Sepsis Consultation Note copied to clipboard for EHR integration!");
+        alert("Grounded Sepsis Consultation Note copied to clipboard for EHR integration.");
       }).catch(err => {
         console.error("Clipboard copy failed:", err);
       });
@@ -1440,10 +1446,10 @@
     function updateGpuBadge() {
       const ind = document.getElementById("gpuStatusIndicator");
       if (synthesizer.webgpuAvailable) {
-        ind.textContent = "🟢 WebGPU Ready";
+        ind.innerHTML = '<i class="bi bi-gpu-card" style="margin-right:3px;"></i>WebGPU Ready';
         ind.style.color = "#86efac";
       } else {
-        ind.textContent = "⚪ CPU Fast";
+        ind.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>CPU Fast';
         ind.style.color = "#bae6fd";
       }
     }
@@ -1458,7 +1464,7 @@
     async function executeFullBenchmark() {
       const btn = document.getElementById("runBenchmarkBtn");
       btn.disabled = true;
-      btn.textContent = "⏳ Auditing All 25 Patient Trajectories...";
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Auditing All 25 Patient Trajectories...';
 
       const res = await runCohortBenchmark(cohortData.patients, vectorIndex);
 
@@ -1479,13 +1485,13 @@
           <td><span style="font-weight:800; font-family:var(--font-mono);">${p.maxSofa}</span></td>
           <td><span style="color:${p.retrievalPrecision >= 90 ? 'var(--status-normal)' : 'var(--status-warning)'}; font-weight:800; font-family:var(--font-mono);">${p.retrievalPrecision}%</span></td>
           <td><span style="color:var(--status-critical); font-weight:800; font-family:var(--font-mono);">${p.totalAlerts}</span></td>
-          <td><span class="sepsis-status-pill status-normal" style="font-size:0.75rem; padding:2px 8px;">VERIFIED ✅</span></td>
+          <td><span class="sepsis-status-pill status-normal" style="font-size:0.75rem; padding:2px 8px;"><i class="bi bi-check-circle-fill" style="margin-right:4px;"></i>VERIFIED</span></td>
         `;
         tbody.appendChild(tr);
       }
 
       btn.disabled = false;
-      btn.textContent = "🔄 Re-Run Full 25-Patient Benchmark";
+      btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Re-Run Full 25-Patient Benchmark';
     }
   </script>
 </body>

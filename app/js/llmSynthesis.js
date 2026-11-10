@@ -108,7 +108,7 @@ export class ClinicalSynthesizer {
     if (criticalDosingAlerts.length > 0) {
       drugPlan.push("**PROACTIVE SAFETY CONTRAINDICATION WARNINGS:**");
       for (const al of criticalDosingAlerts) {
-        drugPlan.push(`⚠️ **${al.drug} (${al.badge}):** ${al.message} *Recommended Action:* ${al.recommendation} [${al.citation}]`);
+        drugPlan.push(`ALERT: **${al.drug} (${al.badge}):** ${al.message} *Recommended Action:* ${al.recommendation} [${al.citation}]`);
       }
       drugPlan.push("");
     }
@@ -138,7 +138,7 @@ export class ClinicalSynthesizer {
       hemoPlan.push(`• **Volume Overload Warning (${simulation.overloadRiskPercentage}% Risk):** Restrict further crystalloids. Transition to dynamic fluid responsiveness assessment ([SSC-2021-FLUID-03]).`);
     }
 
-    hemoPlan.push(`• **Simulated Response:** Baseline MAP ${simulation.baselineMap} mmHg ➔ Simulated Post-Intervention MAP **${simulation.simulatedMap} mmHg** (${simulation.isMapTargetAchieved ? "TARGET >= 65 ACHIEVED ✅" : "BELOW TARGET ❌"}).`);
+    hemoPlan.push(`• **Simulated Response:** Baseline MAP ${simulation.baselineMap} mmHg to Simulated Post-Intervention MAP **${simulation.simulatedMap} mmHg** (${simulation.isMapTargetAchieved ? "TARGET >= 65 ACHIEVED" : "BELOW TARGET"}).`);
 
     sections.push({
       id: "hemoSec",

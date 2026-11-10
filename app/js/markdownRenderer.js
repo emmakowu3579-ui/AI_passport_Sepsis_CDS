@@ -1,7 +1,7 @@
 /**
  * Clinical Markdown & Action Card Parser
  * Converts structured clinical notes and raw markdown into clean, high-contrast, accessible HTML.
- * Designed for clinical decision support environments (Epic/Cerner/UpToDate styling).
+ * Uses Bootstrap Icons (CDN vector icon font) instead of emojis for professional hospital EHR presentation.
  */
 
 export function renderClinicalMarkdown(text) {
@@ -20,7 +20,7 @@ export function renderClinicalMarkdown(text) {
 
   // 4. Convert Citation Bracket Pills [SSC-2021-...] into interactive buttons
   html = html.replace(/\[([A-Z0-9_-]+)\]/g, (match, id) => {
-    return `<button type="button" class="citation-pill" onclick="inspectCitation('${id}')" title="Inspect clinical evidence for ${id}">[${id}]</button>`;
+    return `<button type="button" class="citation-pill" onclick="inspectCitation('${id}')" title="Inspect clinical evidence for ${id}"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>${id}</button>`;
   });
 
   // 5. Line-by-line processing
@@ -47,40 +47,50 @@ export function renderClinicalMarkdown(text) {
         inList = false;
       }
       const isWarning = line.includes("WARNINGS");
-      const icon = isWarning ? "⚠️" : "💊";
+      const iconHtml = isWarning
+        ? '<i class="bi bi-exclamation-triangle-fill"></i>'
+        : '<i class="bi bi-prescription2"></i>';
       const cleanTitle = line.replace(/<[^>]+>/g, '').replace(/[:*]/g, '').trim();
       processed.push(`
         <div class="clinical-group-header ${isWarning ? 'header-warning' : 'header-regimen'}">
-          <span class="group-icon">${icon}</span>
+          <span class="group-icon" aria-hidden="true">${iconHtml}</span>
           <span class="group-title">${cleanTitle}</span>
         </div>
       `);
       continue;
     }
 
-    // B. Contraindication / Hazard alert lines (contains ⚠️ or ⛔)
-    if (line.includes("⚠️") || line.includes("⛔")) {
+    // B. Contraindication / Hazard alert lines (starts with ALERT:)
+    if (line.startsWith("ALERT:")) {
       if (inList) {
         processed.push('</ul>');
         inList = false;
       }
       
-      const isCritical = line.includes("⛔") || line.toLowerCase().includes("contraindicated") || line.toLowerCase().includes("overload");
+      const isCritical = line.toLowerCase().includes("contraindicated") || line.toLowerCase().includes("overload") || line.toLowerCase().includes("neurotoxicity");
       
-      // Clean emoji and variations
-      let alertBody = line.replace(/^[⚠️⛔\uFE0F\s]+/, "");
+      let alertBody = line.replace(/^ALERT:\s*/, "");
       let actionPart = "";
       
       const actionMatch = alertBody.match(/<em class="clinical-italic">Recommended Action:<\/em>\s*(.*?)(?=(?:<button|$))/i);
       if (actionMatch) {
-        actionPart = `<div class="alert-action-strip">👉 <strong style="color:var(--text-primary);">Recommended Action:</strong> ${actionMatch[1].trim()}</div>`;
+        actionPart = `
+          <div class="alert-action-strip">
+            <i class="bi bi-arrow-right-circle-fill" style="color:var(--clinical-blue); margin-right:6px;"></i>
+            <strong style="color:var(--text-primary);">Recommended Action:</strong> ${actionMatch[1].trim()}
+          </div>
+        `;
         alertBody = alertBody.replace(actionMatch[0], "");
       }
+
+      const calloutIcon = isCritical
+        ? '<i class="bi bi-octagon-fill" style="color:var(--status-critical);"></i>'
+        : '<i class="bi bi-exclamation-triangle-fill" style="color:var(--status-warning);"></i>';
 
       processed.push(`
         <div class="clinical-alert-callout ${isCritical ? 'callout-critical' : 'callout-warning'}">
           <div class="callout-header-row">
-            <span class="callout-icon">${isCritical ? '⛔' : '⚠️'}</span>
+            <span class="callout-icon" aria-hidden="true">${calloutIcon}</span>
             <div class="callout-content-text">${alertBody}</div>
           </div>
           ${actionPart}
@@ -97,27 +107,28 @@ export function renderClinicalMarkdown(text) {
       }
       const itemContent = line.replace(/^[•-]\s*/, "");
       
-      // Determine icon based on clinical content
-      let icon = "🔹";
-      if (itemContent.toLowerCase().includes("fluid") || itemContent.toLowerCase().includes("crystalloid") || itemContent.toLowerCase().includes("edema")) {
-        icon = "💧";
-      } else if (itemContent.toLowerCase().includes("culture") || itemContent.toLowerCase().includes("blood")) {
-        icon = "🧪";
-      } else if (itemContent.toLowerCase().includes("antimicrobial") || itemContent.toLowerCase().includes("antibiotic") || itemContent.toLowerCase().includes("vancomycin") || itemContent.toLowerCase().includes("cefepime")) {
-        icon = "💊";
-      } else if (itemContent.toLowerCase().includes("hemodynamic") || itemContent.toLowerCase().includes("map")) {
-        icon = "❤️";
-      } else if (itemContent.toLowerCase().includes("lactate")) {
-        icon = "⏱️";
-      } else if (itemContent.toLowerCase().includes("vasopressor") || itemContent.toLowerCase().includes("norepi") || itemContent.toLowerCase().includes("vasopressin")) {
-        icon = "💉";
-      } else if (itemContent.toLowerCase().includes("renal") || itemContent.toLowerCase().includes("creatinine")) {
-        icon = "🫘";
+      // Determine professional vector icon based on clinical content
+      let iconHtml = '<i class="bi bi-check2-circle" style="color:var(--clinical-blue);"></i>';
+      const lower = itemContent.toLowerCase();
+      if (lower.includes("fluid") || lower.includes("crystalloid") || lower.includes("edema")) {
+        iconHtml = '<i class="bi bi-droplet-fill" style="color:#0284c7;"></i>';
+      } else if (lower.includes("culture") || lower.includes("blood")) {
+        iconHtml = '<i class="bi bi-eyedropper" style="color:#b91c1c;"></i>';
+      } else if (lower.includes("antimicrobial") || lower.includes("antibiotic") || lower.includes("vancomycin") || lower.includes("cefepime")) {
+        iconHtml = '<i class="bi bi-capsule" style="color:#047857;"></i>';
+      } else if (lower.includes("hemodynamic") || lower.includes("map") || lower.includes("simulated")) {
+        iconHtml = '<i class="bi bi-heart-pulse-fill" style="color:#e11d48;"></i>';
+      } else if (lower.includes("lactate")) {
+        iconHtml = '<i class="bi bi-clock-history" style="color:#d97706;"></i>';
+      } else if (lower.includes("vasopressor") || lower.includes("norepi") || lower.includes("vasopressin")) {
+        iconHtml = '<i class="bi bi-activity" style="color:#7c3aed;"></i>';
+      } else if (lower.includes("renal") || lower.includes("creatinine")) {
+        iconHtml = '<i class="bi bi-clipboard2-pulse-fill" style="color:#0369a1;"></i>';
       }
 
       processed.push(`
         <li class="clinical-action-item">
-          <span class="action-icon" aria-hidden="true">${icon}</span>
+          <span class="action-icon" aria-hidden="true">${iconHtml}</span>
           <div class="action-text">${itemContent}</div>
         </li>
       `);
@@ -162,11 +173,12 @@ export function renderAntimicrobialTable(selectedDrugs, creatinine, alerts) {
       spectrum: "Gram-positive (MRSA coverage)",
       standardDose: "25–30 mg/kg IV loading dose, then 15–20 mg/kg IV q8–12h",
       renalAdj: isAki 
-        ? "<span class='dose-badge dose-adjusted'>15 mg/kg IV q24h</span> (Target AUC₂₄/MIC 400–600 mg·h/L)" 
+        ? "<span class='dose-badge dose-adjusted'>15 mg/kg IV q24h</span> (Target AUC24/MIC 400–600 mg·h/L)" 
         : "<span class='dose-badge dose-standard'>Standard interval (q8–12h)</span>",
       safetyAlert: alerts.find(a => a.drug && a.drug.toLowerCase().includes("vancomycin"))
-        ? "⚠️ Nephrotoxic synergy with Pip-Tazo. Daily Cr monitoring required."
-        : "Therapeutic drug monitoring required.",
+        ? "<i class='bi bi-exclamation-triangle-fill' style='color:var(--status-warning); margin-right:4px;'></i>Nephrotoxic synergy with Pip-Tazo. Daily Cr monitoring required."
+        : "<i class='bi bi-check-circle-fill' style='color:var(--status-normal); margin-right:4px;'></i>Therapeutic drug monitoring required.",
+      isHazard: !!alerts.find(a => a.drug && a.drug.toLowerCase().includes("vancomycin")),
       citation: "DOSE-VANC-01",
       citation2: "DOSE-VANC-02"
     },
@@ -179,8 +191,9 @@ export function renderAntimicrobialTable(selectedDrugs, creatinine, alerts) {
         ? "<span class='dose-badge dose-adjusted'>3.375 g IV q6h</span> or 2.25 g IV q6h extended infusion" 
         : "<span class='dose-badge dose-standard'>4.5 g IV q6h extended infusion</span>",
       safetyAlert: alerts.find(a => a.drug && a.drug.toLowerCase().includes("piperacillin"))
-        ? "⚠️ Synergistic AKI hazard when co-administered with Vancomycin."
-        : "Standard renal dose.",
+        ? "<i class='bi bi-exclamation-triangle-fill' style='color:var(--status-warning); margin-right:4px;'></i>Synergistic AKI hazard when co-administered with Vancomycin."
+        : "<i class='bi bi-check-circle-fill' style='color:var(--status-normal); margin-right:4px;'></i>Standard renal dose.",
+      isHazard: !!alerts.find(a => a.drug && a.drug.toLowerCase().includes("piperacillin")),
       citation: "DOSE-PIPTAZO-01",
       citation2: null
     },
@@ -193,8 +206,9 @@ export function renderAntimicrobialTable(selectedDrugs, creatinine, alerts) {
         ? "<span class='dose-badge dose-critical'>2 g IV q12h</span> (Mandatory dose reduction to avoid neurotoxicity)" 
         : "<span class='dose-badge dose-standard'>2 g IV q8h extended infusion</span>",
       safetyAlert: isAki 
-        ? "⛔ <strong>High Neurotoxicity Risk:</strong> Encephalopathy, myoclonus, seizures."
-        : "Standard renal clearance.",
+        ? "<i class='bi bi-octagon-fill' style='color:var(--status-critical); margin-right:4px;'></i><strong>High Neurotoxicity Risk:</strong> Encephalopathy, myoclonus, seizures."
+        : "<i class='bi bi-check-circle-fill' style='color:var(--status-normal); margin-right:4px;'></i>Standard renal clearance.",
+      isHazard: isAki,
       citation: "DOSE-CEFEPIME-01",
       citation2: "DOSE-CEFEPIME-CONTRA-01"
     },
@@ -206,7 +220,8 @@ export function renderAntimicrobialTable(selectedDrugs, creatinine, alerts) {
       renalAdj: isAki 
         ? "<span class='dose-badge dose-adjusted'>1 g IV q12h</span> (extended infusion)" 
         : "<span class='dose-badge dose-standard'>1 g IV q8h extended infusion</span>",
-      safetyAlert: "Reserve for proven resistant gram-negative pathogens or septic shock with ESBL risk.",
+      safetyAlert: "<i class='bi bi-info-circle-fill' style='color:var(--clinical-blue); margin-right:4px;'></i>Reserve for proven resistant gram-negative pathogens or septic shock with ESBL risk.",
+      isHazard: false,
       citation: "DOSE-MEROPENEM-01",
       citation2: null
     },
@@ -219,8 +234,9 @@ export function renderAntimicrobialTable(selectedDrugs, creatinine, alerts) {
         ? "<span class='dose-badge dose-contraindicated'>CONTRAINDICATED in AKI (WITHHOLD)</span>" 
         : "<span class='dose-badge dose-standard'>5–7 mg/kg IV q24h with trough monitoring</span>",
       safetyAlert: isAki 
-        ? "⛔ <strong>Acute Kidney Injury Hazard:</strong> Direct tubular damage & irreversible ototoxicity."
-        : "Monitor peak & trough levels closely.",
+        ? "<i class='bi bi-octagon-fill' style='color:var(--status-critical); margin-right:4px;'></i><strong>Acute Kidney Injury Hazard:</strong> Direct tubular damage & irreversible ototoxicity."
+        : "<i class='bi bi-check-circle-fill' style='color:var(--status-normal); margin-right:4px;'></i>Monitor peak & trough levels closely.",
+      isHazard: isAki,
       citation: "DOSE-GENT-CONTRA-01",
       citation2: null
     }
@@ -234,7 +250,7 @@ export function renderAntimicrobialTable(selectedDrugs, creatinine, alerts) {
       <table class="clinical-dosing-table">
         <thead>
           <tr>
-            <th>Antimicrobial</th>
+            <th><i class="bi bi-capsule" style="margin-right:4px;"></i>Antimicrobial</th>
             <th>Standard Regimen</th>
             <th>Renal Adjustment (Cr ${creatinine.toFixed(1)} mg/dL)</th>
             <th>Safety Status &amp; Evidence</th>
@@ -244,9 +260,8 @@ export function renderAntimicrobialTable(selectedDrugs, creatinine, alerts) {
   `;
 
   for (const r of activeRows) {
-    const isRowHazard = r.safetyAlert.includes("⚠️") || r.safetyAlert.includes("⛔");
     html += `
-      <tr class="${isRowHazard ? 'row-hazard' : ''}">
+      <tr class="${r.isHazard ? 'row-hazard' : ''}">
         <td>
           <div class="drug-name-cell">${r.name}</div>
           <div class="drug-spec-sub">${r.spectrum}</div>
@@ -256,8 +271,8 @@ export function renderAntimicrobialTable(selectedDrugs, creatinine, alerts) {
         <td>
           <div class="safety-cell-text" style="font-size:0.86rem; margin-bottom:4px;">${r.safetyAlert}</div>
           <div class="evidence-pills-row">
-            <button type="button" class="citation-pill" onclick="inspectCitation('${r.citation}')" title="Inspect ${r.citation}">[${r.citation}]</button>
-            ${r.citation2 ? `<button type="button" class="citation-pill" onclick="inspectCitation('${r.citation2}')" title="Inspect ${r.citation2}">[${r.citation2}]</button>` : ''}
+            <button type="button" class="citation-pill" onclick="inspectCitation('${r.citation}')" title="Inspect ${r.citation}"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>${r.citation}</button>
+            ${r.citation2 ? `<button type="button" class="citation-pill" onclick="inspectCitation('${r.citation2}')" title="Inspect ${r.citation2}"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>${r.citation2}</button>` : ''}
           </div>
         </td>
       </tr>
