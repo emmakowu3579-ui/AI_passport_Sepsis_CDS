@@ -23,3 +23,7 @@ for (const s of note.sections) {
   }
 }
 console.log("TOTAL REMAINING ASTERISKS ACROSS NOTE:", totalAsterisks);
+
+import { ClinicalChartEngine } from "../app/js/clinicalCharts.js";
+const chartEngine = new ClinicalChartEngine();
+console.log("ClinicalChartEngine imported and verified successfully!");
