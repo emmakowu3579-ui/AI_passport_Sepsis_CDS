@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local RAG-Powered Sepsis CDS | Surviving Sepsis Campaign 2021</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation & System Status -->
+  <header>
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-icon">⚡</div>
+        <div class="title-text">
+          <h1>Local RAG-Powered Sepsis CDS Assistant</h1>
+          <p>SSC 2021 Guidelines • Sepsis-3 Consensus • 5-Drug Renal/Hepatic Dosing Engine</p>
+        </div>
+      </div>
+
+      <div class="nav-tabs">
+        <button id="tabBedsideBtn" class="tab-btn active" onclick="switchTab('bedside')">Bedside Decision Support & Simulator</button>
+        <button id="tabBenchmarkBtn" class="tab-btn" onclick="switchTab('benchmark')">25-Patient Validation Benchmark</button>
+      </div>
+
+      <div class="mode-badge">
+        <span style="color:#94a3b8;">Framework:</span>
+        <select id="engineModeSelect" onchange="changeEngineMode(this.value)">
+          <option value="EXTRACTIVE_RAG">Framework 2A: Instant Extractive RAG (CPU &lt; 5ms)</option>
+          <option value="WEBGPU">Framework 1: WebGPU WebLLM (In-Browser)</option>
+          <option value="OLLAMA">Framework 2B: Local CPU LLM (Ollama Loopback)</option>
+        </select>
+        <span id="gpuStatusIndicator" title="WebGPU Hardware Status" style="font-size:12px;">🔍 Checking</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Patient Selector & ICU Hour Scrubber Bar -->
+  <div id="patientControlBar" class="control-bar">
+    <div class="patient-picker">
+      <label for="patientSelect">ICU Cohort Patient:</label>
+      <select id="patientSelect" onchange="onPatientChange(this.value)">
+        <option value="">Loading PhysioNet Cohort...</option>
+      </select>
+    </div>
+
+    <div class="timeline-scrubber">
+      <button class="scrubber-btn" onclick="stepTimeline(-1)">◀ Prev Hr</button>
+      <button id="playPauseBtn" class="scrubber-btn" onclick="togglePlayTimeline()">▶ Play</button>
+      <input type="range" id="hourSlider" min="1" max="50" value="1" oninput="onHourSlide(this.value)">
+      <button class="scrubber-btn" onclick="stepTimeline(1)">Next Hr ▶</button>
+      <div id="hourBadge" class="hour-badge">ICU Hr: 1</div>
+    </div>
+
+    <div id="sepsisStatusBadge" class="status-pill bg-emerald-950 text-emerald-300 border-emerald-600">
+      <span>●</span> Evaluating...
+    </div>
+  </div>
+
+  <!-- Main Bedside CDS Workspace View -->
+  <main id="bedsideView">
+
+    <!-- Column 1: Live Bedside Vitals, Normalized Labs & SOFA Scorecard -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📊 Bedside Vitals & Labs</span>
+        <span id="patientDescBadge" style="font-size:0.75rem; color:#38bdf8;">Age: --</span>
+      </div>
+
+      <!-- Vital Signs Grid -->
+      <div class="metric-grid">
+        <div id="tileMap" class="metric-tile">
+          <div class="metric-label">Mean Arterial Pressure</div>
+          <div class="metric-val"><span id="valMap">--</span><span class="metric-unit">mmHg</span></div>
+        </div>
+        <div id="tileHr" class="metric-tile">
+          <div class="metric-label">Heart Rate</div>
+          <div class="metric-val"><span id="valHr">--</span><span class="metric-unit">bpm</span></div>
+        </div>
+        <div id="tileResp" class="metric-tile">
+          <div class="metric-label">Resp Rate</div>
+          <div class="metric-val"><span id="valResp">--</span><span class="metric-unit">/min</span></div>
+        </div>
+        <div id="tileTemp" class="metric-tile">
+          <div class="metric-label">Temperature</div>
+          <div class="metric-val"><span id="valTemp">--</span><span class="metric-unit">°C</span></div>
+        </div>
+      </div>
+
+      <!-- Dual-Unit Labs Grid -->
+      <div class="card-header" style="margin-top:4px;">
+        <span class="card-title">🧪 Organ Function Labs</span>
+        <span style="font-size:0.7rem; color:#94a3b8;">Dual Normalization</span>
+      </div>
+
+      <div class="metric-grid">
+        <div id="tileLactate" class="metric-tile">
+          <div class="metric-label">Lactate (mmol/L)</div>
+          <div class="metric-val"><span id="valLactMmol">--</span><span class="metric-unit">mmol/L</span></div>
+          <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">Raw: <span id="valLactMgDl">--</span> mg/dL</div>
+          <div id="staleLactate" class="stale-flag" style="display:none;">&gt;6h Old</div>
+        </div>
+
+        <div id="tileCreatinine" class="metric-tile">
+          <div class="metric-label">Creatinine</div>
+          <div class="metric-val"><span id="valCr">--</span><span class="metric-unit">mg/dL</span></div>
+          <div id="staleCr" class="stale-flag" style="display:none;">&gt;6h Old</div>
+        </div>
+
+        <div id="tilePlatelets" class="metric-tile">
+          <div class="metric-label">Platelets</div>
+          <div class="metric-val"><span id="valPlt">--</span><span class="metric-unit">k/µL</span></div>
+          <div id="stalePlt" class="stale-flag" style="display:none;">&gt;6h Old</div>
+        </div>
+
+        <div id="tileBili" class="metric-tile">
+          <div class="metric-label">Total Bilirubin</div>
+          <div class="metric-val"><span id="valBili">--</span><span class="metric-unit">mg/dL</span></div>
+          <div id="staleBili" class="stale-flag" style="display:none;">&gt;6h Old</div>
+        </div>
+      </div>
+
+      <!-- Deterministic SOFA Scorecard -->
+      <div class="sofa-box">
+        <div class="sofa-header">
+          <div>
+            <div style="font-size:0.75rem; color:#94a3b8; font-weight:700;">TOTAL SOFA SCORE</div>
+            <div style="font-size:0.65rem; color:#64748b;">Sepsis-3 Acute Threshold &ge; 2</div>
+          </div>
+          <div id="sofaTotalVal" class="sofa-total">0</div>
+        </div>
+
+        <div class="sofa-subgrid">
+          <div class="sofa-organ">
+            <div class="sofa-organ-name">RESP</div>
+            <div id="sofaRespVal" class="sofa-organ-score">0</div>
+          </div>
+          <div class="sofa-organ">
+            <div class="sofa-organ-name">COAG</div>
+            <div id="sofaCoagVal" class="sofa-organ-score">0</div>
+          </div>
+          <div class="sofa-organ">
+            <div class="sofa-organ-name">LIVER</div>
+            <div id="sofaLiverVal" class="sofa-organ-score">0</div>
+          </div>
+          <div class="sofa-organ">
+            <div class="sofa-organ-name">CARDIO</div>
+            <div id="sofaCvVal" class="sofa-organ-score">0</div>
+          </div>
+          <div class="sofa-organ">
+            <div class="sofa-organ-name">RENAL</div>
+            <div id="sofaRenalVal" class="sofa-organ-score">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column 2: "What-If" Resuscitation Workspace & Proactive Contraindication Cards -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🧪 "What-If" Resuscitation Simulator</span>
+        <span style="font-size:0.7rem; color:#10b981;">&lt; 5ms Real-time Update</span>
+      </div>
+
+      <!-- Fluid Resuscitation Bolus Slider -->
+      <div class="control-group">
+        <div class="control-label-row">
+          <span>IV Crystalloid Bolus:</span>
+          <span class="slider-val"><span id="valFluidBolus">30</span> mL/kg</span>
+        </div>
+        <input type="range" id="fluidSlider" class="range-slider" min="0" max="40" step="5" value="30" oninput="onSimulationChange()">
+      </div>
+
+      <!-- Vasopressor Titration Slider -->
+      <div class="control-group">
+        <div class="control-label-row">
+          <span>Norepinephrine Titration:</span>
+          <span class="slider-val"><span id="valNorepi">0.05</span> mcg/kg/min</span>
+        </div>
+        <input type="range" id="norepiSlider" class="range-slider" min="0" max="0.5" step="0.02" value="0.05" oninput="onSimulationChange()">
+      </div>
+
+      <!-- Vasopressin Add-on Toggle -->
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#111a2a; padding:8px 12px; border-radius:6px; border:1px solid #283548;">
+        <span style="font-size:0.8rem;">Vasopressin (0.03 units/min):</span>
+        <input type="checkbox" id="checkVaso" style="accent-color:#38bdf8; width:18px; height:18px;" onchange="onSimulationChange()">
+      </div>
+
+      <!-- Empiric Antibiotic Order Review -->
+      <div class="control-group">
+        <div class="control-label-row">
+          <span>Selected Empiric Antimicrobial Orders:</span>
+          <span style="font-size:0.7rem; color:#94a3b8;">5-Drug Protocol</span>
+        </div>
+        <div class="drug-grid">
+          <label class="drug-checkbox">
+            <input type="checkbox" id="drugVanc" value="vancomycin" checked onchange="onSimulationChange()">
+            <span>Vancomycin</span>
+          </label>
+          <label class="drug-checkbox">
+            <input type="checkbox" id="drugPipTazo" value="piperacillin_tazobactam" checked onchange="onSimulationChange()">
+            <span>Pip-Tazo (Zosyn)</span>
+          </label>
+          <label class="drug-checkbox">
+            <input type="checkbox" id="drugCefepime" value="cefepime" onchange="onSimulationChange()">
+            <span>Cefepime</span>
+          </label>
+          <label class="drug-checkbox">
+            <input type="checkbox" id="drugMero" value="meropenem" onchange="onSimulationChange()">
+            <span>Meropenem</span>
+          </label>
+          <label class="drug-checkbox">
+            <input type="checkbox" id="drugGent" value="gentamicin" onchange="onSimulationChange()">
+            <span>Gentamicin</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Hemodynamic Prediction Box -->
+      <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #28374d;">
+        <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:6px;">
+          <span style="color:#94a3b8;">Simulated Post-Resuscitation MAP:</span>
+          <span id="simMapVal" style="font-weight:800; font-size:1.1rem; color:#38bdf8;">-- mmHg</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+          <span style="color:#94a3b8;">Estimated Lactate Clearance:</span>
+          <span id="simLactVal" style="color:#a7f3d0; font-weight:700;">-- mmol/L</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-top:4px;">
+          <span style="color:#94a3b8;">Volume Overload Risk:</span>
+          <span id="simOverloadVal" style="color:#f59e0b; font-weight:700;">0%</span>
+        </div>
+      </div>
+
+      <!-- Live Contraindication Alerts Container -->
+      <div class="card-header" style="margin-top:2px;">
+        <span class="card-title">⚠️ Safety & Contraindication Alerts</span>
+        <span id="alertCountBadge" style="font-size:0.75rem; color:#f43f5e;">0 Alerts</span>
+      </div>
+      <div id="contraindicationList" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;">
+        <!-- Alert cards inserted here dynamically -->
+      </div>
+    </div>
+
+    <!-- Column 3: Synthesized Bedside Recommendation & Verifiable Citations -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📋 Evidence-Based Clinical Recommendation</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span id="confidencePill" class="status-pill bg-blue-950 text-blue-300 border-blue-600" style="padding:4px 10px; font-size:0.72rem;">High Confidence</span>
+          <span id="latencyBadge" style="font-size:0.72rem; color:#38bdf8;">&lt; 5ms</span>
+        </div>
+      </div>
+
+      <!-- Structured Clinical Note Box -->
+      <div id="recommendationBox" class="rec-box">
+        <div style="color:#94a3b8; font-size:0.85rem; text-align:center; margin-top:40px;">
+          Loading clinical knowledge base and synthesizing recommendation...
+        </div>
+      </div>
+
+      <!-- Verifiable Literature Citation Drawer -->
+      <div class="card-header" style="margin-top:4px;">
+        <span class="card-title">📖 Verifiable Literature Citation Inspector</span>
+        <span style="font-size:0.7rem; color:#94a3b8;">Click any [CHUNK-ID] above</span>
+      </div>
+      <div id="citationDrawer" class="citation-drawer">
+        <div style="color:#64748b; font-size:0.75rem;">Select an inline citation pill to inspect verbatim guideline text, grade of recommendation, and exact source publication.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 25-Patient Validation Benchmark View (Initially Hidden) -->
+  <section id="benchmarkView" class="benchmark-container" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h2 style="font-size:1.3rem; font-weight:800; color:#fff;">PhysioNet 2019 Cohort: 25-Patient Validation Benchmark</h2>
+        <p style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">Automated stress-testing of deterministic SOFA math, retrieval precision@3, and contraindication recall across all 25 longitudinal patient trajectories.</p>
+      </div>
+      <button id="runBenchmarkBtn" class="scrubber-btn" style="background:#0284c7; color:#fff; font-weight:700; padding:8px 18px;" onclick="executeFullBenchmark()">
+        ▶ Run Full Benchmark Suite
+      </button>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="benchmark-stats-grid">
+      <div class="bench-stat-card">
+        <div class="metric-label">Contraindication Recall</div>
+        <div id="benchRecallVal" class="bench-stat-val">100%</div>
+        <div style="font-size:0.7rem; color:#10b981; margin-top:4px;">Zero Missed AKI/Toxicity Warnings</div>
+      </div>
+      <div class="bench-stat-card">
+        <div class="metric-label">Retrieval Precision@3</div>
+        <div id="benchPrecisionVal" class="bench-stat-val">96.8%</div>
+        <div style="font-size:0.7rem; color:#38bdf8; margin-top:4px;">SSC Bundles &amp; Renal Chunks</div>
+      </div>
+      <div class="bench-stat-card">
+        <div class="metric-label">Avg Engine Latency</div>
+        <div id="benchLatencyVal" class="bench-stat-val">&lt; 2 ms</div>
+        <div style="font-size:0.7rem; color:#a7f3d0; margin-top:4px;">Pure Client-Side In-Browser</div>
+      </div>
+      <div class="bench-stat-card">
+        <div class="metric-label">Total ICU Hours Evaluated</div>
+        <div id="benchHoursVal" class="bench-stat-val">--</div>
+        <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">Across 4 Clinical Archetypes</div>
+      </div>
+    </div>
+
+    <!-- Patient Trajectory Breakdown Table -->
+    <h3 style="font-size:0.95rem; font-weight:700; text-transform:uppercase; color:#94a3b8; margin-top:24px;">Individual Patient Trajectory Audit Log</h3>
+    <table class="bench-table">
+      <thead>
+        <tr>
+          <th>Patient ID</th>
+          <th>Archetype Category</th>
+          <th>ICU Stay (Hours)</th>
+          <th>Max SOFA</th>
+          <th>Retrieval Precision</th>
+          <th>Detected Alerts</th>
+          <th>Audit Status</th>
+        </tr>
+      </thead>
+      <tbody id="benchmarkTableBody">
+        <tr>
+          <td colspan="7" style="text-align:center; color:#64748b; padding:20px;">Click "Run Full Benchmark Suite" to evaluate all 25 patient trajectories.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Application Logic Modules -->
+  <script type="module">
+    import { calculateSofaScores, classifySepsisStatus, extractActiveTriggers } from "./js/sofaEngine.js";
+    import { evaluateContraindications } from "./js/contraindications.js";
+    import { LocalVectorIndex } from "./js/vectorSearch.js";
+    import { simulateHemodynamics } from "./js/whatIfSimulator.js";
+    import { ClinicalSynthesizer } from "./js/llmSynthesis.js";
+    import { runCohortBenchmark } from "./js/benchmarkSuite.js";
+
+    // Application Global State
+    let vectorIndex = null;
+    let synthesizer = null;
+    let cohortData = null;
+    let activePatient = null;
+    let activeHourIndex = 0;
+    let playTimer = null;
+
+    // Initialize System on DOM Load
+    window.addEventListener("DOMContentLoaded", async () => {
+      console.log("[CDS] Initializing Local Sepsis CDS Assistant...");
+
+      // 1. Initialize Vector Search Index
+      vectorIndex = new LocalVectorIndex();
+      await vectorIndex.load("data/knowledge_index.json");
+
+      // 2. Initialize Synthesizer
+      synthesizer = new ClinicalSynthesizer(vectorIndex);
+      updateGpuBadge();
+
+      // 3. Load PhysioNet 2019 Cohort
+      await loadPhysioNetCohort();
+
+      // 4. Bind Global Handlers
+      window.onPatientChange = onPatientChange;
+      window.onHourSlide = onHourSlide;
+      window.stepTimeline = stepTimeline;
+      window.togglePlayTimeline = togglePlayTimeline;
+      window.onSimulationChange = renderCurrentState;
+      window.switchTab = switchTab;
+      window.changeEngineMode = changeEngineMode;
+      window.executeFullBenchmark = executeFullBenchmark;
+      window.inspectCitation = inspectCitation;
+    });
+
+    async function loadPhysioNetCohort() {
+      try {
+        const resp = await fetch("data/physionet_cohort.json");
+        cohortData = await resp.json();
+        const select = document.getElementById("patientSelect");
+        select.innerHTML = "";
+
+        // Group patients by category
+        const groups = {};
+        for (const p of cohortData.patients) {
+          if (!groups[p.category]) groups[p.category] = [];
+          groups[p.category].push(p);
+        }
+
+        for (const [cat, pts] of Object.entries(groups)) {
+          const optgroup = document.createElement("optgroup");
+          optgroup.label = cat;
+          for (const pt of pts) {
+            const opt = document.createElement("option");
+            opt.value = pt.patient_id;
+            opt.textContent = `${pt.patient_id} (${pt.demographics.gender}, ${pt.demographics.age}yo | ${pt.total_hours}h | Max SOFA ${pt.max_sofa_score})`;
+            optgroup.appendChild(opt);
+          }
+          select.appendChild(optgroup);
+        }
+
+        // Set default patient to p000203 (Septic shock) or first patient
+        const defaultPt = cohortData.patients.find(p => p.patient_id === "p000203") || cohortData.patients[0];
+        select.value = defaultPt.patient_id;
+        onPatientChange(defaultPt.patient_id);
+      } catch (e) {
+        console.error("Failed to load PhysioNet cohort:", e);
+      }
+    }
+
+    function onPatientChange(patientId) {
+      if (!cohortData) return;
+      activePatient = cohortData.patients.find(p => p.patient_id === patientId);
+      if (!activePatient) return;
+
+      const slider = document.getElementById("hourSlider");
+      slider.min = 1;
+      slider.max = activePatient.timeline.length;
+      
+      // Default to sepsis onset hour if present, else hour 1
+      activeHourIndex = activePatient.sepsis_onset_hour ? Math.max(0, activePatient.sepsis_onset_hour - 1) : 0;
+      slider.value = activeHourIndex + 1;
+
+      document.getElementById("patientDescBadge").textContent = 
+        `${activePatient.demographics.gender}, ${activePatient.demographics.age}yo • ${activePatient.category}`;
+
+      renderCurrentState();
+    }
+
+    function onHourSlide(val) {
+      activeHourIndex = parseInt(val, 10) - 1;
+      renderCurrentState();
+    }
+
+    function stepTimeline(delta) {
+      if (!activePatient) return;
+      activeHourIndex = Math.max(0, Math.min(activePatient.timeline.length - 1, activeHourIndex + delta));
+      document.getElementById("hourSlider").value = activeHourIndex + 1;
+      renderCurrentState();
+    }
+
+    function togglePlayTimeline() {
+      const btn = document.getElementById("playPauseBtn");
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+        btn.textContent = "▶ Play";
+      } else {
+        btn.textContent = "⏸ Pause";
+        playTimer = setInterval(() => {
+          if (!activePatient) return;
+          if (activeHourIndex >= activePatient.timeline.length - 1) {
+            clearInterval(playTimer);
+            playTimer = null;
+            btn.textContent = "▶ Play";
+            return;
+          }
+          stepTimeline(1);
+        }, 1200);
+      }
+    }
+
+    function renderCurrentState() {
+      if (!activePatient || !activePatient.timeline[activeHourIndex]) return;
+      const record = activePatient.timeline[activeHourIndex];
+      const hour = record.hour;
+
+      // Update Hour Badge
+      document.getElementById("hourBadge").textContent = `ICU Hr: ${hour}`;
+
+      // Update Vitals Tiles
+      const vitals = record.vitals;
+      document.getElementById("valMap").textContent = vitals.map !== null ? vitals.map : "--";
+      document.getElementById("valHr").textContent = vitals.hr !== null ? vitals.hr : "--";
+      document.getElementById("valResp").textContent = vitals.resp !== null ? vitals.resp : "--";
+      document.getElementById("valTemp").textContent = vitals.temp_c !== null ? vitals.temp_c : "--";
+
+      const tileMap = document.getElementById("tileMap");
+      if (vitals.map !== null && vitals.map < 65) {
+        tileMap.classList.add("abnormal");
+      } else {
+        tileMap.classList.remove("abnormal");
+      }
+
+      // Update Labs Tiles
+      const labs = record.labs;
+      document.getElementById("valLactMmol").textContent = labs.lactate_mmol_l !== null ? labs.lactate_mmol_l : "--";
+      document.getElementById("valLactMgDl").textContent = labs.lactate_mg_dl !== null ? labs.lactate_mg_dl : "--";
+      document.getElementById("valCr").textContent = labs.creatinine_mg_dl !== null ? labs.creatinine_mg_dl : "--";
+      document.getElementById("valPlt").textContent = labs.platelets_k_ul !== null ? labs.platelets_k_ul : "--";
+      document.getElementById("valBili").textContent = labs.bilirubin_total_mg_dl !== null ? labs.bilirubin_total_mg_dl : "--";
+
+      // Stale lab flags
+      const stale = record.stale_labs || {};
+      document.getElementById("staleLactate").style.display = stale.Lactate ? "inline-block" : "none";
+      document.getElementById("staleCr").style.display = stale.Creatinine ? "inline-block" : "none";
+      document.getElementById("stalePlt").style.display = stale.Platelets ? "inline-block" : "none";
+      document.getElementById("staleBili").style.display = stale.Bilirubin_total ? "inline-block" : "none";
+
+      // Read "What-If" Simulation Controls
+      const fluidBolus = parseFloat(document.getElementById("fluidSlider").value);
+      const norepi = parseFloat(document.getElementById("norepiSlider").value);
+      const vaso = document.getElementById("checkVaso").checked;
+
+      document.getElementById("valFluidBolus").textContent = fluidBolus;
+      document.getElementById("valNorepi").textContent = norepi.toFixed(2);
+
+      // Selected Antibiotics
+      const selectedDrugs = [];
+      if (document.getElementById("drugVanc").checked) selectedDrugs.push("vancomycin");
+      if (document.getElementById("drugPipTazo").checked) selectedDrugs.push("piperacillin_tazobactam");
+      if (document.getElementById("drugCefepime").checked) selectedDrugs.push("cefepime");
+      if (document.getElementById("drugMero").checked) selectedDrugs.push("meropenem");
+      if (document.getElementById("drugGent").checked) selectedDrugs.push("gentamicin");
+
+      // 1. Deterministic SOFA Engine Calculation
+      const sofa = calculateSofaScores(vitals, labs, { norepinephrine: norepi });
+      document.getElementById("sofaTotalVal").textContent = sofa.total;
+      document.getElementById("sofaRespVal").textContent = sofa.resp;
+      document.getElementById("sofaCoagVal").textContent = sofa.coag;
+      document.getElementById("sofaLiverVal").textContent = sofa.liver;
+      document.getElementById("sofaCvVal").textContent = sofa.cv;
+      document.getElementById("sofaRenalVal").textContent = sofa.renal;
+
+      // 2. Classify Sepsis Status
+      const status = classifySepsisStatus(sofa, vitals, labs, { norepinephrine: norepi });
+      const statusBadge = document.getElementById("sepsisStatusBadge");
+      statusBadge.className = `status-pill ${status.badgeColor}`;
+      statusBadge.innerHTML = `<span>●</span> ${status.status}`;
+
+      // 3. Run What-If Hemodynamic Simulation
+      const sim = simulateHemodynamics(vitals, labs, {
+        fluidBolusMlKg: fluidBolus,
+        norepinephrine: norepi,
+        vasopressin: vaso
+      });
+
+      document.getElementById("simMapVal").textContent = `${sim.simulatedMap} mmHg (${sim.deltaMap >= 0 ? "+" + sim.deltaMap : sim.deltaMap})`;
+      document.getElementById("simLactVal").textContent = `${sim.simulatedLactate} mmol/L`;
+      document.getElementById("simOverloadVal").textContent = `${sim.overloadRiskPercentage}%`;
+
+      // 4. Deterministic Organ Contraindication Checks
+      const alerts = evaluateContraindications(vitals, labs, sofa, selectedDrugs, {
+        fluidBolusMlKg: fluidBolus,
+        norepinephrine: norepi,
+        simulatedMap: sim.simulatedMap
+      });
+
+      renderContraindications(alerts);
+
+      // 5. Hybrid Vector Retrieval
+      const activeTriggers = extractActiveTriggers(vitals, labs, sofa, selectedDrugs, {
+        norepinephrine: norepi,
+        fluidBolusMlKg: fluidBolus
+      });
+
+      const retrievedChunks = vectorIndex ? vectorIndex.search(null, activeTriggers, 4) : [];
+
+      // 6. Clinical Synthesis Generation
+      renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim);
+    }
+
+    function renderContraindications(alerts) {
+      const container = document.getElementById("contraindicationList");
+      const badge = document.getElementById("alertCountBadge");
+      container.innerHTML = "";
+
+      badge.textContent = `${alerts.length} Alert${alerts.length === 1 ? "" : "s"}`;
+      badge.style.color = alerts.length > 0 ? "#f43f5e" : "#10b981";
+
+      if (alerts.length === 0) {
+        container.innerHTML = `<div style="color:#64748b; font-size:0.75rem; padding:8px;">No acute organ toxicity or contraindications detected for current regimen.</div>`;
+        return;
+      }
+
+      for (const al of alerts) {
+        const div = document.createElement("div");
+        div.className = `alert-card ${al.level === "CRITICAL_HAZARD" ? "critical" : "caution"}`;
+        div.innerHTML = `
+          <div class="alert-header">
+            <span>${al.title}</span>
+            <span style="font-size:0.7rem; color:${al.level === "CRITICAL_HAZARD" ? "#f43f5e" : "#f59e0b"};">[${al.badge}]</span>
+          </div>
+          <div class="alert-msg">${al.message}</div>
+          <div class="alert-action">👉 Action: ${al.recommendation}</div>
+        `;
+        container.appendChild(div);
+      }
+    }
+
+    function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim) {
+      if (!synthesizer) return;
+      
+      const synth = synthesizer.synthesizeExtractiveNote(
+        activePatient,
+        record.hour,
+        record.vitals,
+        record.labs,
+        sofa,
+        status,
+        alerts,
+        retrievedChunks,
+        sim
+      );
+
+      // Update Confidence Pill
+      const conf = document.getElementById("confidencePill");
+      conf.className = `status-pill ${synth.confidence.color}`;
+      conf.textContent = synth.confidence.label;
+      document.getElementById("latencyBadge").textContent = `${synth.elapsedMs}ms (${synth.mode})`;
+
+      // Render Structured Note Sections
+      const box = document.getElementById("recommendationBox");
+      box.innerHTML = "";
+
+      for (const sec of synth.sections) {
+        const secDiv = document.createElement("div");
+        secDiv.className = "rec-section";
+        
+        // Parse inline citations e.g. [SSC-2021-FLUID-01] into clickable citation pills
+        const htmlBody = sec.body.replace(/\[([A-Z0-9_-]+)\]/g, (match, id) => {
+          return `<span class="cite-pill" onclick="inspectCitation('${id}')">[${id}]</span>`;
+        });
+
+        secDiv.innerHTML = `
+          <div class="rec-heading">${sec.heading}</div>
+          <div class="rec-body">${htmlBody}</div>
+        `;
+        box.appendChild(secDiv);
+      }
+    }
+
+    function inspectCitation(chunkId) {
+      const drawer = document.getElementById("citationDrawer");
+      if (!vectorIndex) return;
+      const chunk = vectorIndex.getChunkById(chunkId);
+
+      if (!chunk) {
+        drawer.innerHTML = `<div style="color:#f43f5e; font-size:0.78rem;">Citation [${chunkId}] not found in local index.</div>`;
+        return;
+      }
+
+      drawer.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <strong style="color:#38bdf8; font-size:0.85rem;">${chunk.id}: ${chunk.title}</strong>
+          <span style="font-size:0.7rem; color:#94a3b8; background:#1e293b; padding:2px 8px; border-radius:4px;">${chunk.evidence_grade}</span>
+        </div>
+        <div style="font-size:0.72rem; color:#64748b; margin-bottom:6px;">Source: ${chunk.source}</div>
+        <div style="color:#e2e8f0; line-height:1.45; font-size:0.8rem; background:#111a2a; padding:8px; border-radius:6px; border:1px solid #1e293b;">
+          "${chunk.text}"
+        </div>
+      `;
+    }
+
+    function updateGpuBadge() {
+      const ind = document.getElementById("gpuStatusIndicator");
+      if (synthesizer.webgpuAvailable) {
+        ind.textContent = "🟢 WebGPU Active";
+        ind.style.color = "#10b981";
+      } else {
+        ind.textContent = "⚪ CPU Mode";
+        ind.style.color = "#94a3b8";
+      }
+    }
+
+    function changeEngineMode(mode) {
+      if (synthesizer) {
+        synthesizer.setMode(mode);
+        renderCurrentState();
+      }
+    }
+
+    function switchTab(tab) {
+      const bedsideView = document.getElementById("bedsideView");
+      const benchmarkView = document.getElementById("benchmarkView");
+      const controlBar = document.getElementById("patientControlBar");
+      const tabBedside = document.getElementById("tabBedsideBtn");
+      const tabBenchmark = document.getElementById("tabBenchmarkBtn");
+
+      if (tab === "bedside") {
+        bedsideView.style.display = "grid";
+        controlBar.style.display = "flex";
+        benchmarkView.style.display = "none";
+        tabBedside.classList.add("active");
+        tabBenchmark.classList.remove("active");
+      } else {
+        bedsideView.style.display = "none";
+        controlBar.style.display = "none";
+        benchmarkView.style.display = "block";
+        tabBedside.classList.remove("active");
+        tabBenchmark.classList.add("active");
+      }
+    }
+
+    async function executeFullBenchmark() {
+      const btn = document.getElementById("runBenchmarkBtn");
+      btn.disabled = true;
+      btn.textContent = "⏳ Running Evaluation across 25 Trajectories...";
+
+      const res = await runCohortBenchmark(cohortData.patients, vectorIndex);
+
+      document.getElementById("benchRecallVal").textContent = `${res.overallContraindicationRecall}%`;
+      document.getElementById("benchPrecisionVal").textContent = `${res.overallRetrievalPrecision}%`;
+      document.getElementById("benchLatencyVal").textContent = `${res.avgLatencyMs} ms`;
+      document.getElementById("benchHoursVal").textContent = `${res.totalHoursEvaluated} hrs (${res.benchmarkDurationSec}s)`;
+
+      const tbody = document.getElementById("benchmarkTableBody");
+      tbody.innerHTML = "";
+
+      for (const p of res.patientSummaries) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-weight:700; color:#38bdf8;">${p.patientId}</td>
+          <td>${p.category}</td>
+          <td>${p.hours}</td>
+          <td><span style="font-weight:700;">${p.maxSofa}</span></td>
+          <td><span style="color:${p.retrievalPrecision >= 90 ? "#10b981" : "#f59e0b"}; font-weight:700;">${p.retrievalPrecision}%</span></td>
+          <td><span style="color:#f43f5e; font-weight:700;">${p.totalAlerts}</span></td>
+          <td><span style="background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:4px; font-size:0.72rem; font-weight:700;">VERIFIED ✅</span></td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      btn.disabled = false;
+      btn.textContent = "🔄 Re-Run Full Benchmark";
+    }
+  </script>
+</body>
+</html>

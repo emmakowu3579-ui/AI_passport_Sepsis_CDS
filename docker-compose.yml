@@ -1,0 +1,9 @@
+services:
+  sepsis-cds:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sepsis-cds-assistant
+    ports:
+      - "8000:80"
+    restart: unless-stopped

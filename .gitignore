@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments & Dependencies
+.env
+.venv
+env/
+venv/
+node_modules/
+
+# Raw Large Datasets (Curated data in data/curated is tracked)
+data/physionet_2019/raw_psv/
+data/raw_guidelines/antimicrobial_labels/
+scripts/extracted_sections.txt
+scripts/extracted_sepsis3.txt
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Antigravity & background task logs
+.gemini/
+.system_generated/
+*.log
