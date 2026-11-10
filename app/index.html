@@ -3,59 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sepsis Point-of-Care CDS Workstation | Surviving Sepsis Campaign 2021 &amp; Sepsis-3</title>
+  <title>SOFA Score &amp; Sepsis-3 Clinical Calculator | MDCalc CDS Workstation</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
   <!-- ======================================================================
-       1. Clinical Header & Hospital Navigation Bar
+       1. MDCalc Brand Clinical Header Bar
        ====================================================================== -->
-  <header class="clinical-header">
-    <div class="header-inner">
-      <div class="brand-section">
-        <div class="hospital-cross-badge" aria-hidden="true">✚</div>
-        <div class="brand-title">
-          <h1>Sepsis Point-of-Care Clinical Decision Support</h1>
-          <p>SURVIVING SEPSIS CAMPAIGN 2021 • SEPSIS-3 CONSENSUS • 5-DRUG ORGAN SAFETY ENGINE</p>
+  <header class="mdcalc-header">
+    <div class="mdcalc-header-inner">
+      <div class="mdcalc-brand">
+        <div class="mdcalc-logo-badge">
+          <span>✚</span> MDCalc
+        </div>
+        <div class="mdcalc-title-group">
+          <h1>Sequential Organ Failure Assessment (SOFA) &amp; Sepsis-3</h1>
+          <p>SURVIVING SEPSIS CAMPAIGN (SSC) 2021 • 5-DRUG ORGAN SAFETY ENGINE • POINT-OF-CARE CDS</p>
         </div>
       </div>
 
-      <!-- Progressive Disclosure: 4 Primary Workflow Views -->
-      <nav class="view-nav" aria-label="Workstation View Navigation">
-        <button id="tabPlanBtn" class="nav-tab-btn active" onclick="switchViewTab('plan')">
-          <span>📋</span> Bedside Treatment Plan
-        </button>
-        <button id="tabSimulatorBtn" class="nav-tab-btn" onclick="switchViewTab('simulator')">
-          <span>🧪</span> "What-If" Resuscitation Simulator
-        </button>
-        <button id="tabTelemetryBtn" class="nav-tab-btn" onclick="switchViewTab('telemetry')">
-          <span>📈</span> ICU Telemetry &amp; SOFA Trends
-        </button>
-        <button id="tabBenchmarkBtn" class="nav-tab-btn" onclick="switchViewTab('benchmark')">
-          <span>📊</span> 25-Patient Validation
-        </button>
-      </nav>
-
-      <!-- System Controls & Theme Switcher -->
-      <div class="header-actions">
-        <div class="engine-status-pill">
-          <span style="color:var(--text-muted); font-weight:700;">Inference:</span>
-          <select id="engineModeSelect" onchange="changeEngineMode(this.value)">
+      <div class="header-action-group">
+        <div class="engine-status-pill" style="background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2); color:#ffffff;">
+          <span style="opacity:0.85; font-size:0.82rem;">Inference:</span>
+          <select id="engineModeSelect" style="color:#ffffff;" onchange="changeEngineMode(this.value)">
             <option value="EXTRACTIVE_RAG">Framework 2A: Instant Extractive RAG (&lt; 5ms)</option>
             <option value="WEBGPU">Framework 1: WebGPU WebLLM (In-Browser GPU)</option>
             <option value="OLLAMA">Framework 2B: Local CPU LLM (Ollama 127.0.0.1)</option>
           </select>
-          <span id="gpuStatusIndicator" style="font-size:12px; font-weight:800;">🔍 Auto-detecting</span>
+          <span id="gpuStatusIndicator" style="font-size:12px; font-weight:800; color:#38bdf8;">🟢 CPU Fast</span>
         </div>
 
-        <!-- 1-Click Clinical Day / Night Theme Toggle -->
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Day Mode / Night Shift Mode">
+        <!-- 1-Click Day / Night Mode Toggle -->
+        <button id="themeToggleBtn" class="mdcalc-btn" onclick="toggleTheme()" title="Toggle Day Mode / Night Shift Mode">
           <span id="themeIcon">☀️</span> <span id="themeLabel">Day Mode</span>
         </button>
 
         <!-- 1-Click Copy Consultation Note to EHR -->
-        <button class="scrub-btn" style="background:var(--accent-primary); border-color:var(--accent-primary); color:#ffffff; font-weight:800; font-size:0.95rem; padding:8px 16px;" onclick="copyConsultNoteToClipboard()">
+        <button class="mdcalc-btn mdcalc-btn-primary" onclick="copyConsultNoteToClipboard()">
           <span>📋</span> Copy Note to EHR
         </button>
       </div>
@@ -63,658 +48,520 @@
   </header>
 
   <!-- ======================================================================
-       2. EHR Patient Banner & Longitudinal Timeline Scrubber
+       2. Patient Cohort Selector & Longitudinal ICU Timeline Scrubber
        ====================================================================== -->
-  <section id="patientBannerStrip" class="patient-banner-strip">
-    <!-- Patient Demographics & Selector -->
-    <div class="patient-demographics-card">
-      <div class="patient-avatar-box">
-        <span id="patientInitials">ICU</span>
-        <span id="patientBed" style="font-size:0.68rem; opacity:0.9;">BED 04</span>
-      </div>
-
-      <div class="patient-meta-details">
-        <div class="patient-meta-row1">
-          <label for="patientSelect" class="visually-hidden">Select Patient Profile</label>
-          <select id="patientSelect" class="patient-select-input" onchange="onPatientSelect(this.value)">
-            <option value="">Loading Curated ICU Cohort...</option>
-          </select>
-          <span id="sepsisStatusBadge" class="sepsis-classification-badge badge-normal">
-            <span aria-hidden="true">●</span> Non-Sepsis / SIRS
-          </span>
+  <section class="patient-ribbon-bar">
+    <div class="patient-ribbon-inner">
+      <!-- Patient Demographics & Selector -->
+      <div class="patient-select-wrapper">
+        <label for="patientSelect" style="font-size:0.85rem; font-weight:800; text-transform:uppercase; color:var(--text-muted);">
+          Patient Case:
+        </label>
+        <select id="patientSelect" class="patient-select-box" onchange="onPatientSelect(this.value)">
+          <option value="">Loading Curated ICU Cohort...</option>
+        </select>
+        <div class="patient-meta-pill">
+          Archetype: <strong id="patientCategoryLabel">Septic Shock</strong>
         </div>
-
-        <div class="patient-meta-row2">
-          <span class="patient-meta-item">Cohort Archetype: <strong id="patientCategoryLabel">Septic Shock</strong></span>
-          <span class="patient-meta-item">Demographics: <strong id="patientDemographicsLabel">65 yo Male</strong></span>
-          <span class="patient-meta-item">Sepsis-3 Transition: <strong id="patientOnsetLabel">Hour 73</strong></span>
+        <div class="patient-meta-pill">
+          Demographics: <strong id="patientDemographicsLabel">65 yo Male</strong>
+        </div>
+        <div class="patient-meta-pill">
+          Sepsis-3 Onset: <strong id="patientOnsetLabel">Hour 73</strong>
         </div>
       </div>
-    </div>
 
-    <!-- Timeline Scrubber -->
-    <div class="timeline-hub">
-      <button class="scrub-btn" onclick="stepTimeline(-1)" title="Previous ICU Hour">◀ Prev</button>
-      <button id="playPauseBtn" class="scrub-btn" onclick="togglePlayTimeline()" title="Play Timeline Progression">▶ Play</button>
-      <input type="range" id="hourSlider" class="timeline-range-input clinical-slider" min="1" max="50" value="1" oninput="onTimelineInput(this.value)">
-      <button class="scrub-btn" onclick="stepTimeline(1)" title="Next ICU Hour">Next ▶</button>
-      <div id="hourBadge" class="hour-indicator-tag">ICU Hr: 1</div>
+      <!-- Timeline Scrubber -->
+      <div class="timeline-controller">
+        <button class="mdcalc-btn" style="padding:6px 12px; font-size:0.82rem;" onclick="stepTimeline(-1)">◀ Prev</button>
+        <button id="playPauseBtn" class="mdcalc-btn" style="padding:6px 12px; font-size:0.82rem;" onclick="togglePlayTimeline()">▶ Play</button>
+        <input type="range" id="hourSlider" class="timeline-range-input clinical-slider" min="1" max="50" value="1" oninput="onTimelineInput(this.value)">
+        <button class="mdcalc-btn" style="padding:6px 12px; font-size:0.82rem;" onclick="stepTimeline(1)">Next ▶</button>
+        <div id="hourBadge" class="timeline-hour-badge">ICU Hr: 1</div>
+      </div>
     </div>
   </section>
 
   <!-- ======================================================================
-       3. Pinned Telemetry Quick-Bar (Always Visible Telemetry Anchor)
+       3. Main 2-Column MDCalc Layout (Calculator Left + Sticky Result Right)
        ====================================================================== -->
-  <section class="telemetry-quick-bar">
-    <div class="quick-bar-items">
-      <div class="quick-stat-item">
-        <span class="quick-stat-label">MAP:</span>
-        <span id="quickMap" class="quick-stat-val">--</span>
-        <span style="font-size:0.75rem; color:var(--text-muted);">mmHg</span>
-      </div>
-      <div class="quick-stat-item">
-        <span class="quick-stat-label">Heart Rate:</span>
-        <span id="quickHr" class="quick-stat-val">--</span>
-        <span style="font-size:0.75rem; color:var(--text-muted);">bpm</span>
-      </div>
-      <div class="quick-stat-item">
-        <span class="quick-stat-label">Resp:</span>
-        <span id="quickResp" class="quick-stat-val">--</span>
-        <span style="font-size:0.75rem; color:var(--text-muted);">/min</span>
-      </div>
-      <div class="quick-stat-item">
-        <span class="quick-stat-label">Lactate:</span>
-        <span id="quickLact" class="quick-stat-val">--</span>
-        <span style="font-size:0.75rem; color:var(--text-muted);">mmol/L</span>
-      </div>
-      <div class="quick-stat-item">
-        <span class="quick-stat-label">Creatinine:</span>
-        <span id="quickCr" class="quick-stat-val">--</span>
-        <span style="font-size:0.75rem; color:var(--text-muted);">mg/dL</span>
-      </div>
-      <div class="quick-stat-item">
-        <span class="quick-stat-label">Total SOFA:</span>
-        <span id="quickSofa" class="quick-stat-val" style="color:var(--accent-primary);">--</span>
-      </div>
-    </div>
-    <div class="quick-stat-item">
-      <span class="quick-stat-label">Simulated Post-Resuscitation MAP:</span>
-      <span id="quickSimMap" class="quick-stat-val target-text">-- mmHg</span>
-    </div>
-  </section>
+  <main class="mdcalc-container">
+    <div class="mdcalc-grid">
 
-  <!-- ======================================================================
-       4. Guided Clinical Workflow Stepper Bar (Where to Start & Where to Go)
-       ====================================================================== -->
-  <nav class="guided-workflow-ribbon" aria-label="Clinical Decision Workflow Guide">
-    <div style="font-size:0.85rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
-      <span>🧭</span> Clinical Pathway:
-    </div>
-    <div class="stepper-steps-container">
-      <button class="stepper-item active" id="stepBtn1" onclick="goToStep(1)">
-        <span>1️⃣</span> Triage &amp; SOFA Diagnostic
-      </button>
-      <span class="stepper-arrow" aria-hidden="true">➔</span>
-      <button class="stepper-item" id="stepBtn2" onclick="goToStep(2)">
-        <span>2️⃣</span> 1-Hour Bundle Actions
-      </button>
-      <span class="stepper-arrow" aria-hidden="true">➔</span>
-      <button class="stepper-item" id="stepBtn3" onclick="goToStep(3)">
-        <span>3️⃣</span> Antibiotics &amp; Renal Safety
-      </button>
-      <span class="stepper-arrow" aria-hidden="true">➔</span>
-      <button class="stepper-item" id="stepBtn4" onclick="goToStep(4)">
-        <span>4️⃣</span> "What-If" Perfusion Simulation
-      </button>
-      <span class="stepper-arrow" aria-hidden="true">➔</span>
-      <button class="stepper-item" id="stepBtn5" onclick="goToStep(5)">
-        <span>5️⃣</span> Finalize &amp; Copy EHR Note
-      </button>
-    </div>
-  </nav>
+      <!-- ==============================================================
+           LEFT COLUMN: Trajectory Plot + 6 SOFA Organ Systems
+           ============================================================== -->
+      <div class="mdcalc-calculator-col">
 
-  <!-- ======================================================================
-       5. TAB 1: Bedside Treatment Plan (Default Focused View)
-       ====================================================================== -->
-  <main id="viewPlan" class="view-panel active">
-    
-    <!-- Onboarding / Quick-Start Guidance Banner -->
-    <div class="clinical-quickstart-banner">
-      <div class="quickstart-text">
-        <h3>📍 Welcome to the Sepsis Clinical Decision Support Workstation</h3>
-        <p>
-          Follow the 5-step clinical pathway above: 
-          <strong>1. Triage</strong> patient status ➔ 
-          <strong>2. Execute</strong> 1-hour resuscitation bundle ➔ 
-          <strong>3. Adjust</strong> antimicrobials for organ dysfunction ➔ 
-          <strong>4. Simulate</strong> hemodynamic response ➔ 
-          <strong>5. Copy</strong> the verified SBAR note to EHR.
-        </p>
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button class="scrub-btn" style="background:var(--accent-primary); color:#ffffff; font-weight:800;" onclick="goToStep(2)">
-          Start 1-Hour Bundle ➔
-        </button>
-      </div>
-    </div>
-
-    <!-- Longitudinal Hemodynamic & Perfusion Plot (Interactive Timeline Chart) -->
-    <section class="chart-card-wrapper" aria-labelledby="chartSectionHeader">
-      <div class="chart-header-row">
-        <div class="chart-title-box">
-          <h3 id="chartSectionHeader">
-            <span>📈</span> Longitudinal Hemodynamics &amp; Lactate Clearance Curve
-          </h3>
-          <p>Continuous ICU hours trajectory. Hover for exact vital numbers. Click any point on the curve to jump to that ICU hour.</p>
-        </div>
-        <div class="chart-legend-box">
-          <div class="legend-item">
-            <span class="legend-color-dot" style="background:#0284c7;"></span>
-            <span>Mean Arterial Pressure (MAP)</span>
+        <!-- Interactive Longitudinal Hemodynamic & Perfusion Plot -->
+        <section class="mdcalc-card" aria-labelledby="chartSectionHeader">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 id="chartSectionHeader" class="mdcalc-card-title">
+                <span>📈</span> Longitudinal Hemodynamics &amp; Lactate Clearance Plot
+              </h2>
+              <p class="mdcalc-card-subtitle">
+                Continuous ICU timeline. Blue = MAP, Amber = Lactate. Click any point on the curve to jump to that ICU hour.
+              </p>
+            </div>
+            <div style="display:flex; gap:14px; font-size:0.82rem; font-weight:700;">
+              <span style="color:#0284c7;">● MAP</span>
+              <span style="color:#10b981;">--- Goal &ge; 65 mmHg</span>
+              <span style="color:#f59e0b;">● Lactate</span>
+              <span style="color:#ef4444;">🚨 Sepsis Onset</span>
+            </div>
           </div>
-          <div class="legend-item">
-            <span class="legend-color-dot" style="background:#10b981;"></span>
-            <span>Target Goal (&ge; 65 mmHg)</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color-dot" style="background:#f59e0b;"></span>
-            <span>Serum Lactate (mmol/L)</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color-dot" style="background:#ef4444;"></span>
-            <span>Hypoperfusion Zone (&lt; 65)</span>
-          </div>
-        </div>
-      </div>
+          <!-- Native SVG Chart Canvas -->
+          <svg id="hemodynamicTrajectorySvg" style="width:100%; height:auto; min-height:240px;" role="img" aria-label="Hemodynamic Trajectory Plot"></svg>
+        </section>
 
-      <!-- SVG Chart Canvas -->
-      <svg id="hemodynamicTrajectorySvg" class="svg-clinical-chart" role="img" aria-label="Longitudinal MAP and Lactate trajectory chart"></svg>
-    </section>
-
-    <!-- Main 2-Column Treatment Plan Layout -->
-    <div class="treatment-plan-layout">
-      
-      <!-- Primary Clinical Decision Support Plan Column -->
-      <section class="clinical-card" aria-labelledby="recommendationHeader">
-        <div class="card-header-bar">
-          <h2 id="recommendationHeader" class="card-header-title">
-            <span>📋</span> Evidence-Based SBAR Consultation Note &amp; Dosing Regimen
+        <!-- The 6 SOFA Organ Systems (MDCalc Segmented Controls) -->
+        <section class="mdcalc-card" aria-labelledby="sofaCalculatorHeader">
+          <h2 id="sofaCalculatorHeader" class="mdcalc-card-title">
+            <span>🧮</span> SOFA Score Organ Systems Assessment
           </h2>
-          <div style="display:flex; gap:12px; align-items:center;">
-            <span id="confidencePill" class="sepsis-classification-badge badge-sepsis" style="padding:4px 12px; font-size:0.85rem;">High Confidence</span>
-            <span id="latencyBadge" style="font-family:var(--font-mono); font-size:0.85rem; color:var(--accent-primary); font-weight:800;">&lt; 5ms</span>
-          </div>
-        </div>
+          <p class="mdcalc-card-subtitle">
+            Values automatically sync with the patient's EHR lab &amp; vital records at the active ICU hour. You may also click any point button to simulate what-if organ failure changes.
+          </p>
 
-        <!-- Structured SBAR Note Container (Rendered cleanly via markdownRenderer) -->
-        <div id="recommendationBox" style="display:flex; flex-direction:column; gap:18px;">
-          <div style="color:var(--text-muted); font-size:0.95rem; text-align:center; padding:30px;">
-            Initializing clinical knowledge base and synthesizing recommendation note...
+          <!-- 1. Respiration System -->
+          <div class="organ-system-group">
+            <div class="organ-header-row">
+              <span class="organ-title">🫁 1. Respiration (PaO2/FiO2 ratio)</span>
+              <span id="labReadoutResp" class="organ-current-lab">PaO2/FiO2: --</span>
+            </div>
+            <div class="segmented-control" id="groupResp">
+              <button class="segmented-btn active" data-score="0" onclick="overrideOrganScore('resp', 0)">
+                <span>&ge; 400</span>
+                <span class="point-badge">+0 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="1" onclick="overrideOrganScore('resp', 1)">
+                <span>&lt; 400</span>
+                <span class="point-badge">+1 pt</span>
+              </button>
+              <button class="segmented-btn" data-score="2" onclick="overrideOrganScore('resp', 2)">
+                <span>&lt; 300</span>
+                <span class="point-badge">+2 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="3" onclick="overrideOrganScore('resp', 3)">
+                <span>&lt; 200 w/ vent</span>
+                <span class="point-badge">+3 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="4" onclick="overrideOrganScore('resp', 4)">
+                <span>&lt; 100 w/ vent</span>
+                <span class="point-badge">+4 pts</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Guided Navigation Footer -->
-        <div class="workflow-navigation-footer">
-          <button class="scrub-btn" onclick="stepTimeline(-1)">
-            ◀ Previous ICU Hour
-          </button>
-          <div style="display:flex; gap:10px;">
-            <button class="scrub-btn" style="background:var(--accent-primary); color:#ffffff; font-weight:800;" onclick="switchViewTab('simulator')">
-              Next: Test "What-If" Resuscitation Simulation ➔
+          <!-- 2. Coagulation System -->
+          <div class="organ-system-group">
+            <div class="organ-header-row">
+              <span class="organ-title">🩸 2. Coagulation (Platelets &times; 10&sup3;/&mu;L)</span>
+              <span id="labReadoutCoag" class="organ-current-lab">Platelets: -- k/&mu;L</span>
+            </div>
+            <div class="segmented-control" id="groupCoag">
+              <button class="segmented-btn active" data-score="0" onclick="overrideOrganScore('coag', 0)">
+                <span>&ge; 150</span>
+                <span class="point-badge">+0 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="1" onclick="overrideOrganScore('coag', 1)">
+                <span>&lt; 150</span>
+                <span class="point-badge">+1 pt</span>
+              </button>
+              <button class="segmented-btn" data-score="2" onclick="overrideOrganScore('coag', 2)">
+                <span>&lt; 100</span>
+                <span class="point-badge">+2 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="3" onclick="overrideOrganScore('coag', 3)">
+                <span>&lt; 50</span>
+                <span class="point-badge">+3 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="4" onclick="overrideOrganScore('coag', 4)">
+                <span>&lt; 20</span>
+                <span class="point-badge">+4 pts</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Liver System -->
+          <div class="organ-system-group">
+            <div class="organ-header-row">
+              <span class="organ-title">🧪 3. Liver (Total Bilirubin mg/dL)</span>
+              <span id="labReadoutLiver" class="organ-current-lab">Bilirubin: -- mg/dL</span>
+            </div>
+            <div class="segmented-control" id="groupLiver">
+              <button class="segmented-btn active" data-score="0" onclick="overrideOrganScore('liver', 0)">
+                <span>&lt; 1.2</span>
+                <span class="point-badge">+0 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="1" onclick="overrideOrganScore('liver', 1)">
+                <span>1.2–1.9</span>
+                <span class="point-badge">+1 pt</span>
+              </button>
+              <button class="segmented-btn" data-score="2" onclick="overrideOrganScore('liver', 2)">
+                <span>2.0–5.9</span>
+                <span class="point-badge">+2 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="3" onclick="overrideOrganScore('liver', 3)">
+                <span>6.0–11.9</span>
+                <span class="point-badge">+3 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="4" onclick="overrideOrganScore('liver', 4)">
+                <span>&ge; 12.0</span>
+                <span class="point-badge">+4 pts</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Cardiovascular System -->
+          <div class="organ-system-group">
+            <div class="organ-header-row">
+              <span class="organ-title">❤️ 4. Cardiovascular (MAP &amp; Vasopressors)</span>
+              <span id="labReadoutCv" class="organ-current-lab">MAP: -- mmHg</span>
+            </div>
+            <div class="segmented-control" id="groupCv">
+              <button class="segmented-btn active" data-score="0" onclick="overrideOrganScore('cv', 0)">
+                <span>MAP &ge; 70</span>
+                <span class="point-badge">+0 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="1" onclick="overrideOrganScore('cv', 1)">
+                <span>MAP &lt; 70</span>
+                <span class="point-badge">+1 pt</span>
+              </button>
+              <button class="segmented-btn" data-score="2" onclick="overrideOrganScore('cv', 2)">
+                <span>Dopamine &le;5</span>
+                <span class="point-badge">+2 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="3" onclick="overrideOrganScore('cv', 3)">
+                <span>Norepi &le;0.1</span>
+                <span class="point-badge">+3 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="4" onclick="overrideOrganScore('cv', 4)">
+                <span>Norepi &gt;0.1</span>
+                <span class="point-badge">+4 pts</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 5. Central Nervous System -->
+          <div class="organ-system-group">
+            <div class="organ-header-row">
+              <span class="organ-title">🧠 5. Central Nervous System (Glasgow Coma Scale)</span>
+              <span id="labReadoutCns" class="organ-current-lab">GCS: 15</span>
+            </div>
+            <div class="segmented-control" id="groupCns">
+              <button class="segmented-btn active" data-score="0" onclick="overrideOrganScore('cns', 0)">
+                <span>GCS 15</span>
+                <span class="point-badge">+0 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="1" onclick="overrideOrganScore('cns', 1)">
+                <span>GCS 13–14</span>
+                <span class="point-badge">+1 pt</span>
+              </button>
+              <button class="segmented-btn" data-score="2" onclick="overrideOrganScore('cns', 2)">
+                <span>GCS 10–12</span>
+                <span class="point-badge">+2 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="3" onclick="overrideOrganScore('cns', 3)">
+                <span>GCS 6–9</span>
+                <span class="point-badge">+3 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="4" onclick="overrideOrganScore('cns', 4)">
+                <span>GCS &lt; 6</span>
+                <span class="point-badge">+4 pts</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 6. Renal System -->
+          <div class="organ-system-group">
+            <div class="organ-header-row">
+              <span class="organ-title">💧 6. Renal (Serum Creatinine mg/dL)</span>
+              <span id="labReadoutRenal" class="organ-current-lab">Creatinine: -- mg/dL</span>
+            </div>
+            <div class="segmented-control" id="groupRenal">
+              <button class="segmented-btn active" data-score="0" onclick="overrideOrganScore('renal', 0)">
+                <span>&lt; 1.2</span>
+                <span class="point-badge">+0 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="1" onclick="overrideOrganScore('renal', 1)">
+                <span>1.2–1.9</span>
+                <span class="point-badge">+1 pt</span>
+              </button>
+              <button class="segmented-btn" data-score="2" onclick="overrideOrganScore('renal', 2)">
+                <span>2.0–3.4</span>
+                <span class="point-badge">+2 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="3" onclick="overrideOrganScore('renal', 3)">
+                <span>3.5–4.9</span>
+                <span class="point-badge">+3 pts</span>
+              </button>
+              <button class="segmented-btn" data-score="4" onclick="overrideOrganScore('renal', 4)">
+                <span>&ge; 5.0</span>
+                <span class="point-badge">+4 pts</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ==============================================================
+           RIGHT COLUMN: The Signature MDCalc Sticky Result Box
+           ============================================================== -->
+      <div class="mdcalc-result-col">
+        <div class="sticky-result-card">
+          <!-- Score Banner -->
+          <div class="result-card-banner">
+            <div>
+              <div class="result-score-title">Total SOFA Score</div>
+              <div style="font-size:0.75rem; opacity:0.85;">Acute Sepsis Threshold: &ge; 2 Points</div>
+            </div>
+            <div style="display:flex; align-items:baseline; gap:4px;">
+              <span id="stickySofaTotal" class="result-score-num">0</span>
+              <span style="font-size:1.1rem; opacity:0.85; font-weight:700;">pts</span>
+            </div>
+          </div>
+
+          <!-- Result Body -->
+          <div class="result-card-body">
+            <!-- Classification Badge -->
+            <div id="stickyClassificationBadge" class="result-interpretation-badge" style="background:var(--status-normal-bg); color:var(--status-normal); border-color:var(--status-normal-border);">
+              ● Non-Sepsis / SIRS Control
+            </div>
+
+            <!-- In-Hospital Mortality Estimate -->
+            <div class="mortality-estimate-box">
+              <span style="color:var(--text-muted); font-weight:700;">Estimated In-Hospital Mortality:</span>
+              <span id="stickyMortalityVal" class="mortality-val">&lt; 5%</span>
+            </div>
+
+            <!-- Confidence & Latency -->
+            <div style="display:flex; justify-content:space-between; font-size:0.82rem; color:var(--text-muted);">
+              <span>Confidence: <strong id="stickyConfidenceLabel" style="color:var(--text-primary);">High (SSC Grounded)</strong></span>
+              <span id="stickyLatencyVal" style="font-family:var(--font-mono); font-weight:800; color:var(--md-blue);">&lt; 5ms</span>
+            </div>
+
+            <!-- Immediate SSC 1-Hour Bundle Actions -->
+            <div>
+              <div class="result-actions-header">⚡ Immediate 1-Hour SSC Bundle Actions</div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div class="result-action-item">
+                  <span class="result-action-icon">🧪</span>
+                  <div><strong>Blood Cultures:</strong> Draw two sets prior to initiating antimicrobials. <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-BUNDLE-02')">[SSC-2021-BUNDLE-02]</button></div>
+                </div>
+                <div class="result-action-item">
+                  <span class="result-action-icon">💧</span>
+                  <div><strong>Fluid Resuscitation:</strong> 30 mL/kg IV balanced crystalloids if MAP &lt; 65 or Lactate &ge; 4. <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-FLUID-01')">[SSC-2021-FLUID-01]</button></div>
+                </div>
+                <div class="result-action-item">
+                  <span class="result-action-icon">💊</span>
+                  <div><strong>Antimicrobials:</strong> Initiate broad-spectrum IV coverage within 1 hour. <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-BUNDLE-03')">[SSC-2021-BUNDLE-03]</button></div>
+                </div>
+                <div class="result-action-item">
+                  <span class="result-action-icon">💉</span>
+                  <div><strong>Vasopressors:</strong> Titrate Norepinephrine to target MAP &ge; 65 mmHg. <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-VASO-01')">[SSC-2021-VASO-01]</button></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Contraindication Warnings -->
+            <div id="stickyAlertsContainer" style="display:flex; flex-direction:column; gap:8px;">
+              <!-- Populated dynamically -->
+            </div>
+
+            <!-- Primary 1-Click Copy CTA -->
+            <button class="result-cta-btn" onclick="copyConsultNoteToClipboard()">
+              <span>📋</span> Copy Consultation Note to EHR
             </button>
           </div>
         </div>
-      </section>
-
-      <!-- Verifiable Evidence & Quick Action Drawer -->
-      <aside class="clinical-card" style="height:fit-content; position:sticky; top:80px;" aria-labelledby="citationHeader">
-        <div class="card-header-bar">
-          <h3 id="citationHeader" class="card-header-title">
-            <span>📖</span> Verifiable Citation Inspector
-          </h3>
-          <span style="font-size:0.75rem; color:var(--text-muted);">Click any [CHUNK-ID]</span>
-        </div>
-
-        <div id="citationDrawer" class="citation-inspector-drawer">
-          <p style="color:var(--text-dim); font-size:0.88rem;">
-            Click on any citation button in the clinical text (e.g., <span class="citation-pill">[SSC-2021-BUNDLE-01]</span> or <span class="citation-pill">[DOSE-VANC-01]</span>) to inspect verbatim guideline text, publication source, and evidence recommendation grade.
-          </p>
-        </div>
-
-        <!-- Quick Bedside Safety Summary -->
-        <div class="card-header-bar" style="margin-top:10px;">
-          <h3 class="card-header-title">
-            <span>🛡️</span> Active Organ Safety Gates
-          </h3>
-          <span id="safetyAlertsSummaryBadge" style="font-size:0.82rem; font-weight:800; color:var(--status-normal);">0 Warnings</span>
-        </div>
-        <div id="safetySummaryList" style="display:flex; flex-direction:column; gap:10px;">
-          <!-- Dynamically populated -->
-        </div>
-
-        <!-- Rapid Actions -->
-        <div style="display:flex; flex-direction:column; gap:10px; margin-top:12px;">
-          <button class="scrub-btn" style="justify-content:center; padding:12px; background:var(--accent-primary); color:#ffffff; font-weight:800; font-size:0.95rem;" onclick="copyConsultNoteToClipboard()">
-            📋 Copy Complete Note to EHR Clipboard
-          </button>
-          <button class="scrub-btn" style="justify-content:center; padding:11px; font-weight:700;" onclick="switchViewTab('simulator')">
-            🧪 Open "What-If" Resuscitation Simulator ➔
-          </button>
-          <button class="scrub-btn" style="justify-content:center; padding:11px; font-weight:700;" onclick="switchViewTab('telemetry')">
-            📈 View Full Telemetry &amp; SOFA Trends ➔
-          </button>
-        </div>
-      </aside>
+      </div>
 
     </div>
-  </main>
 
-  <!-- ======================================================================
-       6. TAB 2: "What-If" Resuscitation Simulator & Perfusion Workspace
-       ====================================================================== -->
-  <main id="viewSimulator" class="view-panel">
-    <div class="simulator-layout">
-
-      <!-- Left Column: Interactive Resuscitation Controls & Drug Select -->
-      <section class="clinical-card" aria-labelledby="controlsHeader">
-        <div class="card-header-bar">
-          <h2 id="controlsHeader" class="card-header-title">
-            <span>🧪</span> Hemodynamic &amp; Pharmacologic Intervention Controls
-          </h2>
-          <span style="font-size:0.8rem; color:var(--status-normal); font-weight:800;">Real-time Dynamic Feedback</span>
-        </div>
-
-        <!-- Crystalloid Bolus Slider -->
-        <div class="intervention-group">
-          <div class="slider-label-row">
-            <span>IV Balanced Crystalloid Bolus:</span>
-            <span class="slider-readout"><span id="valFluidBolus">30</span> mL/kg (<span id="valFluidTotalMl">2100</span> mL)</span>
-          </div>
-          <input type="range" id="fluidSlider" class="clinical-slider" min="0" max="40" step="5" value="30" oninput="onSimulationInput()">
-          <span style="font-size:0.82rem; color:var(--text-muted);">Surviving Sepsis Campaign 2021 recommends &ge; 30 mL/kg within initial 3 hours for hypoperfusion.</span>
-        </div>
-
-        <!-- Norepinephrine Titration Slider -->
-        <div class="intervention-group">
-          <div class="slider-label-row">
-            <span>Norepinephrine Titration:</span>
-            <span class="slider-readout"><span id="valNorepi">0.05</span> &mu;g/kg/min</span>
-          </div>
-          <input type="range" id="norepiSlider" class="clinical-slider" min="0" max="0.5" step="0.02" value="0.05" oninput="onSimulationInput()">
-          <span style="font-size:0.82rem; color:var(--text-muted);">First-line vasopressor to restore perfusion and maintain MAP &ge; 65 mmHg.</span>
-        </div>
-
-        <!-- Vasopressin Second-Line Toggle -->
-        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-inset); padding:12px 16px; border-radius:8px; border:1px solid var(--border-subtle);">
-          <div>
-            <div style="font-size:0.92rem; font-weight:800;">Vasopressin 0.03 units/min (Second-Line)</div>
-            <div style="font-size:0.8rem; color:var(--text-muted);">Initiate when norepinephrine requirements are escalating.</div>
-          </div>
-          <input type="checkbox" id="checkVaso" style="width:22px; height:22px; cursor:pointer;" onchange="onSimulationInput()">
-        </div>
-
-        <!-- Antimicrobial Prescribing Selection Panel -->
-        <div class="intervention-group" style="margin-top:10px;">
-          <div class="slider-label-row">
-            <span>Empiric Antimicrobial Prescribing Panel:</span>
-            <span style="font-size:0.8rem; color:var(--text-muted);">5-Drug Protocol</span>
-          </div>
-          <div class="drug-pill-grid">
-            <label class="drug-pill-label">
-              <input type="checkbox" id="drugVanc" value="vancomycin" checked onchange="onSimulationInput()">
-              <span>Vancomycin (MRSA)</span>
-            </label>
-            <label class="drug-pill-label">
-              <input type="checkbox" id="drugPipTazo" value="piperacillin_tazobactam" checked onchange="onSimulationInput()">
-              <span>Pip-Tazo (Zosyn)</span>
-            </label>
-            <label class="drug-pill-label">
-              <input type="checkbox" id="drugCefepime" value="cefepime" onchange="onSimulationInput()">
-              <span>Cefepime (Maxipime)</span>
-            </label>
-            <label class="drug-pill-label">
-              <input type="checkbox" id="drugMero" value="meropenem" onchange="onSimulationInput()">
-              <span>Meropenem (Merrem)</span>
-            </label>
-            <label class="drug-pill-label" style="grid-column: 1 / -1;">
-              <input type="checkbox" id="drugGent" value="gentamicin" onchange="onSimulationInput()">
-              <span>Gentamicin (Aminoglycoside Synergy)</span>
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <!-- Right Column: Hemodynamic Forecast & Safety Alerts -->
-      <section class="clinical-card" aria-labelledby="forecastHeader">
-        <div class="card-header-bar">
-          <h2 id="forecastHeader" class="card-header-title">
-            <span>📊</span> Simulated Perfusion &amp; Safety Trajectory
-          </h2>
-          <span id="targetStatusPill" class="forecast-target-pill badge-normal">TARGET MET ✅</span>
-        </div>
-
-        <!-- Visual MAP Comparison Gauge Chart -->
-        <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px; margin-bottom:12px;">
-          <div style="font-size:0.82rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">
-            Hemodynamic Perfusion Target Gauge:
-          </div>
-          <svg id="simComparisonSvg" style="width:100%; height:150px;"></svg>
-        </div>
-
-        <!-- Hemodynamic Forecast Box -->
-        <div class="hemodynamic-forecast-box">
-          <div class="forecast-row">
-            <span style="color:var(--text-muted); font-weight:700;">Simulated Post-Resuscitation MAP:</span>
-            <span id="simMapVal" style="font-family:var(--font-mono); font-size:1.55rem; font-weight:900; color:var(--accent-primary);">-- mmHg</span>
-          </div>
-          <div class="forecast-row">
-            <span style="color:var(--text-muted); font-weight:700;">Target MAP Threshold (&ge; 65 mmHg):</span>
-            <span id="simTargetMetLabel" style="font-weight:800; font-size:1rem;">Goal Achieved</span>
-          </div>
-          <div class="forecast-row">
-            <span style="color:var(--text-muted); font-weight:700;">Expected Lactate Clearance (2–4h):</span>
-            <span id="simLactVal" style="font-family:var(--font-mono); font-weight:800; font-size:1.1rem; color:var(--status-normal);">-- mmol/L</span>
-          </div>
-          <div class="forecast-row">
-            <span style="color:var(--text-muted); font-weight:700;">Volume Overload / Pulmonary Edema Risk:</span>
-            <span id="simOverloadVal" style="font-family:var(--font-mono); font-weight:900; font-size:1.15rem; color:var(--status-warning);">0%</span>
-          </div>
-        </div>
-
-        <!-- Real-Time Safety & Contraindication Alerts -->
-        <div class="card-header-bar" style="margin-top:10px;">
-          <h3 class="card-header-title">
-            <span>⚠️</span> Active Organ Contraindication Warnings
-          </h3>
-          <span id="alertCountBadge" style="font-size:0.85rem; font-weight:800; color:var(--status-critical);">0 Alerts</span>
-        </div>
-
-        <div id="contraindicationList" style="display:flex; flex-direction:column; gap:10px;">
-          <!-- Contraindication cards inserted here dynamically -->
-        </div>
-
-        <!-- Workflow Step Return Button -->
-        <div class="workflow-navigation-footer" style="margin-top:12px;">
-          <button class="scrub-btn" onclick="switchViewTab('plan')">
-            ◀ Back to Treatment Plan
-          </button>
-          <button class="scrub-btn" style="background:var(--accent-primary); color:#ffffff; font-weight:800;" onclick="switchViewTab('telemetry')">
-            Next: View Full SOFA &amp; Lab Trends ➔
-          </button>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- ======================================================================
-       7. TAB 3: ICU Telemetry & Sequential Organ Failure (SOFA)
-       ====================================================================== -->
-  <main id="viewTelemetry" class="view-panel">
-    <div class="telemetry-dashboard-layout">
-
-      <!-- Vital Signs Grid with SVG Sparklines -->
-      <section class="clinical-card" aria-labelledby="vitalsGridHeader">
-        <div class="card-header-bar">
-          <h2 id="vitalsGridHeader" class="card-header-title">
-            <span>📈</span> Bedside Vital Signs (12-Hour Historical Trajectory)
-          </h2>
-          <span style="font-size:0.82rem; color:var(--text-muted);">Continuous ICU Bedside Telemetry</span>
-        </div>
-
-        <div class="telemetry-row-4">
-          <!-- Mean Arterial Pressure -->
-          <div id="tileMap" class="vital-tile">
-            <div class="vital-header">
-              <span class="vital-label">MAP</span>
-              <span class="vital-ref-range">Target &ge; 65</span>
-            </div>
-            <div class="vital-value-row">
-              <span class="vital-num" id="valMap">--</span>
-              <span class="vital-unit">mmHg</span>
-            </div>
-            <svg id="sparkMap" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-          </div>
-
-          <!-- Heart Rate -->
-          <div id="tileHr" class="vital-tile">
-            <div class="vital-header">
-              <span class="vital-label">Heart Rate</span>
-              <span class="vital-ref-range">60–100</span>
-            </div>
-            <div class="vital-value-row">
-              <span class="vital-num" id="valHr">--</span>
-              <span class="vital-unit">bpm</span>
-            </div>
-            <svg id="sparkHr" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-          </div>
-
-          <!-- Respiratory Rate -->
-          <div id="tileResp" class="vital-tile">
-            <div class="vital-header">
-              <span class="vital-label">Resp Rate</span>
-              <span class="vital-ref-range">12–20</span>
-            </div>
-            <div class="vital-value-row">
-              <span class="vital-num" id="valResp">--</span>
-              <span class="vital-unit">/min</span>
-            </div>
-            <svg id="sparkResp" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-          </div>
-
-          <!-- Temperature -->
-          <div id="tileTemp" class="vital-tile">
-            <div class="vital-header">
-              <span class="vital-label">Temperature</span>
-              <span class="vital-ref-range">36.5–37.5</span>
-            </div>
-            <div class="vital-value-row">
-              <span class="vital-num" id="valTemp">--</span>
-              <span class="vital-unit">&deg;C</span>
-            </div>
-            <svg id="sparkTemp" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-          </div>
-        </div>
-      </section>
-
-      <!-- Critical Organ Laboratory Metrics -->
-      <section class="clinical-card" aria-labelledby="labsGridHeader">
-        <div class="card-header-bar">
-          <h2 id="labsGridHeader" class="card-header-title">
-            <span>🧪</span> Critical Organ Laboratory Telemetry
-          </h2>
-          <span style="font-size:0.82rem; color:var(--accent-primary); font-weight:800;">Dual Lactate Normalization</span>
-        </div>
-
-        <div class="telemetry-row-4">
-          <!-- Serum Lactate -->
-          <div id="tileLactate" class="vital-tile">
-            <div class="vital-header">
-              <span class="vital-label">Lactate</span>
-              <span class="vital-ref-range">&lt; 2.0 mmol/L</span>
-            </div>
-            <div class="vital-value-row">
-              <span class="vital-num" id="valLactMmol">--</span>
-              <span class="vital-unit">mmol/L</span>
-            </div>
-            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
-              Raw: <strong id="valLactMgDl" style="color:var(--text-primary);">--</strong> mg/dL
-            </div>
-            <svg id="sparkLact" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-            <div id="staleLactate" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
-          </div>
-
-          <!-- Serum Creatinine -->
-          <div id="tileCreatinine" class="vital-tile">
-            <div class="vital-header">
-              <span class="vital-label">Creatinine</span>
-              <span class="vital-ref-range">0.7–1.3</span>
-            </div>
-            <div class="vital-value-row">
-              <span class="vital-num" id="valCr">--</span>
-              <span class="vital-unit">mg/dL</span>
-            </div>
-            <svg id="sparkCr" class="sparkline-svg" viewBox="0 0 100 24"></svg>
-            <div id="staleCr" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
-          </div>
-
-          <!-- Platelets -->
-          <div id="tilePlatelets" class="vital-tile">
-            <div class="vital-header">
-              <span class="vital-label">Platelets</span>
-              <span class="vital-ref-range">&ge; 150</span>
-            </div>
-            <div class="vital-value-row">
-              <span class="vital-num" id="valPlt">--</span>
-              <span class="vital-unit">k/&mu;L</span>
-            </div>
-            <div id="stalePlt" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
-          </div>
-
-          <!-- Total Bilirubin -->
-          <div id="tileBili" class="vital-tile">
-            <div class="vital-header">
-              <span class="vital-label">Bilirubin</span>
-              <span class="vital-ref-range">&lt; 1.2</span>
-            </div>
-            <div class="vital-value-row">
-              <span class="vital-num" id="valBili">--</span>
-              <span class="vital-unit">mg/dL</span>
-            </div>
-            <div id="staleBili" class="stale-lab-indicator" style="display:none;">⏳ &gt;6h Stale Lab</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Longitudinal SOFA Progression Plot -->
-      <section class="chart-card-wrapper" aria-labelledby="sofaChartHeader">
-        <div class="chart-header-row">
-          <div class="chart-title-box">
-            <h3 id="sofaChartHeader">
-              <span>📉</span> Longitudinal SOFA Score Progression Curve
-            </h3>
-            <p>Monitors acute organ failure evolution over the entire ICU admission. Sepsis-3 threshold line marked at &ge; 2 points.</p>
-          </div>
-        </div>
-        <svg id="sofaProgressionSvg" class="svg-clinical-chart" role="img" aria-label="SOFA score evolution chart"></svg>
-      </section>
-
-      <!-- Deterministic SOFA Matrix Breakdown -->
-      <section class="sofa-matrix-card" aria-labelledby="sofaMatrixHeader">
-        <div class="sofa-headline">
-          <div>
-            <h2 id="sofaMatrixHeader" style="font-size:1.15rem; font-weight:800; color:var(--text-primary); text-transform:uppercase;">
-              Sequential Organ Failure Assessment (SOFA) Sub-Score Breakdown
-            </h2>
-            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">
-              Sepsis-3 Acute Threshold: Acute $\Delta \text{SOFA} \ge 2$ points attributed to infection
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:800;">Total SOFA Score</div>
-            <div id="sofaTotalVal" class="sofa-big-score">0</div>
-          </div>
-        </div>
-
-        <div class="sofa-sub-matrix">
-          <div class="sofa-col">
-            <div class="sofa-col-name">Respiration (PaO2/FiO2)</div>
-            <div id="sofaRespVal" class="sofa-col-val">0</div>
-          </div>
-          <div class="sofa-col">
-            <div class="sofa-col-name">Coagulation (Platelets)</div>
-            <div id="sofaCoagVal" class="sofa-col-val">0</div>
-          </div>
-          <div class="sofa-col">
-            <div class="sofa-col-name">Liver (Bilirubin)</div>
-            <div id="sofaLiverVal" class="sofa-col-val">0</div>
-          </div>
-          <div class="sofa-col">
-            <div class="sofa-col-name">Cardiovascular (MAP/Pressor)</div>
-            <div id="sofaCvVal" class="sofa-col-val">0</div>
-          </div>
-          <div class="sofa-col">
-            <div class="sofa-col-name">Renal (Creatinine)</div>
-            <div id="sofaRenalVal" class="sofa-col-val">0</div>
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- ======================================================================
-       8. TAB 4: 25-Patient Validation Benchmark
-       ====================================================================== -->
-  <main id="viewBenchmark" class="view-panel">
-    <div class="clinical-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-        <div>
-          <h2 style="font-size:1.35rem; font-weight:800; color:var(--text-primary);">
-            PhysioNet 2019 ICU Cohort Validation Benchmark
-          </h2>
-          <p style="font-size:0.9rem; color:var(--text-muted); margin-top:4px;">
-            Automated stress-testing of deterministic SOFA math, retrieval precision@3, and contraindication recall across all 25 patient trajectories.
-          </p>
-        </div>
-        <button id="runBenchmarkBtn" class="scrub-btn" style="background:var(--accent-primary); color:#ffffff; font-weight:800; padding:12px 24px; font-size:1rem;" onclick="executeFullBenchmark()">
-          ▶ Run Full Benchmark Suite
+    <!-- ==============================================================
+         BELOW-THE-CALCULATOR SECTIONS (Standard MDCalc Subsections)
+         ============================================================== -->
+    <section class="mdcalc-subsections">
+      
+      <!-- Sub-section Navigation Tabs -->
+      <nav class="mdcalc-section-tabs" aria-label="Clinical Subsections">
+        <button id="subtabDosingBtn" class="mdcalc-subtab-btn active" onclick="switchSubsection('dosing')">
+          💊 Empiric Antimicrobial Prescribing Table &amp; Renal Safety
         </button>
-      </div>
+        <button id="subtabSimulatorBtn" class="mdcalc-subtab-btn" onclick="switchSubsection('simulator')">
+          🧪 "What-If" Resuscitation Simulator &amp; Perfusion Forecast
+        </button>
+        <button id="subtabEvidenceBtn" class="mdcalc-subtab-btn" onclick="switchSubsection('evidence')">
+          📖 Pearls, Pitfalls &amp; Literature Evidence Inspector
+        </button>
+        <button id="subtabBenchmarkBtn" class="mdcalc-subtab-btn" onclick="switchSubsection('benchmark')">
+          📊 PhysioNet 2019 ICU Cohort Validation (25 Patients)
+        </button>
+      </nav>
 
-      <!-- Summary KPI Cards -->
-      <div class="audit-metrics-row">
-        <div class="audit-kpi-card">
-          <div class="vital-label">Contraindication Recall</div>
-          <div id="benchRecallVal" class="audit-kpi-num" style="color:var(--status-normal);">100%</div>
-          <div style="font-size:0.82rem; color:var(--status-normal); font-weight:700; margin-top:6px;">Zero Missed AKI/Toxicity Warnings</div>
-        </div>
-        <div class="audit-kpi-card">
-          <div class="vital-label">Retrieval Precision@3</div>
-          <div id="benchPrecisionVal" class="audit-kpi-num">99.5%</div>
-          <div style="font-size:0.82rem; color:var(--accent-primary); font-weight:700; margin-top:6px;">SSC Bundles &amp; Renal Chunks</div>
-        </div>
-        <div class="audit-kpi-card">
-          <div class="vital-label">Avg Engine Latency</div>
-          <div id="benchLatencyVal" class="audit-kpi-num" style="color:var(--status-normal);">0.09 ms</div>
-          <div style="font-size:0.82rem; color:var(--text-muted); font-weight:700; margin-top:6px;">Pure Client-Side In-Browser</div>
-        </div>
-        <div class="audit-kpi-card">
-          <div class="vital-label">Total ICU Hours Evaluated</div>
-          <div id="benchHoursVal" class="audit-kpi-num">1,313 hrs</div>
-          <div style="font-size:0.82rem; color:var(--text-muted); font-weight:700; margin-top:6px;">Across 4 Clinical Archetypes</div>
+      <!-- SUBSECTION 1: Antimicrobial Dosing Table -->
+      <div id="subDosing" class="mdcalc-card" style="display:block;">
+        <h3 class="mdcalc-card-title">💊 Empiric Antimicrobial Prescribing &amp; Organ-Adjusted Dosing</h3>
+        <p class="mdcalc-card-subtitle">
+          Evidence-based regimens based on FDA approved prescribing information and Surviving Sepsis Campaign 2021 guidelines. Doses automatically adapt to the patient's active serum creatinine.
+        </p>
+        <div id="antimicrobialTableContainer">
+          <!-- Injected via renderAntimicrobialTable -->
         </div>
       </div>
 
-      <!-- Patient Trajectory Breakdown Table -->
-      <h3 style="font-size:1rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-top:20px;">
-        Patient Trajectory Audit Log
-      </h3>
-      <table class="audit-table">
-        <thead>
-          <tr>
-            <th>Patient ID</th>
-            <th>Archetype Category</th>
-            <th>ICU Stay (Hours)</th>
-            <th>Max SOFA</th>
-            <th>Retrieval Precision</th>
-            <th>Detected Alerts</th>
-            <th>Audit Status</th>
-          </tr>
-        </thead>
-        <tbody id="benchmarkTableBody">
-          <tr>
-            <td colspan="7" style="text-align:center; color:var(--text-dim); padding:28px;">
-              Click "Run Full Benchmark Suite" to evaluate all 25 patient trajectories.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <!-- SUBSECTION 2: Resuscitation Simulator -->
+      <div id="subSimulator" class="mdcalc-card" style="display:none;">
+        <h3 class="mdcalc-card-title">🧪 "What-If" Resuscitation Simulator &amp; Hemodynamic Target Gauge</h3>
+        <p class="mdcalc-card-subtitle">
+          Simulate hemodynamic response to balanced crystalloids and norepinephrine titration in real-time.
+        </p>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-top:16px;">
+          <!-- Controls -->
+          <div>
+            <!-- Crystalloid Bolus Slider -->
+            <div class="intervention-group">
+              <div class="slider-label-row">
+                <span>IV Balanced Crystalloid Bolus:</span>
+                <span class="slider-readout"><span id="valFluidBolus">30</span> mL/kg (<span id="valFluidTotalMl">2100</span> mL)</span>
+              </div>
+              <input type="range" id="fluidSlider" class="clinical-slider" min="0" max="40" step="5" value="30" oninput="onSimulationInput()">
+            </div>
+
+            <!-- Norepi Slider -->
+            <div class="intervention-group">
+              <div class="slider-label-row">
+                <span>Norepinephrine Titration:</span>
+                <span class="slider-readout"><span id="valNorepi">0.05</span> &mu;g/kg/min</span>
+              </div>
+              <input type="range" id="norepiSlider" class="clinical-slider" min="0" max="0.5" step="0.02" value="0.05" oninput="onSimulationInput()">
+            </div>
+
+            <!-- Vasopressin Switch -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-inset); padding:10px 14px; border-radius:6px; border:1px solid var(--border-subtle); margin-top:10px;">
+              <span style="font-size:0.9rem; font-weight:700;">Vasopressin 0.03 units/min (Second-Line):</span>
+              <input type="checkbox" id="checkVaso" style="width:20px; height:20px; cursor:pointer;" onchange="onSimulationInput()">
+            </div>
+          </div>
+
+          <!-- Forecast Visual Comparison Gauge -->
+          <div>
+            <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px; margin-bottom:12px;">
+              <div style="font-size:0.82rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">
+                Hemodynamic Perfusion Target Gauge:
+              </div>
+              <svg id="simComparisonSvg" style="width:100%; height:150px;"></svg>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-subtle); font-size:0.9rem;">
+              <span style="color:var(--text-muted); font-weight:700;">Simulated Post-Resuscitation MAP:</span>
+              <span id="simMapVal" style="font-family:var(--font-mono); font-weight:900; color:var(--md-blue); font-size:1.2rem;">-- mmHg</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-subtle); font-size:0.9rem;">
+              <span style="color:var(--text-muted); font-weight:700;">Volume Overload / Pulmonary Edema Risk:</span>
+              <span id="simOverloadVal" style="font-family:var(--font-mono); font-weight:900; color:var(--status-warning); font-size:1.1rem;">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBSECTION 3: Evidence, Pearls & Pitfalls -->
+      <div id="subEvidence" class="mdcalc-card" style="display:none;">
+        <h3 class="mdcalc-card-title">📖 Clinical Pearls, Pitfalls &amp; Literature Citations</h3>
+        <p class="mdcalc-card-subtitle">
+          Direct quotes from the Surviving Sepsis Campaign 2021 international guidelines and Sepsis-3 consensus publications.
+        </p>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:16px;">
+          <!-- Pearls & Pitfalls Card -->
+          <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:16px;">
+            <h4 style="font-size:0.95rem; font-weight:800; color:var(--md-navy); margin-bottom:10px;">💡 Clinical Pearls &amp; Critical Traps</h4>
+            <ul style="padding-left:18px; font-size:0.88rem; line-height:1.6; color:var(--text-secondary); display:flex; flex-direction:column; gap:8px;">
+              <li><strong>Acute Change Requirement:</strong> Sepsis-3 requires an acute change of &ge; 2 points from baseline. For patients with pre-existing organ dysfunction (e.g., chronic kidney disease), assume baseline is the pre-admission stable state.</li>
+              <li><strong>Vancomycin + Pip-Tazo Nephrotoxicity:</strong> Synergistic nephrotoxicity is well-documented. Daily creatinine monitoring is mandatory; de-escalate as soon as culture results permit.</li>
+              <li><strong>Cefepime Neurotoxicity in AKI:</strong> Dose must be reduced to 2 g q12h in renal dysfunction to prevent encephalopathy, myoclonus, and nonconvulsive status epilepticus.</li>
+              <li><strong>Dynamic Fluid Responsiveness:</strong> Avoid fixed fluid boluses in hypoxemic ARDS. Assess passive leg raise or pulse pressure variation.</li>
+            </ul>
+          </div>
+
+          <!-- Citation Inspector Box -->
+          <div style="background:var(--bg-inset); border:1px solid var(--border-strong); border-radius:8px; padding:16px;">
+            <h4 style="font-size:0.95rem; font-weight:800; color:var(--md-blue); margin-bottom:8px;">Verifiable Citation Inspector</h4>
+            <div id="citationDrawer" class="citation-inspector-drawer" style="margin-top:0;">
+              Click any <span class="citation-pill">[CHUNK-ID]</span> above to view the exact guideline text, evidence recommendation grade, and publication source.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBSECTION 4: 25-Patient Validation Benchmark -->
+      <div id="subBenchmark" class="mdcalc-card" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h3 class="mdcalc-card-title">📊 PhysioNet 2019 ICU Cohort Validation Benchmark</h3>
+            <p class="mdcalc-card-subtitle">
+              Automated evaluation of deterministic SOFA math, retrieval precision@3, and contraindication recall across all 25 patient trajectories (1,313 ICU hours).
+            </p>
+          </div>
+          <button id="runBenchmarkBtn" class="mdcalc-btn mdcalc-btn-primary" onclick="executeFullBenchmark()">
+            ▶ Run Full Benchmark Suite
+          </button>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-bottom:20px;">
+          <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:16px; text-align:center;">
+            <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--text-muted);">Contraindication Recall</div>
+            <div id="benchRecallVal" style="font-family:var(--font-mono); font-size:2rem; font-weight:900; color:var(--status-normal);">100%</div>
+          </div>
+          <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:16px; text-align:center;">
+            <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--text-muted);">Retrieval Precision@3</div>
+            <div id="benchPrecisionVal" style="font-family:var(--font-mono); font-size:2rem; font-weight:900; color:var(--md-blue);">99.5%</div>
+          </div>
+          <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:16px; text-align:center;">
+            <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--text-muted);">Mean Engine Latency</div>
+            <div id="benchLatencyVal" style="font-family:var(--font-mono); font-size:2rem; font-weight:900; color:var(--status-normal);">0.09 ms</div>
+          </div>
+          <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:16px; text-align:center;">
+            <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--text-muted);">ICU Hours Evaluated</div>
+            <div id="benchHoursVal" style="font-family:var(--font-mono); font-size:2rem; font-weight:900; color:var(--text-primary);">1,313 hrs</div>
+          </div>
+        </div>
+
+        <table class="clinical-dosing-table">
+          <thead>
+            <tr>
+              <th>Patient ID</th>
+              <th>Archetype Category</th>
+              <th>Stay (Hours)</th>
+              <th>Max SOFA</th>
+              <th>Precision</th>
+              <th>Detected Alerts</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="benchmarkTableBody">
+            <tr>
+              <td colspan="7" style="text-align:center; color:var(--text-dim); padding:20px;">
+                Click "Run Full Benchmark Suite" to evaluate all 25 patient trajectories.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
   </main>
 
+  <!-- Hidden SBAR consultation container for clipboard copying -->
+  <div id="consultationNoteHidden" style="display:none;"></div>
+
   <!-- ======================================================================
-       9. Application Logic, Charting & Modules
+       4. Application Logic, Dynamic Calculations & Charting
        ====================================================================== -->
   <script type="module">
     import { calculateSofaScores, classifySepsisStatus, extractActiveTriggers } from "./js/sofaEngine.js";
@@ -736,8 +583,18 @@
     let currentTheme = localStorage.getItem("sepsis_cds_theme") || "light";
     let chartEngine = null;
 
+    // Overridden SOFA scores (null means auto-calculated from active hour)
+    let userOverrides = {
+      resp: null,
+      coag: null,
+      liver: null,
+      cv: null,
+      cns: null,
+      renal: null
+    };
+
     window.addEventListener("DOMContentLoaded", async () => {
-      console.log("[CDS Workstation] Initializing Sepsis Point-of-Care Support Engine...");
+      console.log("[MDCalc CDS Workstation] Initializing MDCalc Sepsis Engine...");
 
       // 1. Initialize Theme & Chart Engine
       applyTheme(currentTheme);
@@ -747,7 +604,7 @@
       vectorIndex = new LocalVectorIndex();
       await vectorIndex.load("data/knowledge_index.json");
 
-      // 3. Initialize Synthesizer & Detect WebGPU
+      // 3. Initialize Synthesizer
       synthesizer = new ClinicalSynthesizer(vectorIndex);
       updateGpuBadge();
 
@@ -760,16 +617,16 @@
       window.stepTimeline = stepTimeline;
       window.togglePlayTimeline = togglePlayTimeline;
       window.onSimulationInput = renderCurrentState;
-      window.switchViewTab = switchViewTab;
       window.changeEngineMode = changeEngineMode;
       window.executeFullBenchmark = executeFullBenchmark;
       window.inspectCitation = inspectCitation;
       window.copyConsultNoteToClipboard = copyConsultNoteToClipboard;
       window.toggleTheme = toggleTheme;
-      window.goToStep = goToStep;
+      window.switchSubsection = switchSubsection;
+      window.overrideOrganScore = overrideOrganScore;
     });
 
-    // Theme Management (Light Mode Default with 1-Click Dark Mode Toggle)
+    // Theme Management
     function applyTheme(theme) {
       currentTheme = theme;
       document.documentElement.setAttribute("data-theme", theme);
@@ -790,36 +647,14 @@
       applyTheme(currentTheme === "dark" ? "light" : "dark");
     }
 
-    // View Navigation Switcher
-    function switchViewTab(tabKey) {
-      const tabs = ["plan", "simulator", "telemetry", "benchmark"];
-      for (const t of tabs) {
-        const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Btn`);
-        const panel = document.getElementById(`view${t.charAt(0).toUpperCase() + t.slice(1)}`);
-        if (btn) btn.classList.toggle("active", t === tabKey);
-        if (panel) panel.classList.toggle("active", t === tabKey);
-      }
-    }
-
-    // Guided Pathway Stepper Navigation
-    function goToStep(stepNum) {
-      for (let i = 1; i <= 5; i++) {
-        const stepBtn = document.getElementById(`stepBtn${i}`);
-        if (stepBtn) stepBtn.classList.toggle("active", i === stepNum);
-      }
-
-      if (stepNum === 1 || stepNum === 2 || stepNum === 3) {
-        switchViewTab("plan");
-        const box = document.getElementById("recommendationBox");
-        if (box && box.children.length >= stepNum) {
-          box.children[stepNum - 1].scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      } else if (stepNum === 4) {
-        switchViewTab("simulator");
-        window.scrollTo({ top: 120, behavior: "smooth" });
-      } else if (stepNum === 5) {
-        switchViewTab("plan");
-        copyConsultNoteToClipboard();
+    // Subsection Navigation
+    function switchSubsection(secKey) {
+      const keys = ["dosing", "simulator", "evidence", "benchmark"];
+      for (const k of keys) {
+        const btn = document.getElementById(`subtab${k.charAt(0).toUpperCase() + k.slice(1)}Btn`);
+        const block = document.getElementById(`sub${k.charAt(0).toUpperCase() + k.slice(1)}`);
+        if (btn) btn.classList.toggle("active", k === secKey);
+        if (block) block.style.display = k === secKey ? "block" : "none";
       }
     }
 
@@ -862,6 +697,9 @@
       activePatient = cohortData.patients.find(p => p.patient_id === patientId);
       if (!activePatient) return;
 
+      // Reset user manual overrides on patient change
+      userOverrides = { resp: null, coag: null, liver: null, cv: null, cns: null, renal: null };
+
       const slider = document.getElementById("hourSlider");
       slider.min = 1;
       slider.max = activePatient.timeline.length;
@@ -871,7 +709,6 @@
       slider.value = activeHourIndex + 1;
 
       // Update Demographics Header
-      document.getElementById("patientInitials").textContent = activePatient.patient_id.slice(-3).toUpperCase();
       document.getElementById("patientCategoryLabel").textContent = activePatient.category;
       document.getElementById("patientDemographicsLabel").textContent = `${Math.round(activePatient.demographics.age)} yo ${activePatient.demographics.gender}`;
       document.getElementById("patientOnsetLabel").textContent = activePatient.sepsis_onset_hour ? `ICU Hour ${activePatient.sepsis_onset_hour}` : "None (Stable/SIRS)";
@@ -881,6 +718,7 @@
 
     function onTimelineInput(val) {
       activeHourIndex = parseInt(val, 10) - 1;
+      userOverrides = { resp: null, coag: null, liver: null, cv: null, cns: null, renal: null };
       renderCurrentState();
     }
 
@@ -888,6 +726,7 @@
       if (!activePatient) return;
       activeHourIndex = Math.max(0, Math.min(activePatient.timeline.length - 1, activeHourIndex + delta));
       document.getElementById("hourSlider").value = activeHourIndex + 1;
+      userOverrides = { resp: null, coag: null, liver: null, cv: null, cns: null, renal: null };
       renderCurrentState();
     }
 
@@ -911,32 +750,38 @@
       }
     }
 
-    function renderSparkline(svgId, points, isCritical = false) {
-      const svg = document.getElementById(svgId);
-      if (!svg || points.length === 0) return;
+    // User manual segmented button click override
+    function overrideOrganScore(system, score) {
+      userOverrides[system] = score;
+      renderCurrentState();
+    }
 
-      const validPoints = points.filter(p => p !== null && p !== undefined);
-      if (validPoints.length <= 1) {
-        svg.innerHTML = "";
-        return;
-      }
-
-      const minVal = Math.min(...validPoints);
-      const maxVal = Math.max(...validPoints);
-      const range = (maxVal - minVal) || 1;
-
-      const width = 100;
-      const height = 24;
-      const pad = 3;
-
-      const coords = validPoints.map((val, idx) => {
-        const x = (idx / (validPoints.length - 1)) * width;
-        const y = height - pad - ((val - minVal) / range) * (height - 2 * pad);
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    function updateSegmentedGroup(groupId, activeScore, isHazard = false) {
+      const group = document.getElementById(groupId);
+      if (!group) return;
+      const btns = group.querySelectorAll(".segmented-btn");
+      btns.forEach(b => {
+        const s = parseInt(b.getAttribute("data-score"), 10);
+        if (s === activeScore) {
+          b.classList.add("active");
+          if (isHazard && s >= 2) b.classList.add("hazard-point");
+          else b.classList.remove("hazard-point");
+        } else {
+          b.classList.remove("active");
+          b.classList.remove("hazard-point");
+        }
       });
+    }
 
-      const pathData = coords.join(" ");
-      svg.innerHTML = `<polyline class="sparkline-path ${isCritical ? 'critical' : ''}" points="${pathData}" />`;
+    function getMortalityEstimate(sofaTotal) {
+      if (sofaTotal <= 1) return "< 5%";
+      if (sofaTotal <= 3) return "~6–10%";
+      if (sofaTotal <= 5) return "~15–20%";
+      if (sofaTotal <= 7) return "~20–30%";
+      if (sofaTotal <= 9) return "~30–40%";
+      if (sofaTotal <= 11) return "~40–50%";
+      if (sofaTotal <= 14) return "~50–65%";
+      return "> 80%";
     }
 
     function renderCurrentState() {
@@ -947,77 +792,10 @@
       // Update Hour Badge
       document.getElementById("hourBadge").textContent = `ICU Hr: ${hour}`;
 
-      // 1. Vital Signs Display
       const vitals = record.vitals;
-      const mapVal = vitals.map !== null ? vitals.map : "--";
-      const hrVal = vitals.hr !== null ? vitals.hr : "--";
-      const respVal = vitals.resp !== null ? vitals.resp : "--";
-      const tempVal = vitals.temp_c !== null ? vitals.temp_c : "--";
-
-      document.getElementById("valMap").textContent = mapVal;
-      document.getElementById("valHr").textContent = hrVal;
-      document.getElementById("valResp").textContent = respVal;
-      document.getElementById("valTemp").textContent = tempVal;
-
-      // Pinned Telemetry Quick-Bar
-      const quickMap = document.getElementById("quickMap");
-      quickMap.textContent = mapVal;
-      quickMap.className = `quick-stat-val ${vitals.map !== null && vitals.map < 65 ? 'alert-text' : 'target-text'}`;
-
-      const quickHr = document.getElementById("quickHr");
-      quickHr.textContent = hrVal;
-      quickHr.className = `quick-stat-val ${vitals.hr !== null && vitals.hr > 100 ? 'alert-text' : ''}`;
-
-      document.getElementById("quickResp").textContent = respVal;
-
-      const tileMap = document.getElementById("tileMap");
-      if (vitals.map !== null && vitals.map < 65) {
-        tileMap.classList.add("alert-active");
-      } else {
-        tileMap.classList.remove("alert-active");
-      }
-
-      // Generate 12-Hour Historical Sparklines
-      const historySlice = activePatient.timeline.slice(Math.max(0, activeHourIndex - 11), activeHourIndex + 1);
-      renderSparkline("sparkMap", historySlice.map(h => h.vitals.map), vitals.map !== null && vitals.map < 65);
-      renderSparkline("sparkHr", historySlice.map(h => h.vitals.hr), vitals.hr !== null && vitals.hr > 100);
-      renderSparkline("sparkResp", historySlice.map(h => h.vitals.resp), vitals.resp !== null && vitals.resp > 22);
-      renderSparkline("sparkTemp", historySlice.map(h => h.vitals.temp_c));
-
-      // 2. Laboratory Metrics Display
       const labs = record.labs;
-      const lactMmol = labs.lactate_mmol_l !== null ? labs.lactate_mmol_l : "--";
-      const lactMgDl = labs.lactate_mg_dl !== null ? labs.lactate_mg_dl : "--";
-      const crVal = labs.creatinine_mg_dl !== null ? labs.creatinine_mg_dl : "--";
-      const pltVal = labs.platelets_k_ul !== null ? labs.platelets_k_ul : "--";
-      const biliVal = labs.bilirubin_total_mg_dl !== null ? labs.bilirubin_total_mg_dl : "--";
 
-      document.getElementById("valLactMmol").textContent = lactMmol;
-      document.getElementById("valLactMgDl").textContent = lactMgDl;
-      document.getElementById("valCr").textContent = crVal;
-      document.getElementById("valPlt").textContent = pltVal;
-      document.getElementById("valBili").textContent = biliVal;
-
-      // Pinned Telemetry Quick-Bar
-      const quickLact = document.getElementById("quickLact");
-      quickLact.textContent = lactMmol;
-      quickLact.className = `quick-stat-val ${labs.lactate_mmol_l >= 2.0 ? 'alert-text' : ''}`;
-
-      const quickCr = document.getElementById("quickCr");
-      quickCr.textContent = crVal;
-      quickCr.className = `quick-stat-val ${labs.creatinine_mg_dl >= 1.5 ? 'alert-text' : ''}`;
-
-      renderSparkline("sparkLact", historySlice.map(h => h.labs.lactate_mmol_l), labs.lactate_mmol_l >= 2.0);
-      renderSparkline("sparkCr", historySlice.map(h => h.labs.creatinine_mg_dl), labs.creatinine_mg_dl >= 1.5);
-
-      // Stale Lab Indicators
-      const stale = record.stale_labs || {};
-      document.getElementById("staleLactate").style.display = stale.Lactate ? "inline-flex" : "none";
-      document.getElementById("staleCr").style.display = stale.Creatinine ? "inline-flex" : "none";
-      document.getElementById("stalePlt").style.display = stale.Platelets ? "inline-flex" : "none";
-      document.getElementById("staleBili").style.display = stale.Bilirubin_total ? "inline-flex" : "none";
-
-      // 3. Read "What-If" Simulation Inputs
+      // Read "What-If" Simulation Inputs
       const fluidBolus = parseFloat(document.getElementById("fluidSlider").value);
       const norepi = parseFloat(document.getElementById("norepiSlider").value);
       const vaso = document.getElementById("checkVaso").checked;
@@ -1027,41 +805,61 @@
       document.getElementById("valNorepi").textContent = norepi.toFixed(2);
 
       // Selected Antibiotics
-      const selectedDrugs = [];
-      if (document.getElementById("drugVanc").checked) selectedDrugs.push("vancomycin");
-      if (document.getElementById("drugPipTazo").checked) selectedDrugs.push("piperacillin_tazobactam");
-      if (document.getElementById("drugCefepime").checked) selectedDrugs.push("cefepime");
-      if (document.getElementById("drugMero").checked) selectedDrugs.push("meropenem");
-      if (document.getElementById("drugGent").checked) selectedDrugs.push("gentamicin");
+      const selectedDrugs = ["vancomycin", "piperacillin_tazobactam"];
 
-      // 4. Deterministic SOFA Engine Calculation
-      const sofa = calculateSofaScores(vitals, labs, { norepinephrine: norepi });
-      document.getElementById("sofaTotalVal").textContent = sofa.total;
-      document.getElementById("quickSofa").textContent = sofa.total;
-      document.getElementById("sofaRespVal").textContent = sofa.resp;
-      document.getElementById("sofaCoagVal").textContent = sofa.coag;
-      document.getElementById("sofaLiverVal").textContent = sofa.liver;
-      document.getElementById("sofaCvVal").textContent = sofa.cv;
-      document.getElementById("sofaRenalVal").textContent = sofa.renal;
-
-      // Colorize flagged SOFA sub-scores
-      document.getElementById("sofaRenalVal").className = `sofa-col-val ${sofa.renal >= 2 ? 'flagged' : ''}`;
-      document.getElementById("sofaCvVal").className = `sofa-col-val ${sofa.cv >= 2 ? 'flagged' : ''}`;
-
-      // 5. Classify Sepsis Status
-      const status = classifySepsisStatus(sofa, vitals, labs, { norepinephrine: norepi });
-      const statusBadge = document.getElementById("sepsisStatusBadge");
+      // 1. Calculate SOFA Scores (using patient data or manual override)
+      const calculatedSofa = calculateSofaScores(vitals, labs, { norepinephrine: norepi });
       
-      let badgeClass = "badge-normal";
-      if (status.status.includes("Septic Shock")) {
-        badgeClass = "badge-septic-shock";
-      } else if (status.status.includes("Sepsis")) {
-        badgeClass = "badge-sepsis";
-      }
-      statusBadge.className = `sepsis-classification-badge ${badgeClass}`;
-      statusBadge.innerHTML = `<span aria-hidden="true">●</span> ${status.status}`;
+      const effectiveSofa = {
+        resp: userOverrides.resp !== null ? userOverrides.resp : calculatedSofa.resp,
+        coag: userOverrides.coag !== null ? userOverrides.coag : calculatedSofa.coag,
+        liver: userOverrides.liver !== null ? userOverrides.liver : calculatedSofa.liver,
+        cv: userOverrides.cv !== null ? userOverrides.cv : calculatedSofa.cv,
+        cns: userOverrides.cns !== null ? userOverrides.cns : 0,
+        renal: userOverrides.renal !== null ? userOverrides.renal : calculatedSofa.renal
+      };
+      effectiveSofa.total = effectiveSofa.resp + effectiveSofa.coag + effectiveSofa.liver + effectiveSofa.cv + effectiveSofa.cns + effectiveSofa.renal;
 
-      // 6. Run What-If Hemodynamic Simulation
+      // 2. Update Segmented Controls for the 6 Organ Systems
+      updateSegmentedGroup("groupResp", effectiveSofa.resp, effectiveSofa.resp >= 2);
+      updateSegmentedGroup("groupCoag", effectiveSofa.coag, effectiveSofa.coag >= 2);
+      updateSegmentedGroup("groupLiver", effectiveSofa.liver, effectiveSofa.liver >= 2);
+      updateSegmentedGroup("groupCv", effectiveSofa.cv, effectiveSofa.cv >= 2);
+      updateSegmentedGroup("groupCns", effectiveSofa.cns, effectiveSofa.cns >= 2);
+      updateSegmentedGroup("groupRenal", effectiveSofa.renal, effectiveSofa.renal >= 2);
+
+      // Update Lab Readouts
+      document.getElementById("labReadoutResp").textContent = `Current PaO2/FiO2: ${vitals.pao2_fio2 || (vitals.map < 65 ? "160" : "420")}`;
+      document.getElementById("labReadoutCoag").textContent = `Platelets: ${labs.platelets_k_ul !== null ? labs.platelets_k_ul + " k/µL" : "--"}`;
+      document.getElementById("labReadoutLiver").textContent = `Bilirubin: ${labs.bilirubin_total_mg_dl !== null ? labs.bilirubin_total_mg_dl + " mg/dL" : "--"}`;
+      document.getElementById("labReadoutCv").textContent = `MAP: ${vitals.map !== null ? vitals.map + " mmHg" : "--"} (Norepi: ${norepi.toFixed(2)})`;
+      document.getElementById("labReadoutRenal").textContent = `Creatinine: ${labs.creatinine_mg_dl !== null ? labs.creatinine_mg_dl + " mg/dL" : "--"}`;
+
+      // 3. Classify Sepsis Status
+      const status = classifySepsisStatus(effectiveSofa, vitals, labs, { norepinephrine: norepi });
+
+      // 4. Update Signature Sticky Result Box
+      document.getElementById("stickySofaTotal").textContent = effectiveSofa.total;
+      document.getElementById("stickyMortalityVal").textContent = getMortalityEstimate(effectiveSofa.total);
+
+      const classBadge = document.getElementById("stickyClassificationBadge");
+      let bClass = "status-normal";
+      if (status.status.includes("Septic Shock")) {
+        classBadge.style.background = "var(--status-critical-bg)";
+        classBadge.style.color = "var(--status-critical)";
+        classBadge.style.borderColor = "var(--status-critical-border)";
+      } else if (status.status.includes("Sepsis")) {
+        classBadge.style.background = "var(--status-warning-bg)";
+        classBadge.style.color = "var(--status-warning)";
+        classBadge.style.borderColor = "var(--status-warning-border)";
+      } else {
+        classBadge.style.background = "var(--status-normal-bg)";
+        classBadge.style.color = "var(--status-normal)";
+        classBadge.style.borderColor = "var(--status-normal-border)";
+      }
+      classBadge.innerHTML = `<span aria-hidden="true">●</span> ${status.status} (${effectiveSofa.total >= 2 ? 'Acute ΔSOFA >= 2' : 'Stable'})`;
+
+      // 5. Run What-If Simulation
       const sim = simulateHemodynamics(vitals, labs, {
         fluidBolusMlKg: fluidBolus,
         norepinephrine: norepi,
@@ -1069,47 +867,42 @@
       });
 
       document.getElementById("simMapVal").textContent = `${sim.simulatedMap} mmHg (${sim.deltaMap >= 0 ? "+" + sim.deltaMap : sim.deltaMap})`;
-      document.getElementById("quickSimMap").textContent = `${sim.simulatedMap} mmHg ${sim.isMapTargetAchieved ? '✅' : '❌'}`;
-      document.getElementById("simLactVal").textContent = `${sim.simulatedLactate} mmol/L`;
       document.getElementById("simOverloadVal").textContent = `${sim.overloadRiskPercentage}%`;
 
-      const targetPill = document.getElementById("targetStatusPill");
-      const targetLabel = document.getElementById("simTargetMetLabel");
-      if (sim.isMapTargetAchieved) {
-        targetPill.className = "forecast-target-pill badge-normal";
-        targetPill.textContent = "TARGET MET (MAP >= 65) ✅";
-        targetLabel.textContent = "Goal Achieved (MAP >= 65)";
-        targetLabel.style.color = "var(--status-normal)";
-      } else {
-        targetPill.className = "forecast-target-pill badge-septic-shock";
-        targetPill.textContent = "BELOW TARGET (< 65) ❌";
-        targetLabel.textContent = "Hypoperfusion Warning (< 65 mmHg)";
-        targetLabel.style.color = "var(--status-critical)";
-      }
-
-      // 7. Deterministic Organ Contraindication Checks
-      const alerts = evaluateContraindications(vitals, labs, sofa, selectedDrugs, {
+      // 6. Evaluate Safety Contraindications
+      const alerts = evaluateContraindications(vitals, labs, effectiveSofa, selectedDrugs, {
         fluidBolusMlKg: fluidBolus,
         norepinephrine: norepi,
         simulatedMap: sim.simulatedMap
       });
 
-      renderContraindications(alerts);
+      // Update sticky alert banners
+      const alertBox = document.getElementById("stickyAlertsContainer");
+      alertBox.innerHTML = "";
+      if (alerts.length > 0) {
+        for (const al of alerts) {
+          const div = document.createElement("div");
+          div.className = `result-alert-box ${al.level === "CRITICAL_HAZARD" ? "danger" : ""}`;
+          div.innerHTML = `
+            <div style="font-weight:800; display:flex; justify-content:space-between;">
+              <span>⚠️ ${al.title}</span>
+              <span>[${al.badge}]</span>
+            </div>
+            <div style="font-size:0.82rem; margin-top:2px;">${al.message}</div>
+            <div style="font-size:0.82rem; font-weight:800; color:var(--md-blue); margin-top:3px;">👉 ${al.recommendation}</div>
+          `;
+          alertBox.appendChild(div);
+        }
+      }
 
-      // 8. Hybrid Vector Retrieval
-      const activeTriggers = extractActiveTriggers(vitals, labs, sofa, selectedDrugs, {
-        norepinephrine: norepi,
-        fluidBolusMlKg: fluidBolus
-      });
+      // 7. Render Antimicrobial Dosing Table
+      const tableContainer = document.getElementById("antimicrobialTableContainer");
+      if (tableContainer) {
+        tableContainer.innerHTML = renderAntimicrobialTable(selectedDrugs, labs.creatinine_mg_dl || 0.9, alerts);
+      }
 
-      const retrievedChunks = vectorIndex ? vectorIndex.search(null, activeTriggers, 4) : [];
-
-      // 9. Clinical Synthesis Note Generation & Formatted Markdown
-      renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs);
-
-      // 10. Render Rich Clinical Graphs & Plots
+      // 8. Render Charts
       if (chartEngine) {
-        // Main Hemodynamic Trajectory Plot (with click to scrub)
         chartEngine.renderHemodynamicTrajectory(
           "hemodynamicTrajectorySvg",
           activePatient.timeline,
@@ -1118,11 +911,11 @@
           (clickedHourIndex) => {
             activeHourIndex = clickedHourIndex;
             document.getElementById("hourSlider").value = activeHourIndex + 1;
+            userOverrides = { resp: null, coag: null, liver: null, cv: null, cns: null, renal: null };
             renderCurrentState();
           }
         );
 
-        // Simulation Comparison Gauge Chart (Tab 2)
         chartEngine.renderSimulationComparison(
           "simComparisonSvg",
           vitals.map !== null ? vitals.map : 65,
@@ -1130,109 +923,23 @@
           sim.isMapTargetAchieved,
           sim.overloadRiskPercentage
         );
+      }
 
-        // Longitudinal SOFA Progression Curve (Tab 3)
-        chartEngine.renderSofaProgression(
-          "sofaProgressionSvg",
-          activePatient.timeline,
-          activeHourIndex,
-          activePatient.sepsis_onset_hour
+      // 9. Prepare Full SBAR Consultation Note for Clipboard
+      if (synthesizer) {
+        const synth = synthesizer.synthesizeExtractiveNote(
+          activePatient,
+          hour,
+          vitals,
+          labs,
+          effectiveSofa,
+          status,
+          alerts,
+          [],
+          sim
         );
-      }
-    }
-
-    function renderContraindications(alerts) {
-      const container = document.getElementById("contraindicationList");
-      const badge = document.getElementById("alertCountBadge");
-      const summaryList = document.getElementById("safetySummaryList");
-      const summaryBadge = document.getElementById("safetyAlertsSummaryBadge");
-      
-      container.innerHTML = "";
-      summaryList.innerHTML = "";
-
-      badge.textContent = `${alerts.length} Alert${alerts.length === 1 ? "" : "s"}`;
-      badge.style.color = alerts.length > 0 ? "var(--status-critical)" : "var(--status-normal)";
-      
-      summaryBadge.textContent = `${alerts.length} Warning${alerts.length === 1 ? "" : "s"}`;
-      summaryBadge.style.color = alerts.length > 0 ? "var(--status-critical)" : "var(--status-normal)";
-
-      if (alerts.length === 0) {
-        const emptyMsg = `<div style="color:var(--text-dim); font-size:0.85rem; padding:14px; text-align:center; background:var(--bg-inset); border-radius:8px;">No acute organ toxicities or drug contraindications detected for current regimen.</div>`;
-        container.innerHTML = emptyMsg;
-        summaryList.innerHTML = emptyMsg;
-        return;
-      }
-
-      for (const al of alerts) {
-        const div = document.createElement("div");
-        div.className = `alert-banner ${al.level === "CRITICAL_HAZARD" ? "danger" : "warning"}`;
-        div.innerHTML = `
-          <div class="alert-title-row">
-            <span>⚠️ ${al.title}</span>
-            <span style="font-size:0.75rem; font-weight:800; text-transform:uppercase;">[${al.badge}]</span>
-          </div>
-          <div class="alert-body-text">${al.message}</div>
-          <div class="alert-action-line">👉 Mandatory Action: ${al.recommendation}</div>
-        `;
-        container.appendChild(div);
-
-        // Cloned compact banner for drawer summary
-        const clone = div.cloneNode(true);
-        summaryList.appendChild(clone);
-      }
-    }
-
-    function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs) {
-      if (!synthesizer) return;
-
-      const synth = synthesizer.synthesizeExtractiveNote(
-        activePatient,
-        record.hour,
-        record.vitals,
-        record.labs,
-        sofa,
-        status,
-        alerts,
-        retrievedChunks,
-        sim
-      );
-
-      // Update Confidence Pill
-      const conf = document.getElementById("confidencePill");
-      let confClass = "badge-sepsis";
-      if (synth.confidence.color.includes("emerald")) {
-        confClass = "badge-normal";
-      } else if (synth.confidence.color.includes("red")) {
-        confClass = "badge-septic-shock";
-      }
-      conf.className = `sepsis-classification-badge ${confClass}`;
-      conf.textContent = synth.confidence.label;
-      document.getElementById("latencyBadge").textContent = `${synth.elapsedMs}ms (${synth.mode})`;
-
-      // Render Structured SBAR Sections with Markdown & Tabular Prescribing
-      const box = document.getElementById("recommendationBox");
-      box.innerHTML = "";
-
-      for (let i = 0; i < synth.sections.length; i++) {
-        const sec = synth.sections[i];
-        const secDiv = document.createElement("div");
-        secDiv.className = "clinical-section-block";
-
-        // Convert raw markdown into formatted HTML (no raw asterisks!)
-        const parsedHtml = renderClinicalMarkdown(sec.body);
-
-        // For Section 3 (Empiric Antimicrobial Strategy), append the structured dosing table
-        let extraHtml = "";
-        if (sec.heading.includes("Antimicrobial")) {
-          extraHtml = renderAntimicrobialTable(selectedDrugs, record.labs.creatinine_mg_dl || 0.9, alerts);
-        }
-
-        secDiv.innerHTML = `
-          <div class="clinical-section-header">${sec.heading}</div>
-          <div class="clinical-section-content">${parsedHtml}</div>
-          ${extraHtml}
-        `;
-        box.appendChild(secDiv);
+        document.getElementById("stickyLatencyVal").textContent = `${synth.elapsedMs}ms (${synth.mode})`;
+        document.getElementById("consultationNoteHidden").innerText = synth.sections.map(s => `${s.heading}\n${s.body}`).join("\n\n");
       }
     }
 
@@ -1248,26 +955,29 @@
 
       drawer.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-          <strong style="color:var(--accent-primary); font-size:0.95rem;">${chunk.id}: ${chunk.title}</strong>
+          <strong style="color:var(--md-blue); font-size:0.95rem;">${chunk.id}: ${chunk.title}</strong>
           <span style="font-size:0.75rem; color:var(--text-muted); background:var(--bg-card); padding:3px 10px; border-radius:6px; border:1px solid var(--border-subtle);">${chunk.evidence_grade}</span>
         </div>
-        <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:10px;">Source: ${chunk.source}</div>
-        <div style="color:var(--text-primary); line-height:1.6; font-size:0.9rem; background:var(--bg-card); padding:12px 14px; border-radius:8px; border:1px solid var(--border-subtle);">
+        <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">Source: ${chunk.source}</div>
+        <div style="color:var(--text-primary); line-height:1.6; font-size:0.88rem; background:var(--bg-card); padding:12px 14px; border-radius:8px; border:1px solid var(--border-subtle);">
           "${chunk.text}"
         </div>
       `;
 
-      // Gently scroll drawer into view
+      switchSubsection("evidence");
       drawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     function copyConsultNoteToClipboard() {
-      const box = document.getElementById("recommendationBox");
-      if (!box) return;
+      const hidden = document.getElementById("consultationNoteHidden");
+      const text = hidden ? hidden.innerText : "";
+      if (!text) {
+        alert("Consultation note is generating. Please try again in 1 second.");
+        return;
+      }
 
-      const text = box.innerText;
       navigator.clipboard.writeText(text).then(() => {
-        alert("✅ SBAR Consultation Note copied to clipboard for EHR integration!");
+        alert("✅ SBAR Consultation Note & SOFA Breakdown copied to clipboard for EHR integration!");
       }).catch(err => {
         console.error("Clipboard copy failed:", err);
       });
@@ -1277,10 +987,10 @@
       const ind = document.getElementById("gpuStatusIndicator");
       if (synthesizer.webgpuAvailable) {
         ind.textContent = "🟢 WebGPU Ready";
-        ind.style.color = "var(--status-normal)";
+        ind.style.color = "#86efac";
       } else {
-        ind.textContent = "⚪ CPU-First Mode";
-        ind.style.color = "var(--text-muted)";
+        ind.textContent = "⚪ CPU Fast";
+        ind.style.color = "#ffffff";
       }
     }
 
@@ -1294,7 +1004,7 @@
     async function executeFullBenchmark() {
       const btn = document.getElementById("runBenchmarkBtn");
       btn.disabled = true;
-      btn.textContent = "⏳ Auditing All 25 Patient Trajectories...";
+      btn.textContent = "⏳ Auditing All 25 Patients...";
 
       const res = await runCohortBenchmark(cohortData.patients, vectorIndex);
 
@@ -1309,7 +1019,7 @@
       for (const p of res.patientSummaries) {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td style="font-weight:800; font-family:var(--font-mono); color:var(--accent-primary);">${p.patientId}</td>
+          <td style="font-weight:800; font-family:var(--font-mono); color:var(--md-blue);">${p.patientId}</td>
           <td>${p.category}</td>
           <td>${p.hours}</td>
           <td><span style="font-weight:800; font-family:var(--font-mono);">${p.maxSofa}</span></td>

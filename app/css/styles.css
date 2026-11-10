@@ -1,97 +1,79 @@
 /* ==========================================================================
-   Clinical ICU Workstation Design System (WCAG AAA Compliant)
-   Engineered for Critical Care Physicians, Fellows & Clinical Informaticists
-   Modeled after UpToDate, Epic Systems Rover/Hyperspace & NHS Digital CDS
-   High-legibility typography, generous spacing, and intuitive guided stepper
+   MDCalc Clinical Decision Support Design System (WCAG AAA Compliant)
+   Modeled after www.mdcalc.com - The Gold Standard in Clinical Calculators
+   High-legibility typography, segmented controls, sticky result cards, and clean medical hierarchy
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   Theme Variables: Default Light Mode (Clinical Day Mode)
-   -------------------------------------------------------------------------- */
 :root, [data-theme="light"] {
   color-scheme: light;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
 
-  /* Surfaces & Hierarchy */
-  --bg-app: #f4f6f9;              /* Calming Clinical Slate */
-  --bg-banner: #ffffff;
-  --bg-panel: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
-  --bg-inset: #f1f5f9;
-  --bg-highlight: #ecfdf5;
+  /* MDCalc Palette */
+  --md-navy: #0f2e4c;
+  --md-blue: #0284c7;
+  --md-blue-hover: #0369a1;
+  --md-blue-light: #e0f2fe;
 
-  /* Borders & Elevation */
-  --border-subtle: #cbd5e1;       /* Slate 300 - clearly defined */
-  --border-strong: #94a3b8;       /* Slate 400 */
-  --card-shadow: 0 2px 4px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
-  --card-shadow-hover: 0 6px 12px -2px rgba(15, 23, 42, 0.12), 0 3px 6px -2px rgba(15, 23, 42, 0.08);
+  --bg-app: #f4f6f8;              /* MDCalc light neutral background */
+  --bg-card: #ffffff;             /* Crisp clinical card surface */
+  --bg-inset: #f8fafc;
+  --bg-highlight: #f0fdf4;
 
-  /* High-Contrast Typography */
-  --text-primary: #0f172a;        /* Deep Slate 900 - 15:1 contrast */
-  --text-secondary: #1e293b;      /* Slate 800 */
-  --text-muted: #475569;          /* Slate 600 - highly legible */
-  --text-dim: #64748b;            /* Slate 500 */
+  --border-subtle: #e2e8f0;       /* Slate 200 */
+  --border-strong: #cbd5e1;       /* Slate 300 */
+  --border-active: #0284c7;
 
-  /* Telemetry & Vital Status Colors */
-  --status-normal: #047857;       /* Deep Emerald */
-  --status-normal-bg: #dcfce7;    /* Emerald 100 */
-  --status-normal-border: #86efac;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --card-shadow-lg: 0 4px 16px -2px rgba(15, 23, 42, 0.12), 0 2px 6px -2px rgba(15, 23, 42, 0.08);
 
-  --status-warning: #b45309;      /* Deep Amber */
-  --status-warning-bg: #fef3c7;   /* Amber 100 */
-  --status-warning-border: #fcd34d;
-
-  --status-critical: #b91c1c;     /* Deep Red */
-  --status-critical-bg: #fee2e2;  /* Red 100 */
-  --status-critical-border: #fca5a5;
-
-  /* Clinical Primary Accents */
-  --accent-primary: #0284c7;      /* Medical Sky Blue */
-  --accent-primary-hover: #0369a1;
-  --accent-cyan: #0284c7;
-  --accent-blue: #2563eb;
-  --accent-purple: #7c3aed;
-
-  /* Citations & Evidence Pills */
-  --pill-bg: #e0f2fe;
-  --pill-text: #0369a1;
-  --pill-border: #7dd3fc;
-  --pill-hover-bg: #0284c7;
-  --pill-hover-text: #ffffff;
-
-  accent-color: var(--accent-primary);
-}
-
-/* --------------------------------------------------------------------------
-   Theme Variables: Dark Mode (Low-Light ICU Night Shift Mode)
-   -------------------------------------------------------------------------- */
-[data-theme="dark"] {
-  color-scheme: dark;
-
-  /* Surfaces & Hierarchy */
-  --bg-app: #080d1a;
-  --bg-banner: #0c1424;
-  --bg-panel: #111a2e;
-  --bg-card: #152238;
-  --bg-card-hover: #1c2d4a;
-  --bg-inset: #0a1120;
-  --bg-highlight: #064e3b;
-
-  /* Borders & Elevation */
-  --border-subtle: #2d4268;
-  --border-strong: #3b527e;
-  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --card-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.5);
-
-  /* High-Contrast Typography */
-  --text-primary: #f8fafc;
-  --text-secondary: #e2e8f0;
-  --text-muted: #cbd5e1;
+  /* Typography */
+  --text-primary: #1e293b;        /* Slate 800 - crisp, high-contrast */
+  --text-secondary: #334155;      /* Slate 700 */
+  --text-muted: #64748b;          /* Slate 500 */
   --text-dim: #94a3b8;
 
-  /* Telemetry & Vital Status Colors */
+  /* Clinical Status */
+  --status-normal: #059669;       /* Emerald */
+  --status-normal-bg: #ecfdf5;
+  --status-normal-border: #a7f3d0;
+
+  --status-warning: #d97706;      /* Amber */
+  --status-warning-bg: #fffbeb;
+  --status-warning-border: #fde68a;
+
+  --status-critical: #dc2626;     /* Red */
+  --status-critical-bg: #fef2f2;
+  --status-critical-border: #fecaca;
+
+  accent-color: var(--md-blue);
+}
+
+/* ICU Night Shift Mode */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --md-navy: #1e3a5f;
+  --md-blue: #38bdf8;
+  --md-blue-hover: #0284c7;
+  --md-blue-light: rgba(56, 189, 248, 0.15);
+
+  --bg-app: #090f1d;
+  --bg-card: #131d31;
+  --bg-inset: #0d1526;
+  --bg-highlight: #064e3b;
+
+  --border-subtle: #243452;
+  --border-strong: #33476e;
+  --border-active: #38bdf8;
+
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --card-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+
   --status-normal: #10b981;
   --status-normal-bg: rgba(16, 185, 129, 0.18);
   --status-normal-border: #059669;
@@ -104,21 +86,7 @@
   --status-critical-bg: rgba(239, 68, 68, 0.22);
   --status-critical-border: #dc2626;
 
-  /* Clinical Accents */
-  --accent-primary: #38bdf8;
-  --accent-primary-hover: #0284c7;
-  --accent-cyan: #38bdf8;
-  --accent-blue: #60a5fa;
-  --accent-purple: #a78bfa;
-
-  /* Citations & Evidence Pills */
-  --pill-bg: rgba(56, 189, 248, 0.18);
-  --pill-text: #38bdf8;
-  --pill-border: rgba(56, 189, 248, 0.45);
-  --pill-hover-bg: #38bdf8;
-  --pill-hover-text: #080d1a;
-
-  accent-color: var(--accent-primary);
+  accent-color: var(--md-blue);
 }
 
 * {
@@ -128,7 +96,7 @@
 }
 
 html {
-  font-size: 16px; /* Base 16px for comfortable clinical reading */
+  font-size: 16px;
 }
 
 body {
@@ -138,26 +106,26 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
-  line-height: 1.6;
+  line-height: 1.55;
   font-size: 1rem;
-  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ==========================================================================
-   1. Clinical Header & Hospital Navigation Bar
+   1. MDCalc Brand Header Bar
    ========================================================================== */
-header.clinical-header {
-  background-color: var(--bg-banner);
-  border-bottom: 2px solid var(--border-subtle);
+header.mdcalc-header {
+  background-color: var(--md-navy);
+  color: #ffffff;
   padding: 12px 28px;
   position: sticky;
   top: 0;
-  z-index: 50;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.header-inner {
+.mdcalc-header-inner {
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -165,640 +133,484 @@ header.clinical-header {
   flex-wrap: wrap;
 }
 
-.brand-section {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.hospital-cross-badge {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
-  flex-shrink: 0;
-}
-
-.brand-title h1 {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-}
-
-.brand-title p {
-  font-size: 0.78rem;
-  color: var(--accent-primary);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
-/* View Navigation Switcher */
-.view-nav {
-  display: flex;
-  background: var(--bg-inset);
-  padding: 5px;
-  border-radius: 10px;
-  border: 1px solid var(--border-subtle);
-  gap: 6px;
-}
-
-.nav-tab-btn {
-  background: transparent;
-  color: var(--text-muted);
-  border: none;
-  padding: 9px 18px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.15s ease;
-}
-
-.nav-tab-btn:hover {
-  color: var(--text-primary);
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="dark"] .nav-tab-btn:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.nav-tab-btn.active {
-  background: var(--bg-card);
-  color: var(--accent-primary);
-  border: 1px solid var(--border-strong);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Right Controls in Header */
-.header-actions {
+.mdcalc-brand {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.theme-toggle-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.15s ease;
-}
-
-.theme-toggle-btn:hover {
-  border-color: var(--accent-primary);
-  background-color: var(--bg-card-hover);
-}
-
-.engine-status-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-}
-
-.engine-status-pill select {
-  background: transparent;
-  border: none;
-  color: var(--accent-primary);
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  outline: none;
-}
-
-/* ==========================================================================
-   2. EHR Patient Banner & Longitudinal Timeline Scrubber
-   ========================================================================== */
-.patient-banner-strip {
-  background-color: var(--bg-banner);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 12px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.patient-demographics-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.patient-avatar-box {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.9rem;
+.mdcalc-logo-badge {
+  background: var(--md-blue);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  flex-shrink: 0;
-}
-
-.patient-meta-details {
+  font-size: 20px;
+  font-weight: 900;
+  padding: 6px 12px;
+  border-radius: 6px;
+  letter-spacing: -0.02em;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 4px;
 }
 
-.patient-meta-row1 {
+.mdcalc-title-group h1 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.mdcalc-title-group p {
+  font-size: 0.78rem;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.header-action-group {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
-.patient-select-input {
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  border: 2px solid var(--border-strong);
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  outline: none;
-  cursor: pointer;
-}
-
-.patient-meta-row2 {
-  font-size: 0.86rem;
-  color: var(--text-muted);
-  display: flex;
-  gap: 18px;
-}
-
-.patient-meta-item strong {
-  color: var(--text-primary);
-  font-weight: 700;
-}
-
-/* Timeline Scrubber Container */
-.timeline-hub {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--bg-inset);
+.mdcalc-btn {
+  background: #ffffff;
+  color: var(--md-navy);
+  border: 1px solid transparent;
   padding: 8px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--border-subtle);
-  flex: 1;
-  max-width: 580px;
-}
-
-.scrub-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  padding: 7px 14px;
   border-radius: 6px;
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.15s ease;
-}
-
-.scrub-btn:hover {
-  background-color: var(--bg-card-hover);
-  border-color: var(--accent-primary);
-}
-
-.timeline-range-input {
-  flex: 1;
-  cursor: pointer;
-  height: 8px;
-}
-
-.hour-indicator-tag {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  color: #fff;
-  font-weight: 800;
-  padding: 5px 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  min-width: 95px;
-  text-align: center;
-}
-
-/* Sepsis Classification Badges */
-.sepsis-classification-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 800;
-  border: 1px solid transparent;
-}
-
-.badge-septic-shock {
-  background-color: var(--status-critical-bg);
-  color: var(--status-critical);
-  border-color: var(--status-critical-border);
-}
-
-.badge-sepsis {
-  background-color: var(--status-warning-bg);
-  color: var(--status-warning);
-  border-color: var(--status-warning-border);
-}
-
-.badge-normal {
-  background-color: var(--status-normal-bg);
-  color: var(--status-normal);
-  border-color: var(--status-normal-border);
-}
-
-/* ==========================================================================
-   3. Pinned Telemetry Quick-Bar (Always Visible Telemetry Anchor)
-   ========================================================================== */
-.telemetry-quick-bar {
-  background-color: var(--bg-inset);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 8px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  font-size: 0.9rem;
-  overflow-x: auto;
-}
-
-.quick-bar-items {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.quick-stat-item {
-  display: flex;
-  align-items: baseline;
   gap: 6px;
+  transition: all 0.15s ease;
 }
 
-.quick-stat-label {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
+.mdcalc-btn:hover {
+  background-color: #f1f5f9;
 }
 
-.quick-stat-val {
-  font-family: var(--font-mono);
-  font-weight: 900;
-  font-size: 1.05rem;
-  color: var(--text-primary);
+.mdcalc-btn-primary {
+  background: var(--md-blue);
+  color: #ffffff;
 }
 
-.quick-stat-val.alert-text {
-  color: var(--status-critical);
-  font-weight: 900;
-}
-
-.quick-stat-val.target-text {
-  color: var(--status-normal);
+.mdcalc-btn-primary:hover {
+  background: var(--md-blue-hover);
 }
 
 /* ==========================================================================
-   4. Guided Clinical Workflow Stepper Bar (Where to Start & Where to Go)
+   2. Patient Cohort Ribbon & Timeline Scrubber
    ========================================================================== */
-.guided-workflow-ribbon {
+.patient-ribbon-bar {
   background: var(--bg-card);
-  border-bottom: 2px solid var(--border-subtle);
-  padding: 10px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  overflow-x: auto;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 28px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
-.stepper-steps-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stepper-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-inset);
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.stepper-item:hover {
-  border-color: var(--accent-primary);
-  color: var(--text-primary);
-}
-
-.stepper-item.active {
-  background: var(--bg-highlight);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.stepper-arrow {
-  color: var(--text-dim);
-  font-size: 0.9rem;
-}
-
-/* Quick Navigation CTA Bar */
-.workflow-navigation-footer {
+.patient-ribbon-inner {
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
-  padding: 16px;
-  background: var(--bg-inset);
-  border-radius: 8px;
-  border: 1px solid var(--border-subtle);
-}
-
-/* Onboarding Clinical Quick-Start Banner */
-.clinical-quickstart-banner {
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(3, 105, 161, 0.04) 100%);
-  border: 1px solid rgba(2, 132, 199, 0.3);
-  border-left: 5px solid var(--accent-primary);
-  border-radius: 8px;
-  padding: 14px 20px;
-  margin-bottom: 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
-.quickstart-text h3 {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 4px;
+.patient-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.quickstart-text p {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-/* ==========================================================================
-   5. Interactive Clinical Charting Containers
-   ========================================================================== */
-.chart-card-wrapper {
+.patient-select-box {
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: var(--card-shadow);
-  margin-bottom: 20px;
-}
-
-.chart-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.chart-title-box h3 {
-  font-size: 1.15rem;
-  font-weight: 800;
+  border: 2px solid var(--border-strong);
   color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.chart-title-box p {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.chart-legend-box {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 0.82rem;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.95rem;
   font-weight: 700;
+  cursor: pointer;
 }
 
-.legend-item {
+.patient-meta-pill {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.patient-meta-pill strong {
+  color: var(--text-primary);
+}
+
+.timeline-controller {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  background: var(--bg-inset);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  flex: 1;
+  max-width: 540px;
 }
 
-.legend-color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-}
-
-.svg-clinical-chart {
-  width: 100%;
-  height: auto;
-  min-height: 240px;
-  display: block;
+.timeline-hour-badge {
+  background: var(--md-navy);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  min-width: 90px;
+  text-align: center;
 }
 
 /* ==========================================================================
-   6. Focused Views Container
+   3. Main 2-Column MDCalc Layout (Calculator Left + Sticky Result Right)
    ========================================================================== */
-.view-panel {
-  display: none;
-  padding: 20px 28px;
+.mdcalc-container {
+  max-width: 1440px;
+  margin: 20px auto;
+  padding: 0 24px;
+  width: 100%;
   flex: 1;
 }
 
-.view-panel.active {
-  display: block;
-}
-
-/* ==========================================================================
-   7. TAB 1: Bedside Treatment Plan Layout
-   ========================================================================== */
-.treatment-plan-layout {
+.mdcalc-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 22px;
+  grid-template-columns: 1fr 420px;
+  gap: 28px;
+  align-items: start;
 }
 
-@media (max-width: 1150px) {
-  .treatment-plan-layout {
+@media (max-width: 1050px) {
+  .mdcalc-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.clinical-card {
-  background-color: var(--bg-card);
+/* Left Column: Calculator Parameters & Plots */
+.mdcalc-calculator-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Right Column: Sticky Result & Recommendation Box */
+.mdcalc-result-col {
+  position: sticky;
+  top: 85px;
+}
+
+/* MDCalc Card Component */
+.mdcalc-card {
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 22px;
   box-shadow: var(--card-shadow);
+}
+
+.mdcalc-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mdcalc-card-subtitle {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   4. MDCalc Segmented Controls (Radio Point Buttons for Organ Systems)
+   ========================================================================== */
+.organ-system-group {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.organ-system-group:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.organ-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.organ-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.organ-current-lab {
+  font-size: 0.85rem;
+  color: var(--md-blue);
+  font-weight: 700;
+}
+
+.segmented-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: var(--bg-inset);
+  padding: 5px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.segmented-btn {
+  flex: 1 1 calc(20% - 6px);
+  min-width: 110px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.segmented-btn .point-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.segmented-btn:hover {
+  border-color: var(--md-blue);
+  color: var(--md-blue);
+}
+
+.segmented-btn.active {
+  background: var(--md-blue);
+  color: #ffffff;
+  border-color: var(--md-blue);
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);
+}
+
+.segmented-btn.active .point-badge {
+  color: #e0f2fe;
+}
+
+/* Highlighted Organ Flag */
+.segmented-btn.active.hazard-point {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.segmented-btn.active.hazard-point .point-badge {
+  color: #fee2e2;
+}
+
+/* ==========================================================================
+   5. MDCalc Signature Sticky Result Card
+   ========================================================================== */
+.sticky-result-card {
+  background: var(--bg-card);
+  border: 2px solid var(--md-blue);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow-lg);
+  overflow: hidden;
+}
+
+.result-card-banner {
+  background: linear-gradient(135deg, var(--md-navy) 0%, var(--md-blue) 100%);
+  color: #ffffff;
+  padding: 18px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.result-score-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+.result-score-num {
+  font-family: var(--font-mono);
+  font-size: 2.6rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.result-card-body {
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.card-header-bar {
+.result-interpretation-badge {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-align: center;
+  border: 1px solid;
+}
+
+.mortality-estimate-box {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.9rem;
 }
 
-.card-header-title {
-  font-size: 1.05rem;
+.mortality-val {
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: var(--status-critical);
+}
+
+/* Next Steps Action Checklist */
+.result-actions-header {
+  font-size: 0.82rem;
   font-weight: 800;
   text-transform: uppercase;
+  color: var(--text-muted);
   letter-spacing: 0.04em;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  margin-bottom: 6px;
 }
 
-/* Clinical Section Blocks in Treatment Plan */
-.clinical-section-block {
-  background-color: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.clinical-section-header {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--accent-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 8px;
-}
-
-.clinical-p {
-  font-size: 0.98rem;
-  line-height: 1.65;
-  color: var(--text-primary);
-}
-
-.clinical-bold {
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-[data-theme="light"] .clinical-bold {
-  color: #0f172a;
-}
-
-.clinical-italic {
-  font-style: italic;
-  color: var(--text-secondary);
-}
-
-/* Structured Clinical Action Items (Checklist Cards) */
-.clinical-action-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.clinical-action-item {
+.result-action-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  background-color: var(--bg-card);
+  gap: 10px;
+  background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 14px 18px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 
-.action-icon {
-  font-size: 1.3rem;
-  line-height: 1.2;
+.result-action-icon {
+  font-size: 1.15rem;
   flex-shrink: 0;
+  line-height: 1.2;
 }
 
-.action-text {
-  font-size: 0.96rem;
-  line-height: 1.6;
-  color: var(--text-primary);
-}
-
-/* Clinical Alert Callout Banners */
-.clinical-alert-callout {
-  background-color: var(--status-warning-bg);
+/* Alerts inside Result */
+.result-alert-box {
+  background: var(--status-warning-bg);
   border: 1px solid var(--status-warning-border);
-  border-left: 5px solid var(--status-warning);
-  border-radius: 8px;
-  padding: 14px 18px;
-  margin: 8px 0;
+  border-left: 4px solid var(--status-warning);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.86rem;
 }
 
-.callout-content {
-  font-size: 0.94rem;
-  line-height: 1.55;
+.result-alert-box.danger {
+  background: var(--status-critical-bg);
+  border-color: var(--status-critical-border);
+  border-left-color: var(--status-critical);
+}
+
+/* Primary Action Buttons */
+.result-cta-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--md-blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.result-cta-btn:hover {
+  background: var(--md-blue-hover);
+}
+
+/* ==========================================================================
+   6. Below-the-Calculator Sections (Standard MDCalc Tabs / Accordions)
+   ========================================================================== */
+.mdcalc-subsections {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mdcalc-section-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border-subtle);
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.mdcalc-subtab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.mdcalc-subtab-btn:hover {
   color: var(--text-primary);
+}
+
+.mdcalc-subtab-btn.active {
+  color: var(--md-blue);
+  border-bottom-color: var(--md-blue);
 }
 
 /* Antimicrobial Table Styling */
 .clinical-table-wrapper {
   overflow-x: auto;
-  margin: 12px 0;
   border-radius: 8px;
   border: 1px solid var(--border-subtle);
+  margin-top: 12px;
 }
 
 .clinical-dosing-table {
@@ -825,71 +637,33 @@ header.clinical-header {
   vertical-align: middle;
 }
 
-.clinical-dosing-table tr:last-child td {
-  border-bottom: none;
-}
-
 .clinical-dosing-table tr:hover {
   background-color: var(--bg-card-hover);
 }
 
-.row-hazard {
-  background-color: rgba(239, 68, 68, 0.05);
-}
-
-.drug-name-cell {
-  font-weight: 800;
-  font-size: 0.98rem;
-  color: var(--accent-primary);
-}
-
-.drug-spec-sub {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.safety-cell-text {
-  font-size: 0.88rem;
-  line-height: 1.45;
-  margin-bottom: 6px;
-}
-
-.evidence-pills-row {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.text-critical {
-  color: var(--status-critical);
-  font-weight: 800;
-}
-
-/* Verifiable Citation Pills */
+/* Citation Evidence Pills */
 .citation-pill {
   display: inline-flex;
   align-items: center;
-  background-color: var(--pill-bg);
-  color: var(--pill-text);
-  border: 1px solid var(--pill-border);
-  padding: 3px 8px;
-  border-radius: 6px;
+  background-color: var(--md-blue-light);
+  color: var(--md-blue);
+  border: 1px solid rgba(2, 132, 199, 0.4);
+  padding: 2px 7px;
+  border-radius: 4px;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 800;
   cursor: pointer;
-  margin: 0 3px;
+  margin: 0 2px;
   transition: all 0.15s ease;
-  vertical-align: middle;
 }
 
 .citation-pill:hover {
-  background-color: var(--pill-hover-bg);
-  color: var(--pill-hover-text);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: var(--md-blue);
+  color: #ffffff;
 }
 
-/* Citation Drawer */
+/* Citation Popout Box */
 .citation-inspector-drawer {
   background: var(--bg-inset);
   border: 1px solid var(--border-strong);
@@ -897,27 +671,15 @@ header.clinical-header {
   padding: 16px;
   font-size: 0.9rem;
   line-height: 1.6;
+  margin-top: 12px;
 }
 
-/* ==========================================================================
-   8. TAB 2: "What-If" Resuscitation Simulator & Perfusion Workspace
-   ========================================================================== */
-.simulator-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 22px;
-}
-
-@media (max-width: 1000px) {
-  .simulator-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* Slider Controls in Simulator Section */
 .intervention-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .slider-label-row {
@@ -926,361 +688,20 @@ header.clinical-header {
   align-items: baseline;
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-primary);
 }
 
 .slider-readout {
   font-family: var(--font-mono);
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: var(--accent-primary);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--md-blue);
 }
 
 .clinical-slider {
   width: 100%;
-  height: 10px;
-  border-radius: 5px;
+  height: 8px;
+  border-radius: 4px;
   background: var(--border-subtle);
   outline: none;
   cursor: pointer;
-}
-
-.drug-pill-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.drug-pill-label {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.15s ease;
-}
-
-.drug-pill-label:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-strong);
-}
-
-.drug-pill-label.active {
-  border-color: var(--accent-primary);
-  background: var(--status-normal-bg);
-}
-
-.hemodynamic-forecast-box {
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.forecast-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.95rem;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.forecast-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.forecast-target-pill {
-  font-size: 0.85rem;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 6px;
-}
-
-/* Contraindication Alert Cards */
-.alert-banner {
-  border-radius: 8px;
-  padding: 14px 16px;
-  border-left: 5px solid;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
-}
-
-.alert-banner.danger {
-  background: var(--status-critical-bg);
-  border-left-color: var(--status-critical);
-  border-top: 1px solid var(--status-critical-border);
-  border-right: 1px solid var(--status-critical-border);
-  border-bottom: 1px solid var(--status-critical-border);
-}
-
-.alert-banner.warning {
-  background: var(--status-warning-bg);
-  border-left-color: var(--status-warning);
-  border-top: 1px solid var(--status-warning-border);
-  border-right: 1px solid var(--status-warning-border);
-  border-bottom: 1px solid var(--status-warning-border);
-}
-
-.alert-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.alert-body-text {
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.alert-action-line {
-  color: var(--accent-primary);
-  font-weight: 800;
-  margin-top: 4px;
-}
-
-/* ==========================================================================
-   9. TAB 3: ICU Telemetry & Sequential Organ Failure (SOFA)
-   ========================================================================== */
-.telemetry-dashboard-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-
-.telemetry-row-4 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 950px) {
-  .telemetry-row-4 {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.vital-tile {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 16px 18px;
-  box-shadow: var(--card-shadow);
-  position: relative;
-  transition: all 0.15s ease;
-}
-
-.vital-tile.alert-active {
-  background-color: var(--status-critical-bg);
-  border-color: var(--status-critical-border);
-  box-shadow: 0 0 12px rgba(220, 38, 38, 0.2);
-}
-
-.vital-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.vital-label {
-  font-size: 0.85rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.vital-ref-range {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-}
-
-.vital-value-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: 6px;
-}
-
-.vital-num {
-  font-family: var(--font-mono);
-  font-size: 2.1rem;
-  font-weight: 900;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-.vital-unit {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin-left: 4px;
-}
-
-.sparkline-svg {
-  width: 100%;
-  height: 32px;
-  margin-top: 8px;
-  overflow: visible;
-}
-
-.sparkline-path {
-  fill: none;
-  stroke: var(--accent-primary);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.sparkline-path.critical {
-  stroke: var(--status-critical);
-}
-
-.stale-lab-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--status-warning-bg);
-  border: 1px solid var(--status-warning-border);
-  color: var(--status-warning);
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  margin-top: 6px;
-}
-
-/* SOFA Matrix Table */
-.sofa-matrix-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: var(--card-shadow);
-}
-
-.sofa-headline {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.sofa-big-score {
-  font-family: var(--font-mono);
-  font-size: 2.6rem;
-  font-weight: 900;
-  color: var(--accent-primary);
-}
-
-.sofa-sub-matrix {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-}
-
-@media (max-width: 750px) {
-  .sofa-sub-matrix {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.sofa-col {
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 12px;
-  text-align: center;
-}
-
-.sofa-col-name {
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.sofa-col-val {
-  font-family: var(--font-mono);
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-top: 6px;
-}
-
-.sofa-col-val.flagged {
-  color: var(--status-critical);
-}
-
-/* ==========================================================================
-   10. TAB 4: Benchmark Audit View
-   ========================================================================== */
-.audit-metrics-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin: 20px 0;
-}
-
-@media (max-width: 950px) {
-  .audit-metrics-row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.audit-kpi-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: var(--card-shadow);
-}
-
-.audit-kpi-num {
-  font-family: var(--font-mono);
-  font-size: 2.4rem;
-  font-weight: 900;
-  color: var(--accent-primary);
-  margin-top: 6px;
-}
-
-.audit-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.92rem;
-  margin-top: 18px;
-  background: var(--bg-card);
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-}
-
-.audit-table th, .audit-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-subtle);
-  text-align: left;
-}
-
-.audit-table th {
-  background-color: var(--bg-inset);
-  color: var(--text-muted);
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 0.8rem;
 }
