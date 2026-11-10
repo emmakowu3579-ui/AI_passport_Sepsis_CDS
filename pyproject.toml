@@ -1,0 +1,15 @@
+[project]
+name = "sepsis-rag-cds"
+version = "1.0.0"
+description = "Local RAG-Powered Sepsis Clinical Treatment Recommender"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
