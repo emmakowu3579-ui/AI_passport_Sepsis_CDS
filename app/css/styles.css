@@ -9,34 +9,38 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
 
-  /* Clinical Palette */
-  --clinical-navy: #0f2e4c;
-  --clinical-blue: #0284c7;
-  --clinical-blue-hover: #0369a1;
-  --clinical-blue-light: #e0f2fe;
+  /* Clinical Palette — Directly Harmonized with Asclepius Emblem Logo */
+  --clinical-navy: #002757;       /* Deep navy from the Asclepius serpent & staff */
+  --clinical-navy-dark: #001938;
+  --clinical-blue: #008775;       /* WCAG AAA High-Contrast Medical Cross Teal */
+  --clinical-blue-hover: #006e5f;
+  --clinical-blue-light: #e6f9f5; /* Fresh mint/teal tint */
+  --brand-teal: #00bfa6;          /* Vibrant emblem cross teal */
+  --brand-teal-glow: rgba(0, 191, 166, 0.35);
+  --brand-navy: #002757;
 
-  --bg-app: #f4f6f8;              /* Soft neutral clinical background */
+  --bg-app: #f4f8f9;              /* Soft neutral clinical background with subtle tint */
   --bg-card: #ffffff;             /* Crisp white card surface */
-  --bg-inset: #f8fafc;
-  --bg-highlight: #f0fdf4;
+  --bg-inset: #f8fafb;
+  --bg-highlight: #eefcf8;
 
-  --border-subtle: #dbe2ea;
-  --border-strong: #cbd5e1;
-  --border-active: #0284c7;
+  --border-subtle: #d3e2e2;
+  --border-strong: #b8cfcf;
+  --border-active: #008775;
 
-  --card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
-  --card-shadow-lg: 0 4px 16px -2px rgba(15, 23, 42, 0.1), 0 2px 6px -2px rgba(15, 23, 42, 0.06);
+  --card-shadow: 0 1px 3px 0 rgba(0, 39, 87, 0.06), 0 1px 2px -1px rgba(0, 39, 87, 0.04);
+  --card-shadow-lg: 0 4px 16px -2px rgba(0, 39, 87, 0.1), 0 2px 6px -2px rgba(0, 39, 87, 0.06);
 
   /* High-Legibility Typography */
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #475569;
-  --text-dim: #64748b;
+  --text-primary: #06182c;
+  --text-secondary: #274059;
+  --text-muted: #4b667e;
+  --text-dim: #6c8397;
 
   /* Clinical Status Colors */
-  --status-normal: #047857;
-  --status-normal-bg: #ecfdf5;
-  --status-normal-border: #a7f3d0;
+  --status-normal: #00796b;
+  --status-normal-bg: #e6fbf7;
+  --status-normal-border: #80e5d4;
 
   --status-warning: #b45309;
   --status-warning-bg: #fffbeb;
@@ -52,31 +56,35 @@
 /* Low-Light ICU Night Shift Mode */
 [data-theme="dark"] {
   color-scheme: dark;
-  --clinical-navy: #162a45;
-  --clinical-blue: #38bdf8;
-  --clinical-blue-hover: #0284c7;
-  --clinical-blue-light: rgba(56, 189, 248, 0.16);
+  --clinical-navy: #041426;
+  --clinical-navy-dark: #020a14;
+  --clinical-blue: #00cdb0;
+  --clinical-blue-hover: #00bfa6;
+  --clinical-blue-light: rgba(0, 205, 176, 0.18);
+  --brand-teal: #00cdb0;
+  --brand-teal-glow: rgba(0, 205, 176, 0.45);
+  --brand-navy: #002757;
 
-  --bg-app: #090f1d;
-  --bg-card: #131d31;
-  --bg-inset: #0d1526;
-  --bg-highlight: #064e3b;
+  --bg-app: #030d17;
+  --bg-card: #0a1b2d;
+  --bg-inset: #061321;
+  --bg-highlight: #003630;
 
-  --border-subtle: #243452;
-  --border-strong: #33476e;
-  --border-active: #38bdf8;
+  --border-subtle: #132a42;
+  --border-strong: #1e3f63;
+  --border-active: #00cdb0;
 
-  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  --card-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --card-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
 
-  --text-primary: #f8fafc;
-  --text-secondary: #e2e8f0;
-  --text-muted: #cbd5e1;
-  --text-dim: #94a3b8;
+  --text-primary: #f0fdfa;
+  --text-secondary: #ccfbf1;
+  --text-muted: #99f6e4;
+  --text-dim: #5eead4;
 
-  --status-normal: #10b981;
-  --status-normal-bg: rgba(16, 185, 129, 0.18);
-  --status-normal-border: #059669;
+  --status-normal: #00cdb0;
+  --status-normal-bg: rgba(0, 205, 176, 0.18);
+  --status-normal-border: #009e86;
 
   --status-warning: #f59e0b;
   --status-warning-bg: rgba(245, 158, 11, 0.18);
@@ -146,17 +154,28 @@ header.clinical-header {
 }
 
 .brand-badge {
-  background: var(--clinical-blue);
-  color: #ffffff;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  background: #ffffff;
+  border: 2px solid rgba(0, 191, 166, 0.45);
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
   font-weight: 900;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 39, 87, 0.35);
+  overflow: hidden;
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.brand-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-titles h1 {
@@ -168,9 +187,9 @@ header.clinical-header {
 
 .brand-titles p {
   font-size: 0.78rem;
-  color: #93c5fd;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  color: #5eead4;
+  font-weight: 700;
+  letter-spacing: 0.025em;
 }
 
 /* Mode Switcher Tabs (Workstation vs Benchmark) */
@@ -445,10 +464,10 @@ header.clinical-header {
 }
 
 .workflow-step-pill.active-step-page {
-  background: var(--clinical-blue);
-  border-color: var(--clinical-blue);
+  background: var(--clinical-navy);
+  border-color: var(--brand-teal);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.28);
+  box-shadow: 0 4px 14px rgba(0, 39, 87, 0.25);
 }
 
 .step-num-circle {
@@ -466,7 +485,7 @@ header.clinical-header {
 }
 
 .workflow-step-pill.active-step-page .step-num-circle {
-  background: #ffffff;
+  background: var(--brand-teal);
   color: var(--clinical-navy);
 }
 
@@ -887,7 +906,7 @@ header.clinical-header {
 .legend-dash-blue {
   width: 18px;
   height: 3px;
-  background: repeating-linear-gradient(90deg, #0284c7, #0284c7 4px, transparent 4px, transparent 7px);
+  background: repeating-linear-gradient(90deg, var(--clinical-blue), var(--clinical-blue) 4px, transparent 4px, transparent 7px);
   display: inline-block;
 }
 
@@ -1452,7 +1471,7 @@ header.clinical-header {
 }
 
 .ollama-pulsing-icon i {
-  color: #0284c7;
+  color: var(--brand-teal);
   font-size: 1.25rem;
   display: inline-block;
   animation: pulse-critical-icon 1.6s ease-in-out infinite;
@@ -1500,7 +1519,7 @@ header.clinical-header {
 .ollama-progress-bar-fill {
   width: 5%;
   height: 100%;
-  background: linear-gradient(90deg, #0284c7, #0d9488, #10b981);
+  background: linear-gradient(90deg, var(--clinical-navy), var(--clinical-blue), var(--brand-teal));
   border-radius: 4px;
   transition: width 0.15s ease-out;
 }

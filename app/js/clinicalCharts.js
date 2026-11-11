@@ -107,7 +107,7 @@ export class ClinicalChartEngine {
 
     // Axis Labels
     elements.push(`
-      <text x="${padLeft - 38}" y="${padTop - 12}" fill="#0284c7" font-size="12" font-weight="800">MAP (mmHg)</text>
+      <text x="${padLeft - 38}" y="${padTop - 12}" fill="var(--clinical-blue, #008775)" font-size="12" font-weight="800">MAP (mmHg)</text>
       <text x="${padLeft + plotW + 10}" y="${padTop - 12}" fill="#f59e0b" font-size="12" font-weight="800">Lactate</text>
     `);
 
@@ -156,7 +156,7 @@ export class ClinicalChartEngine {
     }
     if (mapPoints.length > 1) {
       elements.push(`
-        <polyline points="${mapPoints.join(' ')}" fill="none" stroke="#0284c7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline points="${mapPoints.join(' ')}" fill="none" stroke="var(--clinical-blue, #008775)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
       `);
     }
 
@@ -169,8 +169,8 @@ export class ClinicalChartEngine {
 
       elements.push(`
         <line x1="${curX}" y1="${padTop}" x2="${curX}" y2="${padTop + plotH}" stroke="var(--text-primary, #0f172a)" stroke-width="2" />
-        <circle cx="${curX}" cy="${curMapY}" r="7" fill="#0284c7" stroke="#ffffff" stroke-width="2.5" />
-        <rect x="${curX - 42}" y="${padTop + plotH + 24}" width="84" height="20" rx="4" fill="#0284c7" />
+        <circle cx="${curX}" cy="${curMapY}" r="7" fill="var(--clinical-blue, #008775)" stroke="#ffffff" stroke-width="2.5" />
+        <rect x="${curX - 42}" y="${padTop + plotH + 24}" width="84" height="20" rx="4" fill="var(--clinical-blue, #008775)" />
         <text x="${curX}" y="${padTop + plotH + 38}" fill="#ffffff" font-size="11" font-weight="800" text-anchor="middle">Hr ${currentHourIndex + 1} (Active)</text>
       `);
     }
@@ -217,7 +217,7 @@ export class ClinicalChartEngine {
         const sofa = tr.getAttribute("data-sofa");
 
         this.hoverTooltip.innerHTML = `
-          <div style="font-size:12px; font-weight:800; color:var(--accent-primary, #0284c7); margin-bottom:2px;">ICU Hour ${h}</div>
+          <div style="font-size:12px; font-weight:800; color:var(--clinical-blue, #008775); margin-bottom:2px;">ICU Hour ${h}</div>
           <div>MAP: <strong style="color:${map < 65 ? '#ef4444' : '#10b981'};">${map} mmHg</strong></div>
           <div>Serum Lactate: <strong style="color:#f59e0b;">${lact} mmol/L</strong></div>
           <div>Heart Rate: <strong>${hr} bpm</strong></div>
@@ -331,8 +331,8 @@ export class ClinicalChartEngine {
     const targetX = barX(65);
 
     const isBaseAchieved = baselineMap >= 65;
-    const baseColor = isBaseAchieved ? '#10b981' : '#ef4444';
-    const simColor = isAchieved ? '#10b981' : '#ef4444';
+    const baseColor = isBaseAchieved ? 'var(--brand-teal, #00bfa6)' : '#ef4444';
+    const simColor = isAchieved ? 'var(--brand-teal, #00bfa6)' : '#ef4444';
 
     const deltaMap = Math.round(simulatedMap - baselineMap);
     const deltaStr = deltaMap >= 0 ? `+${deltaMap}` : `${deltaMap}`;
@@ -340,13 +340,13 @@ export class ClinicalChartEngine {
     const elements = `
       <!-- Danger (<65) and Target (>=65) Background Shading Zones -->
       <rect x="${xStart}" y="38" width="${targetX - xStart}" height="96" rx="4" fill="rgba(239, 68, 68, 0.08)" />
-      <rect x="${targetX}" y="38" width="${xEnd - targetX}" height="96" rx="4" fill="rgba(16, 185, 129, 0.08)" />
+      <rect x="${targetX}" y="38" width="${xEnd - targetX}" height="96" rx="4" fill="rgba(0, 191, 166, 0.10)" />
 
       <!-- Zone Indicator Labels -->
       <text x="${(xStart + targetX) / 2}" y="18" fill="#b91c1c" font-size="11" font-weight="800" text-anchor="middle" letter-spacing="0.04em">
         DANGER ZONE (&lt; 65 mmHg)
       </text>
-      <text x="${(targetX + xEnd) / 2}" y="18" fill="#047857" font-size="11" font-weight="800" text-anchor="middle" letter-spacing="0.04em">
+      <text x="${(targetX + xEnd) / 2}" y="18" fill="var(--clinical-blue, #008775)" font-size="11" font-weight="800" text-anchor="middle" letter-spacing="0.04em">
         ADEQUATE PERFUSION ZONE (&ge; 65 mmHg)
       </text>
 
@@ -371,12 +371,12 @@ export class ClinicalChartEngine {
       <rect x="${xStart}" y="104" width="${simW}" height="26" rx="6" fill="${simColor}" />
 
       <!-- Target 65 Goal Line (Only drawn through tracks, cleanly avoiding text collision) -->
-      <line x1="${targetX}" y1="40" x2="${targetX}" y2="74" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="4,3" />
-      <line x1="${targetX}" y1="100" x2="${targetX}" y2="148" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="4,3" />
+      <line x1="${targetX}" y1="40" x2="${targetX}" y2="74" stroke="var(--clinical-navy, #002757)" stroke-width="2.5" stroke-dasharray="4,3" />
+      <line x1="${targetX}" y1="100" x2="${targetX}" y2="148" stroke="var(--clinical-navy, #002757)" stroke-width="2.5" stroke-dasharray="4,3" />
 
       <!-- Target 65 Badge & Pointer -->
-      <polygon points="${targetX - 5},148 ${targetX + 5},148 ${targetX},152" fill="#0284c7" />
-      <rect x="${targetX - 54}" y="152" width="108" height="24" rx="5" fill="#0284c7" />
+      <polygon points="${targetX - 5},148 ${targetX + 5},148 ${targetX},152" fill="var(--clinical-navy, #002757)" />
+      <rect x="${targetX - 54}" y="152" width="108" height="24" rx="5" fill="var(--clinical-navy, #002757)" />
       <text x="${targetX}" y="168" fill="#ffffff" font-size="12" font-weight="900" text-anchor="middle">Goal: 65 mmHg</text>
 
       <!-- Tick Labels -->

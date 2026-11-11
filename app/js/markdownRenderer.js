@@ -150,11 +150,11 @@ export function renderClinicalMarkdown(text) {
       let iconHtml = '<i class="bi bi-check2-circle" style="color:var(--clinical-blue);"></i>';
       const lower = itemContent.toLowerCase();
       if (lower.includes("fluid") || lower.includes("crystalloid") || lower.includes("edema")) {
-        iconHtml = '<i class="bi bi-droplet-fill" style="color:#0284c7;"></i>';
+        iconHtml = '<i class="bi bi-droplet-fill" style="color:var(--brand-teal);"></i>';
       } else if (lower.includes("culture") || lower.includes("blood")) {
         iconHtml = '<i class="bi bi-eyedropper" style="color:#b91c1c;"></i>';
       } else if (lower.includes("antimicrobial") || lower.includes("antibiotic") || lower.includes("vancomycin") || lower.includes("cefepime")) {
-        iconHtml = '<i class="bi bi-capsule" style="color:#047857;"></i>';
+        iconHtml = '<i class="bi bi-capsule" style="color:var(--status-normal);"></i>';
       } else if (lower.includes("hemodynamic") || lower.includes("map") || lower.includes("simulated")) {
         iconHtml = '<i class="bi bi-heart-pulse-fill" style="color:#e11d48;"></i>';
       } else if (lower.includes("lactate")) {
@@ -162,7 +162,7 @@ export function renderClinicalMarkdown(text) {
       } else if (lower.includes("vasopressor") || lower.includes("norepi") || lower.includes("vasopressin")) {
         iconHtml = '<i class="bi bi-activity" style="color:#7c3aed;"></i>';
       } else if (lower.includes("renal") || lower.includes("creatinine")) {
-        iconHtml = '<i class="bi bi-clipboard2-pulse-fill" style="color:#0369a1;"></i>';
+        iconHtml = '<i class="bi bi-clipboard2-pulse-fill" style="color:var(--clinical-blue);"></i>';
       }
 
       processed.push(`
