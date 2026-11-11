@@ -167,23 +167,55 @@ export class ClinicalSynthesizer {
   }
 
   /**
+   * Auto-detects available models from local Ollama endpoint (http://localhost:11434)
+   */
+  async detectOllamaModel() {
+    try {
+      const resp = await fetch("http://localhost:11434/api/tags");
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.models && data.models.length > 0) {
+          const preferred = data.models.find(m => m.name.includes("qwen") || m.name.includes("llama"));
+          return preferred ? preferred.name : data.models[0].name;
+        }
+      }
+    } catch (e) {
+      console.warn("[Synthesis] Could not query Ollama tags:", e);
+    }
+    return "qwen2.5:1.5b";
+  }
+
+  /**
    * Connects to Ollama on http://localhost:11434 if available (Framework 2B)
    */
   async synthesizeOllama(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation) {
     const startTime = performance.now();
     const extractive = this.synthesizeExtractiveNote(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation);
+    const targetModel = await this.detectOllamaModel();
     
-    const contextPrompt = `You are a clinical decision support system. Ground your answer strictly in these guideline chunks:\n` +
-      retrievedChunks.map(c => `[${c.id}] ${c.title}: ${c.text}`).join("\n\n") +
-      `\n\nPatient Vitals: MAP ${vitals.map} mmHg, HR ${vitals.hr}, Lactate ${labs.lactate_mmol_l} mmol/L, Creatinine ${labs.creatinine_mg_dl} mg/dL. SOFA: ${sofa.total}.\n` +
-      `Synthesize a bedside clinical note with inline citations [SSC-2021-...] or [DOSE-...].`;
+    const contextPrompt = `You are a clinical decision support system for ICU sepsis care.
+Ground your recommendations strictly in these clinical guideline chunks:
+${retrievedChunks.map(c => `[${c.id}] ${c.title}: ${c.text}`).join("\n\n")}
+
+Patient Assessment:
+- Age/Gender: ${patient.demographics.age}yo ${patient.demographics.gender}
+- Sepsis Status: ${status.status}
+- Deterministic SOFA Score: ${sofa.total} (Respiration: ${sofa.resp}, Coagulation: ${sofa.coag}, Liver: ${sofa.liver}, Cardiovascular: ${sofa.cv}, Renal: ${sofa.renal})
+- Bedside Vitals: MAP ${vitals.map} mmHg, HR ${vitals.hr} bpm
+- Labs: Serum Lactate ${labs.lactate_mmol_l} mmol/L, Creatinine ${labs.creatinine_mg_dl} mg/dL
+- Active Safety Alerts: ${alerts.map(a => `${a.drug} (${a.badge}): ${a.message}`).join("; ") || "None"}
+
+Generate a concise 3-paragraph clinical consultation note covering:
+1. Sepsis diagnostic status and hemodynamic resuscitation goals.
+2. SSC 1-hour bundle actions (cultures, empiric antibiotics, MAP >= 65 target).
+3. Organ safety precautions and dosing adjustments with citations [SSC-2021-...] or [DOSE-...].`;
 
     try {
       const response = await fetch("http://localhost:11434/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "qwen2.5:1.5b",
+          model: targetModel,
           prompt: contextPrompt,
           stream: false
         })
@@ -196,17 +228,30 @@ export class ClinicalSynthesizer {
       const resJson = await response.json();
       const elapsedMs = performance.now() - startTime;
 
+      const sections = [...extractive.sections];
+      if (resJson.response) {
+        sections.unshift({
+          id: "ollamaGenSec",
+          tab: "bundleTab",
+          heading: `Framework 2B: Local LLM Generative Synthesis (Ollama • ${targetModel})`,
+          body: `• **Ollama Generative Consultation:**\n\n${resJson.response.trim()}`
+        });
+      }
+
       return {
-        mode: "OLLAMA_CPU",
+        mode: `OLLAMA_CPU (${targetModel})`,
+        model: targetModel,
         confidence: extractive.confidence,
         rawText: resJson.response,
-        sections: extractive.sections,
+        sections,
         elapsedMs: Math.round(elapsedMs),
         retrievedChunks
       };
     } catch (e) {
       console.warn("[Synthesis] Ollama local connection failed, falling back to Instant Extractive RAG:", e);
-      return extractive;
+      const fallback = this.synthesizeExtractiveNote(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation);
+      fallback.mode = "EXTRACTIVE_RAG (Ollama Offline)";
+      return fallback;
     }
   }
 }

@@ -1481,20 +1481,37 @@
       }
     }
 
-    function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs) {
+    async function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs) {
       if (!synthesizer) return;
 
-      const synth = synthesizer.synthesizeExtractiveNote(
-        activePatient,
-        record.hour,
-        record.vitals,
-        record.labs,
-        sofa,
-        status,
-        alerts,
-        retrievedChunks,
-        sim
-      );
+      let synth;
+      if (synthesizer.currentMode === "OLLAMA") {
+        document.getElementById("confidencePill").textContent = "GENERATING WITH OLLAMA CPU...";
+        document.getElementById("latencyBadge").innerHTML = '<i class="bi bi-hourglass-split"></i> Querying Ollama (127.0.0.1:11434)...';
+        synth = await synthesizer.synthesizeOllama(
+          activePatient,
+          record.hour,
+          record.vitals,
+          record.labs,
+          sofa,
+          status,
+          alerts,
+          retrievedChunks,
+          sim
+        );
+      } else {
+        synth = synthesizer.synthesizeExtractiveNote(
+          activePatient,
+          record.hour,
+          record.vitals,
+          record.labs,
+          sofa,
+          status,
+          alerts,
+          retrievedChunks,
+          sim
+        );
+      }
 
       document.getElementById("confidencePill").textContent = synth.confidence.label;
       document.getElementById("latencyBadge").textContent = `${synth.elapsedMs}ms (${synth.mode})`;
@@ -1578,6 +1595,16 @@
     function changeEngineMode(mode) {
       if (synthesizer) {
         synthesizer.setMode(mode);
+        const gpuInd = document.getElementById("gpuStatusIndicator");
+        if (mode === "OLLAMA") {
+          gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Ollama Active (127.0.0.1)';
+          gpuInd.style.color = "#fcd34d";
+        } else if (mode === "WEBGPU") {
+          updateGpuBadge();
+        } else {
+          gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>CPU Fast (< 5ms)';
+          gpuInd.style.color = "#bae6fd";
+        }
         renderCurrentState();
       }
     }
