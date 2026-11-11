@@ -1227,6 +1227,39 @@
     let authService = null;
     let tourGuide = null;
 
+    // ========================================================================
+    // Immediate Synchronous Window Handler Bindings
+    // Guarantees all interactive UI controls, buttons, and tabs respond from ms 0
+    // ========================================================================
+    window.onPatientSelect = onPatientSelect;
+    window.onTimelineInput = onTimelineInput;
+    window.stepTimeline = stepTimeline;
+    window.togglePlayTimeline = togglePlayTimeline;
+    window.onSimulationInput = renderCurrentState;
+    window.changeEngineMode = changeEngineMode;
+    window.cancelOllamaGeneration = cancelOllamaGeneration;
+    window.executeFullBenchmark = executeFullBenchmark;
+    window.inspectCitation = inspectCitation;
+    window.copyConsultNoteToClipboard = copyConsultNoteToClipboard;
+    window.toggleTheme = toggleTheme;
+    window.switchAppMode = switchAppMode;
+    window.scrollToSection = scrollToSection;
+    window.navigateToStepPage = navigateToStepPage;
+    window.switchRagTab = switchRagTab;
+    window.switchChartView = switchChartView;
+    
+    // Auth Handlers
+    window.switchAuthTab = switchAuthTab;
+    window.handleSignInSubmit = handleSignInSubmit;
+    window.handleSignUpSubmit = handleSignUpSubmit;
+    window.handleQuickDemoLogin = handleQuickDemoLogin;
+    window.handleSignOut = handleSignOut;
+    window.startGuidedTour = startGuidedTour;
+
+    // Developer Architecture & Telemetry Console
+    window.toggleDevConsole = toggleDevConsole;
+    window.dumpTelemetryToConsole = dumpTelemetryToConsole;
+
     window.addEventListener("DOMContentLoaded", async () => {
       console.log("[Sepsis CDS] Booting Local RAG-Powered Sepsis Clinical Treatment Recommender...");
 
@@ -1252,36 +1285,6 @@
 
       // 6. Load 25 Curated PhysioNet 2019 Patient Trajectories
       await loadPhysioNetCohort();
-
-      // 7. Bind UI Event Handlers
-      window.onPatientSelect = onPatientSelect;
-      window.onTimelineInput = onTimelineInput;
-      window.stepTimeline = stepTimeline;
-      window.togglePlayTimeline = togglePlayTimeline;
-      window.onSimulationInput = renderCurrentState;
-      window.changeEngineMode = changeEngineMode;
-      window.cancelOllamaGeneration = cancelOllamaGeneration;
-      window.executeFullBenchmark = executeFullBenchmark;
-      window.inspectCitation = inspectCitation;
-      window.copyConsultNoteToClipboard = copyConsultNoteToClipboard;
-      window.toggleTheme = toggleTheme;
-      window.switchAppMode = switchAppMode;
-      window.scrollToSection = scrollToSection;
-      window.navigateToStepPage = navigateToStepPage;
-      window.switchRagTab = switchRagTab;
-      window.switchChartView = switchChartView;
-      
-      // Auth Handlers
-      window.switchAuthTab = switchAuthTab;
-      window.handleSignInSubmit = handleSignInSubmit;
-      window.handleSignUpSubmit = handleSignUpSubmit;
-      window.handleQuickDemoLogin = handleQuickDemoLogin;
-      window.handleSignOut = handleSignOut;
-      window.startGuidedTour = startGuidedTour;
-
-      // Developer Architecture & Telemetry Console
-      window.toggleDevConsole = toggleDevConsole;
-      window.dumpTelemetryToConsole = dumpTelemetryToConsole;
 
       window.addEventListener("keydown", (e) => {
         if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {

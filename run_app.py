@@ -35,9 +35,13 @@ def main():
     except Exception as e:
         print(f"Could not open browser automatically: {e}")
 
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print("Server running. Press Ctrl+C to stop.\n")
+    # Use ThreadingHTTPServer for high-performance concurrent request handling
+    class ConcurrentServer(http.server.ThreadingHTTPServer):
+        allow_reuse_address = True
+        daemon_threads = True
+
+    with ConcurrentServer(("", PORT), Handler) as httpd:
+        print("Server running (Concurrent Multithreaded). Press Ctrl+C to stop.\n")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
