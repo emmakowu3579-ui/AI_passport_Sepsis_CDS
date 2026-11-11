@@ -34,6 +34,17 @@ export class ClinicalChartEngine {
   }
 
   /**
+   * Safely extracts total SOFA score across varied patient record schema conventions
+   */
+  getRecordSofa(rec) {
+    if (!rec) return 0;
+    if (rec.sofa && typeof rec.sofa.sofa_total === "number") return rec.sofa.sofa_total;
+    if (rec.sofa_scores && typeof rec.sofa_scores.total === "number") return rec.sofa_scores.total;
+    if (typeof rec.sofa === "number") return rec.sofa;
+    return 0;
+  }
+
+  /**
    * Renders the Longitudinal Hemodynamic & Lactate Trajectory Plot
    */
   renderHemodynamicTrajectory(svgElementId, timeline, currentHourIndex, sepsisOnsetHour, onHourClick) {
@@ -183,7 +194,8 @@ export class ClinicalChartEngine {
       const recMap = rec.vitals.map !== null ? rec.vitals.map : "--";
       const recLact = rec.labs.lactate_mmol_l !== null ? rec.labs.lactate_mmol_l : "--";
       const recHr = rec.vitals.hr !== null ? rec.vitals.hr : "--";
-      const recSofa = rec.sofa_scores ? rec.sofa_scores.total : "--";
+      const sVal = this.getRecordSofa(rec);
+      const recSofa = sVal !== null && sVal !== undefined ? sVal : "--";
 
       elements.push(`
         <rect class="chart-scrub-trigger" x="${x - stepW / 2}" y="${padTop}" width="${stepW}" height="${plotH}" fill="transparent" style="cursor:pointer;"
@@ -238,7 +250,7 @@ export class ClinicalChartEngine {
   /**
    * Renders the Longitudinal SOFA Organ Failure Progression Chart
    */
-  renderSofaProgression(svgElementId, timeline, currentHourIndex, sepsisOnsetHour) {
+  renderSofaProgression(svgElementId, timeline, currentHourIndex, sepsisOnsetHour, onHourClick, currentActiveSofa) {
     const svg = document.getElementById(svgElementId);
     if (!svg || !timeline || timeline.length === 0) return;
 
@@ -252,7 +264,17 @@ export class ClinicalChartEngine {
     const plotW = width - padLeft - padRight;
     const plotH = height - padTop - padBottom;
 
-    const maxSofa = 14;
+    // Calculate dynamic max SOFA from trajectory or at least 12
+    let highestSofa = 12;
+    for (let i = 0; i < timeline.length; i++) {
+      const s = this.getRecordSofa(timeline[i]);
+      if (s > highestSofa) highestSofa = s;
+    }
+    if (typeof currentActiveSofa === "number" && currentActiveSofa > highestSofa) {
+      highestSofa = currentActiveSofa;
+    }
+    const maxSofa = Math.min(24, Math.max(12, Math.ceil(highestSofa / 3) * 3));
+
     const sofaY = (score) => padTop + plotH - (Math.min(maxSofa, score) / maxSofa) * plotH;
     const totalHours = timeline.length;
     const hourX = (idx) => padLeft + (idx / Math.max(1, totalHours - 1)) * plotW;
@@ -280,15 +302,46 @@ export class ClinicalChartEngine {
       <text x="${padLeft - 40}" y="${padTop - 10}" fill="var(--text-primary, #0f172a)" font-size="12" font-weight="800">SOFA Score</text>
     `);
 
+    // X-Axis Ticks & Labels
+    const step = totalHours > 50 ? 12 : (totalHours > 20 ? 6 : 2);
+    for (let i = 0; i < totalHours; i += step) {
+      const x = hourX(i);
+      elements.push(`
+        <line x1="${x}" y1="${padTop + plotH}" x2="${x}" y2="${padTop + plotH + 5}" stroke="var(--border-strong, #94a3b8)" stroke-width="1" />
+        <text x="${x}" y="${padTop + plotH + 18}" fill="var(--text-muted, #64748b)" font-size="11" font-weight="600" text-anchor="middle">Hr ${i + 1}</text>
+      `);
+    }
+
+    // Sepsis-3 Onset Marker (if present)
+    if (sepsisOnsetHour && sepsisOnsetHour <= totalHours) {
+      const onsetIdx = sepsisOnsetHour - 1;
+      const onsetX = hourX(onsetIdx);
+      elements.push(`
+        <line x1="${onsetX}" y1="${padTop}" x2="${onsetX}" y2="${padTop + plotH}" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5,3" />
+        <rect x="${onsetX - 50}" y="${padTop - 28}" width="100" height="22" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5" />
+        <text x="${onsetX}" y="${padTop - 13}" fill="#991b1b" font-size="11" font-weight="800" text-anchor="middle">SEPSIS-3 ONSET</text>
+      `);
+    }
+
     // SOFA Polyline Area & Curve
     const sofaPoints = [];
+    const areaPoints = [];
+    areaPoints.push(`${hourX(0).toFixed(1)},${(padTop + plotH).toFixed(1)}`);
+
     for (let i = 0; i < totalHours; i++) {
-      const score = timeline[i].sofa_scores ? timeline[i].sofa_scores.total : 0;
-      sofaPoints.push(`${hourX(i).toFixed(1)},${sofaY(score).toFixed(1)}`);
+      let score = this.getRecordSofa(timeline[i]);
+      if (i === currentHourIndex && typeof currentActiveSofa === "number") {
+        score = currentActiveSofa;
+      }
+      const pt = `${hourX(i).toFixed(1)},${sofaY(score).toFixed(1)}`;
+      sofaPoints.push(pt);
+      areaPoints.push(pt);
     }
+    areaPoints.push(`${hourX(totalHours - 1).toFixed(1)},${(padTop + plotH).toFixed(1)}`);
 
     if (sofaPoints.length > 1) {
       elements.push(`
+        <polygon points="${areaPoints.join(' ')}" fill="rgba(124, 58, 237, 0.12)" />
         <polyline points="${sofaPoints.join(' ')}" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
       `);
     }
@@ -296,15 +349,85 @@ export class ClinicalChartEngine {
     // Active Hour Indicator
     if (currentHourIndex >= 0 && currentHourIndex < totalHours) {
       const curX = hourX(currentHourIndex);
-      const curScore = timeline[currentHourIndex].sofa_scores ? timeline[currentHourIndex].sofa_scores.total : 0;
+      let curScore = this.getRecordSofa(timeline[currentHourIndex]);
+      if (typeof currentActiveSofa === "number") {
+        curScore = currentActiveSofa;
+      }
       elements.push(`
         <line x1="${curX}" y1="${padTop}" x2="${curX}" y2="${padTop + plotH}" stroke="var(--text-primary)" stroke-width="1.8" stroke-dasharray="3,3" />
         <circle cx="${curX}" cy="${sofaY(curScore)}" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2" />
       `);
     }
 
+    // Invisible Click Targets for Scrubbing & Hover Tooltips
+    for (let i = 0; i < totalHours; i++) {
+      const x = hourX(i);
+      const stepW = plotW / totalHours;
+      const rec = timeline[i];
+      let sVal = this.getRecordSofa(rec);
+      if (i === currentHourIndex && typeof currentActiveSofa === "number") {
+        sVal = currentActiveSofa;
+      }
+      const recMap = rec.vitals.map !== null ? rec.vitals.map : "--";
+      const recLact = rec.labs.lactate_mmol_l !== null ? rec.labs.lactate_mmol_l : "--";
+      const recHr = rec.vitals.hr !== null ? rec.vitals.hr : "--";
+
+      elements.push(`
+        <rect class="sofa-chart-scrub-trigger" x="${x - stepW / 2}" y="${padTop}" width="${stepW}" height="${plotH}" fill="transparent" style="cursor:pointer;"
+          data-hour-index="${i}"
+          data-hour="${rec.hour}"
+          data-map="${recMap}"
+          data-lact="${recLact}"
+          data-hr="${recHr}"
+          data-sofa="${sVal}"
+        />
+      `);
+    }
+
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.innerHTML = elements.join("\n");
+
+    // Bind interaction events (click to scrub, hover for tooltip)
+    const triggers = svg.querySelectorAll(".sofa-chart-scrub-trigger");
+    triggers.forEach(tr => {
+      tr.addEventListener("click", () => {
+        const idx = parseInt(tr.getAttribute("data-hour-index"), 10);
+        if (typeof onHourClick === "function") {
+          onHourClick(idx);
+        }
+      });
+
+      tr.addEventListener("mouseenter", (e) => {
+        if (!this.hoverTooltip) return;
+        const h = tr.getAttribute("data-hour");
+        const map = tr.getAttribute("data-map");
+        const lact = tr.getAttribute("data-lact");
+        const hr = tr.getAttribute("data-hr");
+        const sofa = tr.getAttribute("data-sofa");
+
+        this.hoverTooltip.innerHTML = `
+          <div style="font-size:12px; font-weight:800; color:#7c3aed; margin-bottom:2px;">ICU Hour ${h}</div>
+          <div>Total SOFA: <strong style="color:${parseInt(sofa, 10) >= 2 ? '#ef4444' : 'var(--status-normal)'}; font-size:13px;">${sofa} pts</strong></div>
+          <div>MAP: <strong style="color:${map < 65 ? '#ef4444' : '#10b981'};">${map} mmHg</strong></div>
+          <div>Serum Lactate: <strong style="color:#f59e0b;">${lact} mmol/L</strong></div>
+          <div>Heart Rate: <strong>${hr} bpm</strong></div>
+          <div style="font-size:10px; color:var(--text-muted); margin-top:3px;"><i class="bi bi-cursor-fill" style="margin-right:3px;"></i>Click point to scrub timeline</div>
+        `;
+        this.hoverTooltip.style.display = "block";
+        this.hoverTooltip.style.left = `${e.clientX + 14}px`;
+        this.hoverTooltip.style.top = `${e.clientY - 20}px`;
+      });
+
+      tr.addEventListener("mousemove", (e) => {
+        if (!this.hoverTooltip) return;
+        this.hoverTooltip.style.left = `${e.clientX + 14}px`;
+        this.hoverTooltip.style.top = `${e.clientY - 20}px`;
+      });
+
+      tr.addEventListener("mouseleave", () => {
+        if (this.hoverTooltip) this.hoverTooltip.style.display = "none";
+      });
+    });
   }
 
   /**

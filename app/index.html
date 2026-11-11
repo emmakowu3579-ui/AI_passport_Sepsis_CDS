@@ -1773,7 +1773,13 @@
           "sofaProgressionSvg",
           activePatient.timeline,
           activeHourIndex,
-          activePatient.sepsis_onset_hour
+          activePatient.sepsis_onset_hour,
+          (clickedHourIndex) => {
+            activeHourIndex = clickedHourIndex;
+            document.getElementById("hourSlider").value = activeHourIndex + 1;
+            renderCurrentState();
+          },
+          sofa.total
         );
 
         chartEngine.renderSimulationComparison(
