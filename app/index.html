@@ -172,6 +172,7 @@
             <option value="OLLAMA">Local AI Consultation (Ollama)</option>
             <option value="WEBGPU">In-Browser Neural CDS (WebLLM)</option>
           </select>
+          <span id="gpuStatusIndicator" style="display:none;" aria-hidden="true"></span>
         </div>
 
         <button id="themeToggleBtn" class="action-btn" onclick="toggleTheme()" title="Switch between Clinical Day Mode and ICU Night Mode">
@@ -764,6 +765,7 @@
           <div class="metric-name">Safety Gate Concordance</div>
           <div id="benchSafetyVal" class="metric-number" style="color:var(--status-normal); font-size:2.1rem;">100%</div>
           <div class="metric-subtext">Zero Missed AKI / Nephrotoxic Synergy</div>
+          <span id="benchLatencyVal" style="display:none;" aria-hidden="true"></span>
         </div>
         <div class="metric-box" style="text-align:center;">
           <div class="metric-name">Total ICU Hours Audited</div>
@@ -2293,12 +2295,18 @@
 
     function updateGpuBadge() {
       const ind = document.getElementById("gpuStatusIndicator");
-      if (synthesizer.webgpuAvailable) {
-        ind.innerHTML = '<i class="bi bi-gpu-card" style="margin-right:3px;"></i>WebGPU Ready';
-        ind.style.color = "#86efac";
-      } else {
-        ind.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>CPU Fast';
-        ind.style.color = "#bae6fd";
+      if (ind) {
+        if (synthesizer && synthesizer.webgpuAvailable) {
+          ind.innerHTML = '<i class="bi bi-gpu-card" style="margin-right:3px;"></i>WebGPU Ready';
+          ind.style.color = "#86efac";
+        } else {
+          ind.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Instant CDS Active';
+          ind.style.color = "#5eead4";
+        }
+      }
+      const devGpu = document.getElementById("devWebgpuStatus");
+      if (devGpu && synthesizer) {
+        devGpu.textContent = synthesizer.webgpuAvailable ? "Available (WebGPU)" : "Unavailable (CPU Fallback)";
       }
     }
 
@@ -2306,15 +2314,19 @@
       if (synthesizer) {
         synthesizer.setMode(mode);
         const gpuInd = document.getElementById("gpuStatusIndicator");
-        if (mode === "OLLAMA") {
-          gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Ollama Active (127.0.0.1)';
-          gpuInd.style.color = "#fcd34d";
-        } else if (mode === "WEBGPU") {
-          updateGpuBadge();
-        } else {
-          gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Instant CDS Active';
-          gpuInd.style.color = "#5eead4";
+        if (gpuInd) {
+          if (mode === "OLLAMA") {
+            gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Ollama Active (127.0.0.1)';
+            gpuInd.style.color = "#fcd34d";
+          } else if (mode === "WEBGPU") {
+            updateGpuBadge();
+          } else {
+            gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Instant CDS Active';
+            gpuInd.style.color = "#5eead4";
+          }
         }
+        const devMode = document.getElementById("devActiveMode");
+        if (devMode) devMode.textContent = mode;
         renderCurrentState();
       }
     }
@@ -2326,10 +2338,18 @@
 
       const res = await runCohortBenchmark(cohortData.patients, vectorIndex);
 
-      document.getElementById("benchRecallVal").textContent = `${res.overallContraindicationRecall}%`;
-      document.getElementById("benchPrecisionVal").textContent = `${res.overallRetrievalPrecision}%`;
-      document.getElementById("benchLatencyVal").textContent = `${res.avgLatencyMs} ms`;
-      document.getElementById("benchHoursVal").textContent = `${res.totalHoursEvaluated} hrs`;
+      const recallEl = document.getElementById("benchRecallVal");
+      if (recallEl) recallEl.textContent = `${res.overallContraindicationRecall}%`;
+      const precEl = document.getElementById("benchPrecisionVal");
+      if (precEl) precEl.textContent = `${res.overallRetrievalPrecision}%`;
+      const safetyEl = document.getElementById("benchSafetyVal");
+      if (safetyEl) safetyEl.textContent = `${res.overallContraindicationRecall}%`;
+      const latEl = document.getElementById("benchLatencyVal");
+      if (latEl) latEl.textContent = `${res.avgLatencyMs} ms`;
+      const devLatEl = document.getElementById("devMeanLatency");
+      if (devLatEl) devLatEl.textContent = `${res.avgLatencyMs} ms`;
+      const hoursEl = document.getElementById("benchHoursVal");
+      if (hoursEl) hoursEl.textContent = `${res.totalHoursEvaluated} hrs`;
 
       const tbody = document.getElementById("benchmarkTableBody");
       tbody.innerHTML = "";
