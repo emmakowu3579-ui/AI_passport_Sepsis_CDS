@@ -13,8 +13,8 @@ Run the full multi-container stack (Nginx web application + Ollama inference eng
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/<your-username>/sepsis-rag-cds.git
-cd sepsis-rag-cds
+git clone https://github.com/emmakowu3579-ui/AI_passport_Sepsis_CDS.git
+cd AI_passport_Sepsis_CDS
 
 # 2. Launch the containerized system
 docker compose up -d
@@ -37,8 +37,8 @@ If you prefer running directly on your host machine without Docker, the applicat
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/<your-username>/sepsis-rag-cds.git
-cd sepsis-rag-cds
+git clone https://github.com/emmakowu3579-ui/AI_passport_Sepsis_CDS.git
+cd AI_passport_Sepsis_CDS
 
 # 2. Launch the multi-threaded clinical server
 python run_app.py
