@@ -1196,6 +1196,91 @@ header.clinical-header {
   color: #92400e;
 }
 
+/* ============================================================================
+   Pulsing Effects for Clinical Safety Hazard and Caution Signs
+   ============================================================================ */
+
+/* Ensure vector icon glyphs can animate transform/scaling */
+.callout-icon i,
+.alert-severity-badge i,
+.safety-legend-chip i,
+.dose-badge.dose-critical i {
+  display: inline-block;
+  will-change: transform, filter;
+}
+
+/* Keyframes: Critical Hazard Icon Pulse (Red) */
+@keyframes pulse-critical-icon {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.4));
+  }
+  50% {
+    transform: scale(1.22);
+    filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.9));
+  }
+}
+
+/* Keyframes: Caution Icon Pulse (Amber) */
+@keyframes pulse-warning-icon {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 1px rgba(217, 119, 6, 0.3));
+  }
+  50% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 7px rgba(217, 119, 6, 0.8));
+  }
+}
+
+/* Keyframes: Critical Hazard Badge Glow Pulse */
+@keyframes pulse-critical-badge {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45);
+    border-color: var(--status-critical-border);
+  }
+  50% {
+    box-shadow: 0 0 12px 3px rgba(220, 38, 38, 0.35);
+    border-color: var(--status-critical);
+  }
+}
+
+/* Keyframes: Caution Badge Glow Pulse */
+@keyframes pulse-warning-badge {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.35);
+    border-color: var(--status-warning-border);
+  }
+  50% {
+    box-shadow: 0 0 10px 2px rgba(217, 119, 6, 0.28);
+    border-color: var(--status-warning);
+  }
+}
+
+/* Keyframes: Critical Callout Card Glow Pulse */
+@keyframes pulse-critical-callout {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+    border-left-color: var(--status-critical);
+  }
+  50% {
+    box-shadow: 0 4px 18px rgba(220, 38, 38, 0.16);
+    border-left-color: #ef4444;
+  }
+}
+
+/* Keyframes: Caution Callout Card Glow Pulse */
+@keyframes pulse-warning-callout {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+    border-left-color: var(--status-warning);
+  }
+  50% {
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.12);
+    border-left-color: #f59e0b;
+  }
+}
+
 /* Alert Severity Badges Inside Warning Cards */
 .alert-severity-badge {
   display: inline-flex;
@@ -1215,12 +1300,31 @@ header.clinical-header {
   background: var(--status-critical-bg);
   color: var(--status-critical);
   border: 1.5px solid var(--status-critical-border);
+  animation: pulse-critical-badge 1.8s ease-in-out infinite;
+}
+
+.alert-severity-badge.badge-critical i {
+  animation: pulse-critical-icon 1.8s ease-in-out infinite;
 }
 
 .alert-severity-badge.badge-warning {
   background: var(--status-warning-bg);
   color: var(--status-warning);
   border: 1.5px solid var(--status-warning-border);
+  animation: pulse-warning-badge 2.4s ease-in-out infinite;
+}
+
+.alert-severity-badge.badge-warning i {
+  animation: pulse-warning-icon 2.4s ease-in-out infinite;
+}
+
+/* Legend Chips Pulsing */
+.chip-critical i {
+  animation: pulse-critical-icon 1.8s ease-in-out infinite;
+}
+
+.chip-warning i {
+  animation: pulse-warning-icon 2.4s ease-in-out infinite;
 }
 
 /* Clinical Safety Alerts Callouts */
@@ -1235,12 +1339,49 @@ header.clinical-header {
   background: var(--status-warning-bg);
   border: 1.5px solid var(--status-warning-border);
   border-left: 7px solid var(--status-warning);
+  animation: pulse-warning-callout 3.0s ease-in-out infinite;
+}
+
+.callout-warning .callout-icon i {
+  animation: pulse-warning-icon 2.4s ease-in-out infinite;
 }
 
 .callout-critical {
   background: var(--status-critical-bg);
   border: 1.5px solid var(--status-critical-border);
   border-left: 7px solid var(--status-critical);
+  animation: pulse-critical-callout 2.0s ease-in-out infinite;
+}
+
+.callout-critical .callout-icon i {
+  animation: pulse-critical-icon 1.8s ease-in-out infinite;
+}
+
+/* Executive Diagnosis Badges */
+.exec-pill-badge.badge-critical {
+  animation: pulse-critical-badge 2.0s ease-in-out infinite;
+}
+
+.exec-pill-badge.badge-warning {
+  animation: pulse-warning-badge 2.8s ease-in-out infinite;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .callout-critical,
+  .callout-warning,
+  .callout-critical .callout-icon i,
+  .callout-warning .callout-icon i,
+  .alert-severity-badge,
+  .alert-severity-badge i,
+  .chip-critical i,
+  .chip-warning i,
+  .exec-pill-badge {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
 }
 
 .callout-header-row {
