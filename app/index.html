@@ -846,6 +846,7 @@
       window.switchAppMode = switchAppMode;
       window.scrollToSection = scrollToSection;
       window.navigateToStepPage = navigateToStepPage;
+      window.setEhrNoteFontSize = setEhrNoteFontSize;
       window.switchRagTab = switchRagTab;
       window.switchChartView = switchChartView;
       
@@ -1328,6 +1329,61 @@
     let currentRagTab = "bundleTab";
     let currentChartView = "hemo";
     let currentSynthState = null;
+    let currentEhrFontSize = localStorage.getItem("sepsis_ehr_font_size") || "large";
+
+    function setEhrNoteFontSize(size) {
+      currentEhrFontSize = size;
+      localStorage.setItem("sepsis_ehr_font_size", size);
+
+      const pre = document.getElementById("ehrNotePre");
+      if (pre) {
+        pre.className = `ehr-note-pre font-${size}`;
+      }
+
+      document.querySelectorAll(".note-font-btn").forEach(btn => {
+        const btnSize = btn.getAttribute("data-size");
+        btn.classList.toggle("active", btnSize === size);
+      });
+    }
+
+    function generateCleanEhrConsultNote(patient, record, sofa, status, synth) {
+      const patientId = patient ? (patient.patient_id || patient.id || "p000000") : "p000000";
+      const age = patient?.demographics?.age ? Math.round(patient.demographics.age) : "65";
+      const gender = patient?.demographics?.gender || "Male";
+      const category = patient?.category || "ICU Patient";
+      const timestamp = new Date().toLocaleTimeString();
+
+      let noteText = `================================================================================\n`;
+      noteText += `ICU SEPSIS CONSULTATION NOTE & EVIDENCE-BASED RECOMMENDATION\n`;
+      noteText += `Patient ID : ${patientId} (${age}yo ${gender}) | Category: ${category}\n`;
+      noteText += `ICU Stay   : Hour ${record.hour} | Sepsis Status: ${status.status} | Total SOFA: ${sofa.total}\n`;
+      noteText += `Perfusion  : MAP ${record.vitals.map} mmHg | Lactate: ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + ' mmol/L (' + record.labs.lactate_mg_dl + ' mg/dL)' : 'Pending'}\n`;
+      noteText += `Generated  : ${timestamp} | Mode: ${synth.mode}\n`;
+      noteText += `================================================================================\n\n`;
+
+      for (const sec of synth.sections) {
+        noteText += `--------------------------------------------------------------------------------\n`;
+        noteText += `${sec.heading.toUpperCase()}\n`;
+        noteText += `--------------------------------------------------------------------------------\n`;
+
+        // Strip raw markdown symbols for clean clinical legibility in EHR systems
+        let cleanBody = sec.body
+          .replace(/<[^>]+>/g, '')
+          .replace(/\(\s*\[([A-Z0-9_-]+)\]\s*\)/g, '[$1]')
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
+          .replace(/ALERT:\s*/g, 'SAFETY ALERT: ')
+          .trim();
+
+        noteText += `${cleanBody}\n\n`;
+      }
+
+      noteText += `================================================================================\n`;
+      noteText += `EHR CONSULTATION AUDIT TRAIL • SURVIVING SEPSIS CAMPAIGN (SSC 2021) GUIDELINES\n`;
+      noteText += `================================================================================\n`;
+
+      return noteText;
+    }
 
     function switchChartView(view) {
       currentChartView = view;
@@ -1384,27 +1440,26 @@
         const consultWrapper = document.createElement("div");
         consultWrapper.className = "consult-note-wrapper";
 
-        let noteText = `================================================================================\n`;
-        noteText += `ICU SEPSIS CONSULTATION NOTE & EVIDENCE-BASED RECOMMENDATION\n`;
-        noteText += `Patient ID : ${activePatient.id} (${activePatient.demographics.age}yo ${activePatient.demographics.gender}) | Category: ${activePatient.category}\n`;
-        noteText += `ICU Hour   : ${record.hour} | Sepsis Status: ${status.status} | Total SOFA: ${sofa.total}\n`;
-        noteText += `Perfusion  : MAP ${record.vitals.map} mmHg | Lactate: ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + ' mmol/L (' + record.labs.lactate_mg_dl + ' mg/dL)' : 'Pending'}\n`;
-        noteText += `Generated  : ${new Date().toLocaleTimeString()} | Mode: ${synth.mode}\n`;
-        noteText += `================================================================================\n\n`;
-
-        for (const sec of synth.sections) {
-          noteText += `## ${sec.heading}\n`;
-          noteText += `${sec.body.replace(/<[^>]+>/g, '').replace(/\[([A-Z0-9_-]+)\]/g, '[$1]')}\n\n`;
-        }
+        const noteText = generateCleanEhrConsultNote(activePatient, record, sofa, status, synth);
 
         consultWrapper.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <strong style="color:var(--clinical-navy); font-size:0.95rem;"><i class="bi bi-file-earmark-medical-fill" style="margin-right:4px;"></i>Complete EHR Consultation Note</strong>
-            <button class="action-btn action-btn-primary" style="padding:6px 14px; font-size:0.82rem;" onclick="copyConsultNoteToClipboard()">
-              <i class="bi bi-clipboard2-check-fill"></i> Copy Raw Text
-            </button>
+          <div class="consult-note-header-row">
+            <div class="consult-note-title">
+              <i class="bi bi-file-earmark-medical-fill" style="color:var(--clinical-blue);"></i> Complete EHR Consultation Note
+            </div>
+            <div class="consult-note-tools">
+              <div class="note-font-size-group">
+                <span class="note-font-label"><i class="bi bi-fonts"></i> Text Size:</span>
+                <button type="button" class="note-font-btn ${currentEhrFontSize === 'standard' ? 'active' : ''}" data-size="standard" onclick="setEhrNoteFontSize('standard')">Standard</button>
+                <button type="button" class="note-font-btn ${currentEhrFontSize === 'large' ? 'active' : ''}" data-size="large" onclick="setEhrNoteFontSize('large')">Large (Default)</button>
+                <button type="button" class="note-font-btn ${currentEhrFontSize === 'xlarge' ? 'active' : ''}" data-size="xlarge" onclick="setEhrNoteFontSize('xlarge')">Extra Large</button>
+              </div>
+              <button id="copyEhrNoteBtn" class="action-btn action-btn-primary" style="padding:10px 20px; font-size:1.02rem;" onclick="copyConsultNoteToClipboard()">
+                <i class="bi bi-clipboard2-check-fill"></i> Copy Raw Text
+              </button>
+            </div>
           </div>
-          <pre class="ehr-note-pre">${noteText}</pre>
+          <pre id="ehrNotePre" class="ehr-note-pre font-${currentEhrFontSize}">${noteText}</pre>
         `;
         box.appendChild(consultWrapper);
         return;
@@ -1502,21 +1557,21 @@
       if (!currentSynthState) return;
       const { synth, record, sofa, status } = currentSynthState;
 
-      let noteText = `================================================================================\n`;
-      noteText += `ICU SEPSIS CONSULTATION NOTE & EVIDENCE-BASED RECOMMENDATION\n`;
-      noteText += `Patient ID : ${activePatient.id} (${activePatient.demographics.age}yo ${activePatient.demographics.gender}) | Category: ${activePatient.category}\n`;
-      noteText += `ICU Hour   : ${record.hour} | Sepsis Status: ${status.status} | Total SOFA: ${sofa.total}\n`;
-      noteText += `Perfusion  : MAP ${record.vitals.map} mmHg | Lactate: ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + ' mmol/L (' + record.labs.lactate_mg_dl + ' mg/dL)' : 'Pending'}\n`;
-      noteText += `Generated  : ${new Date().toLocaleTimeString()} | Mode: ${synth.mode}\n`;
-      noteText += `================================================================================\n\n`;
-
-      for (const sec of synth.sections) {
-        noteText += `## ${sec.heading}\n`;
-        noteText += `${sec.body.replace(/<[^>]+>/g, '').replace(/\[([A-Z0-9_-]+)\]/g, '[$1]')}\n\n`;
-      }
+      const noteText = generateCleanEhrConsultNote(activePatient, record, sofa, status, synth);
 
       navigator.clipboard.writeText(noteText).then(() => {
-        alert("Grounded Sepsis Consultation Note copied to clipboard for EHR integration.");
+        const btn = document.getElementById("copyEhrNoteBtn");
+        if (btn) {
+          const original = btn.innerHTML;
+          btn.innerHTML = '<i class="bi bi-check-circle-fill" style="margin-right:4px;"></i> Copied Clean Note!';
+          btn.style.background = 'var(--status-normal)';
+          setTimeout(() => {
+            btn.innerHTML = original;
+            btn.style.background = '';
+          }, 2200);
+        } else {
+          alert("Grounded Sepsis Consultation Note copied to clipboard for EHR integration.");
+        }
       }).catch(err => {
         console.error("Clipboard copy failed:", err);
       });
