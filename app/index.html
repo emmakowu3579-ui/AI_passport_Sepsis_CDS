@@ -1638,6 +1638,7 @@
         clearInterval(playTimer);
         playTimer = null;
         btn.innerHTML = '<i class="bi bi-play-fill"></i> Play';
+        renderCurrentState();
       } else {
         btn.innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
         playTimer = setInterval(() => {
@@ -1645,6 +1646,7 @@
             clearInterval(playTimer);
             playTimer = null;
             btn.innerHTML = '<i class="bi bi-play-fill"></i> Play';
+            renderCurrentState();
             return;
           }
           stepTimeline(1);
@@ -2122,10 +2124,10 @@
         sim
       );
 
-      // If user is in EXTRACTIVE_RAG or WEBGPU mode, render immediately
-      if (synthesizer.currentMode !== "OLLAMA") {
+      // If user is in EXTRACTIVE_RAG or WEBGPU mode, or if timeline is actively auto-playing, render immediately
+      if (synthesizer.currentMode !== "OLLAMA" || playTimer !== null) {
         document.getElementById("confidencePill").textContent = baseSynth.confidence.label;
-        document.getElementById("latencyBadge").textContent = "Extractive Clinical Guidance";
+        document.getElementById("latencyBadge").textContent = playTimer !== null ? "Timeline Playback (Instant CDS)" : "Extractive Clinical Guidance";
         currentSynthState = { synth: baseSynth, selectedDrugs, record, sofa, status, alerts };
         renderActiveRagContent();
         return;
@@ -2231,7 +2233,7 @@
 
       confPill.textContent = finalSynth.confidence.label;
       confPill.className = "exec-pill-badge badge-normal";
-      latencyBadge.textContent = "Ollama Synthesis Complete";
+      latencyBadge.textContent = finalSynth.mode.includes("Fallback") ? "Instant Extractive Guidance (Ollama Offline)" : "Ollama Synthesis Complete";
 
       // Cache state and re-render clean active tab content with generative section integrated
       currentSynthState = { synth: finalSynth, selectedDrugs, record, sofa, status, alerts };
