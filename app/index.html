@@ -559,8 +559,19 @@
           <!-- Right Side: Perfusion Gauge & Contraindication Alerts -->
           <div>
             <div style="background:var(--bg-inset); border:1.5px solid var(--border-subtle); border-radius:10px; padding:18px; margin-bottom:16px;">
-              <div class="metrics-section-label" style="margin-bottom:8px;"><i class="bi bi-speedometer2" style="color:var(--clinical-blue); margin-right:6px;"></i>Hemodynamic Response Forecast Gauge</div>
-              <svg id="simComparisonSvg" style="width:100%; height:170px; display:block;"></svg>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                <div class="metrics-section-label" style="margin-bottom:0;"><i class="bi bi-speedometer2" style="color:var(--clinical-blue); margin-right:6px;"></i>Hemodynamic Response Forecast Gauge</div>
+              </div>
+
+              <!-- Color Meaning Legend for Perfusion Gauge -->
+              <div class="gauge-legend-strip">
+                <span class="gauge-legend-title"><i class="bi bi-info-circle-fill" style="color:var(--clinical-blue); margin-right:5px;"></i>Gauge Color Meaning:</span>
+                <span class="gauge-legend-pill"><span class="legend-dot dot-green"></span> <strong>Green:</strong> Target Met (&ge; 65 mmHg)</span>
+                <span class="gauge-legend-pill"><span class="legend-dot dot-red"></span> <strong>Red:</strong> Hypoperfusion (&lt; 65 mmHg)</span>
+                <span class="gauge-legend-pill"><span class="legend-dash-blue"></span> <strong>Blue Line:</strong> SSC Goal (65 mmHg)</span>
+              </div>
+
+              <svg id="simComparisonSvg" style="width:100%; height:195px; display:block;"></svg>
             </div>
 
             <div style="background:var(--bg-inset); border:1.5px solid var(--border-subtle); border-radius:10px; padding:16px 20px; display:flex; flex-direction:column; gap:10px; font-size:1.06rem;">
@@ -846,7 +857,6 @@
       window.switchAppMode = switchAppMode;
       window.scrollToSection = scrollToSection;
       window.navigateToStepPage = navigateToStepPage;
-      window.setEhrNoteFontSize = setEhrNoteFontSize;
       window.switchRagTab = switchRagTab;
       window.switchChartView = switchChartView;
       
@@ -1304,23 +1314,54 @@
 
       if (alerts.length === 0) {
         container.innerHTML = `
-          <div style="background:var(--status-normal-bg); color:var(--status-normal); border:1px solid var(--status-normal-border); border-radius:6px; padding:10px 12px; font-size:0.86rem; margin-top:8px; font-weight:700;">
-            <i class="bi bi-check-circle-fill" style="margin-right:4px;"></i>No organ contraindications or nephrotoxic drug synergies detected for current selection.
+          <div style="background:var(--status-normal-bg); color:var(--status-normal); border:1.5px solid var(--status-normal-border); border-radius:8px; padding:14px 18px; font-size:1.05rem; margin-top:10px; font-weight:700;">
+            <i class="bi bi-check-circle-fill" style="margin-right:6px;"></i>No organ contraindications or nephrotoxic drug synergies detected for current selection.
           </div>
         `;
         return;
       }
 
+      // Add Color Meaning Severity Legend
+      const legendDiv = document.createElement("div");
+      legendDiv.className = "safety-legend-bar";
+      legendDiv.innerHTML = `
+        <div class="safety-legend-header">
+          <i class="bi bi-info-circle-fill" style="color:var(--clinical-blue);"></i>
+          <strong>Safety Alert Color Meaning:</strong>
+        </div>
+        <div class="safety-legend-chips">
+          <span class="safety-legend-chip chip-critical">
+            <i class="bi bi-octagon-fill"></i>
+            <span><strong>Red (Critical Hazard):</strong> Contraindication or acute organ threat &mdash; immediate action required</span>
+          </span>
+          <span class="safety-legend-chip chip-warning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span><strong>Amber (Caution):</strong> Organ impairment or drug synergy &mdash; active surveillance required</span>
+          </span>
+        </div>
+      `;
+      container.appendChild(legendDiv);
+
       for (const al of alerts) {
+        const isCritical = al.level === "CRITICAL_HAZARD";
         const div = document.createElement("div");
-        div.className = `contraindication-banner ${al.level === "CRITICAL_HAZARD" ? "danger" : "warning"}`;
+        div.className = `contraindication-banner ${isCritical ? "danger" : "warning"}`;
         div.innerHTML = `
-          <div style="display:flex; justify-content:space-between; font-weight:800; color:var(--text-primary);">
-            <span><i class="bi bi-exclamation-triangle-fill" style="color:var(--status-warning); margin-right:5px;"></i>${al.title}</span>
-            <span style="font-size:0.75rem; text-transform:uppercase;">[${al.badge}]</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="alert-severity-badge ${isCritical ? 'badge-critical' : 'badge-warning'}">
+                <i class="bi ${isCritical ? 'bi-octagon-fill' : 'bi-exclamation-triangle-fill'}"></i>
+                ${isCritical ? 'CRITICAL HAZARD' : 'CAUTION &bull; SURVEILLANCE'}
+              </span>
+              <strong style="color:var(--text-primary); font-size:1.14rem;">${al.title}</strong>
+            </div>
+            <span style="font-size:0.88rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); background:var(--bg-card); padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle);">[${al.badge}]</span>
           </div>
-          <div style="color:var(--text-secondary); margin-top:4px; line-height:1.45;">${al.message}</div>
-          <div style="color:var(--clinical-blue); font-weight:800; margin-top:4px;"><i class="bi bi-arrow-right-circle-fill" style="margin-right:4px;"></i>Action: ${al.recommendation}</div>
+          <div style="color:var(--text-secondary); line-height:1.65; font-size:1.08rem; margin-top:4px;">${al.message}</div>
+          <div style="color:var(--clinical-blue); font-weight:800; margin-top:10px; font-size:1.08rem; display:flex; align-items:baseline; gap:6px;">
+            <i class="bi bi-arrow-right-circle-fill" style="margin-right:4px; flex-shrink:0;"></i>
+            <span>Action: ${al.recommendation}</span>
+          </div>
         `;
         container.appendChild(div);
       }
@@ -1329,61 +1370,6 @@
     let currentRagTab = "bundleTab";
     let currentChartView = "hemo";
     let currentSynthState = null;
-    let currentEhrFontSize = localStorage.getItem("sepsis_ehr_font_size") || "large";
-
-    function setEhrNoteFontSize(size) {
-      currentEhrFontSize = size;
-      localStorage.setItem("sepsis_ehr_font_size", size);
-
-      const pre = document.getElementById("ehrNotePre");
-      if (pre) {
-        pre.className = `ehr-note-pre font-${size}`;
-      }
-
-      document.querySelectorAll(".note-font-btn").forEach(btn => {
-        const btnSize = btn.getAttribute("data-size");
-        btn.classList.toggle("active", btnSize === size);
-      });
-    }
-
-    function generateCleanEhrConsultNote(patient, record, sofa, status, synth) {
-      const patientId = patient ? (patient.patient_id || patient.id || "p000000") : "p000000";
-      const age = patient?.demographics?.age ? Math.round(patient.demographics.age) : "65";
-      const gender = patient?.demographics?.gender || "Male";
-      const category = patient?.category || "ICU Patient";
-      const timestamp = new Date().toLocaleTimeString();
-
-      let noteText = `================================================================================\n`;
-      noteText += `ICU SEPSIS CONSULTATION NOTE & EVIDENCE-BASED RECOMMENDATION\n`;
-      noteText += `Patient ID : ${patientId} (${age}yo ${gender}) | Category: ${category}\n`;
-      noteText += `ICU Stay   : Hour ${record.hour} | Sepsis Status: ${status.status} | Total SOFA: ${sofa.total}\n`;
-      noteText += `Perfusion  : MAP ${record.vitals.map} mmHg | Lactate: ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + ' mmol/L (' + record.labs.lactate_mg_dl + ' mg/dL)' : 'Pending'}\n`;
-      noteText += `Generated  : ${timestamp} | Mode: ${synth.mode}\n`;
-      noteText += `================================================================================\n\n`;
-
-      for (const sec of synth.sections) {
-        noteText += `--------------------------------------------------------------------------------\n`;
-        noteText += `${sec.heading.toUpperCase()}\n`;
-        noteText += `--------------------------------------------------------------------------------\n`;
-
-        // Strip raw markdown symbols for clean clinical legibility in EHR systems
-        let cleanBody = sec.body
-          .replace(/<[^>]+>/g, '')
-          .replace(/\(\s*\[([A-Z0-9_-]+)\]\s*\)/g, '[$1]')
-          .replace(/\*\*(.*?)\*\*/g, '$1')
-          .replace(/\*(.*?)\*/g, '$1')
-          .replace(/ALERT:\s*/g, 'SAFETY ALERT: ')
-          .trim();
-
-        noteText += `${cleanBody}\n\n`;
-      }
-
-      noteText += `================================================================================\n`;
-      noteText += `EHR CONSULTATION AUDIT TRAIL • SURVIVING SEPSIS CAMPAIGN (SSC 2021) GUIDELINES\n`;
-      noteText += `================================================================================\n`;
-
-      return noteText;
-    }
 
     function switchChartView(view) {
       currentChartView = view;
@@ -1440,26 +1426,27 @@
         const consultWrapper = document.createElement("div");
         consultWrapper.className = "consult-note-wrapper";
 
-        const noteText = generateCleanEhrConsultNote(activePatient, record, sofa, status, synth);
+        let noteText = `================================================================================\n`;
+        noteText += `ICU SEPSIS CONSULTATION NOTE & EVIDENCE-BASED RECOMMENDATION\n`;
+        noteText += `Patient ID : ${activePatient.id} (${activePatient.demographics.age}yo ${activePatient.demographics.gender}) | Category: ${activePatient.category}\n`;
+        noteText += `ICU Hour   : ${record.hour} | Sepsis Status: ${status.status} | Total SOFA: ${sofa.total}\n`;
+        noteText += `Perfusion  : MAP ${record.vitals.map} mmHg | Lactate: ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + ' mmol/L (' + record.labs.lactate_mg_dl + ' mg/dL)' : 'Pending'}\n`;
+        noteText += `Generated  : ${new Date().toLocaleTimeString()} | Mode: ${synth.mode}\n`;
+        noteText += `================================================================================\n\n`;
+
+        for (const sec of synth.sections) {
+          noteText += `## ${sec.heading}\n`;
+          noteText += `${sec.body.replace(/<[^>]+>/g, '').replace(/\[([A-Z0-9_-]+)\]/g, '[$1]')}\n\n`;
+        }
 
         consultWrapper.innerHTML = `
-          <div class="consult-note-header-row">
-            <div class="consult-note-title">
-              <i class="bi bi-file-earmark-medical-fill" style="color:var(--clinical-blue);"></i> Complete EHR Consultation Note
-            </div>
-            <div class="consult-note-tools">
-              <div class="note-font-size-group">
-                <span class="note-font-label"><i class="bi bi-fonts"></i> Text Size:</span>
-                <button type="button" class="note-font-btn ${currentEhrFontSize === 'standard' ? 'active' : ''}" data-size="standard" onclick="setEhrNoteFontSize('standard')">Standard</button>
-                <button type="button" class="note-font-btn ${currentEhrFontSize === 'large' ? 'active' : ''}" data-size="large" onclick="setEhrNoteFontSize('large')">Large (Default)</button>
-                <button type="button" class="note-font-btn ${currentEhrFontSize === 'xlarge' ? 'active' : ''}" data-size="xlarge" onclick="setEhrNoteFontSize('xlarge')">Extra Large</button>
-              </div>
-              <button id="copyEhrNoteBtn" class="action-btn action-btn-primary" style="padding:10px 20px; font-size:1.02rem;" onclick="copyConsultNoteToClipboard()">
-                <i class="bi bi-clipboard2-check-fill"></i> Copy Raw Text
-              </button>
-            </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong style="color:var(--clinical-navy); font-size:0.95rem;"><i class="bi bi-file-earmark-medical-fill" style="margin-right:4px;"></i>Complete EHR Consultation Note</strong>
+            <button class="action-btn action-btn-primary" style="padding:6px 14px; font-size:0.82rem;" onclick="copyConsultNoteToClipboard()">
+              <i class="bi bi-clipboard2-check-fill"></i> Copy Raw Text
+            </button>
           </div>
-          <pre id="ehrNotePre" class="ehr-note-pre font-${currentEhrFontSize}">${noteText}</pre>
+          <pre class="ehr-note-pre">${noteText}</pre>
         `;
         box.appendChild(consultWrapper);
         return;
@@ -1557,21 +1544,21 @@
       if (!currentSynthState) return;
       const { synth, record, sofa, status } = currentSynthState;
 
-      const noteText = generateCleanEhrConsultNote(activePatient, record, sofa, status, synth);
+      let noteText = `================================================================================\n`;
+      noteText += `ICU SEPSIS CONSULTATION NOTE & EVIDENCE-BASED RECOMMENDATION\n`;
+      noteText += `Patient ID : ${activePatient.id} (${activePatient.demographics.age}yo ${activePatient.demographics.gender}) | Category: ${activePatient.category}\n`;
+      noteText += `ICU Hour   : ${record.hour} | Sepsis Status: ${status.status} | Total SOFA: ${sofa.total}\n`;
+      noteText += `Perfusion  : MAP ${record.vitals.map} mmHg | Lactate: ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + ' mmol/L (' + record.labs.lactate_mg_dl + ' mg/dL)' : 'Pending'}\n`;
+      noteText += `Generated  : ${new Date().toLocaleTimeString()} | Mode: ${synth.mode}\n`;
+      noteText += `================================================================================\n\n`;
+
+      for (const sec of synth.sections) {
+        noteText += `## ${sec.heading}\n`;
+        noteText += `${sec.body.replace(/<[^>]+>/g, '').replace(/\[([A-Z0-9_-]+)\]/g, '[$1]')}\n\n`;
+      }
 
       navigator.clipboard.writeText(noteText).then(() => {
-        const btn = document.getElementById("copyEhrNoteBtn");
-        if (btn) {
-          const original = btn.innerHTML;
-          btn.innerHTML = '<i class="bi bi-check-circle-fill" style="margin-right:4px;"></i> Copied Clean Note!';
-          btn.style.background = 'var(--status-normal)';
-          setTimeout(() => {
-            btn.innerHTML = original;
-            btn.style.background = '';
-          }, 2200);
-        } else {
-          alert("Grounded Sepsis Consultation Note copied to clipboard for EHR integration.");
-        }
+        alert("Grounded Sepsis Consultation Note copied to clipboard for EHR integration.");
       }).catch(err => {
         console.error("Clipboard copy failed:", err);
       });

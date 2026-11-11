@@ -309,40 +309,79 @@ export class ClinicalChartEngine {
 
   /**
    * Renders the "What-If" Resuscitation Perfusion Comparison Gauge
+   * High-contrast clinical visualizer with clear color coding and no text collisions.
    */
   renderSimulationComparison(svgElementId, baselineMap, simulatedMap, isAchieved, overloadRisk) {
     const svg = document.getElementById(svgElementId);
     if (!svg) return;
 
-    const width = 450;
-    const height = 160;
+    const width = 520;
+    const height = 185;
     const minMap = 40;
     const maxMap = 110;
 
-    const barX = (val) => 40 + ((Math.min(maxMap, Math.max(minMap, val)) - minMap) / (maxMap - minMap)) * 360;
+    const xStart = 35;
+    const xEnd = 485;
+    const xWidth = xEnd - xStart;
 
-    const baseW = Math.max(10, barX(baselineMap) - 40);
-    const simW = Math.max(10, barX(simulatedMap) - 40);
+    const barX = (val) => xStart + ((Math.min(maxMap, Math.max(minMap, val)) - minMap) / (maxMap - minMap)) * xWidth;
+
+    const baseW = Math.max(10, barX(baselineMap) - xStart);
+    const simW = Math.max(10, barX(simulatedMap) - xStart);
     const targetX = barX(65);
 
+    const isBaseAchieved = baselineMap >= 65;
+    const baseColor = isBaseAchieved ? '#10b981' : '#ef4444';
+    const simColor = isAchieved ? '#10b981' : '#ef4444';
+
+    const deltaMap = Math.round(simulatedMap - baselineMap);
+    const deltaStr = deltaMap >= 0 ? `+${deltaMap}` : `${deltaMap}`;
+
     const elements = `
-      <!-- Background Bar Track -->
-      <rect x="40" y="30" width="360" height="24" rx="6" fill="var(--bg-inset, #f1f5f9)" stroke="var(--border-subtle, #e2e8f0)" />
-      <text x="40" y="22" fill="var(--text-muted, #64748b)" font-size="11" font-weight="700">Baseline MAP: ${baselineMap} mmHg</text>
-      <rect x="40" y="30" width="${baseW}" height="24" rx="6" fill="${baselineMap < 65 ? '#ef4444' : '#10b981'}" />
+      <!-- Danger (<65) and Target (>=65) Background Shading Zones -->
+      <rect x="${xStart}" y="38" width="${targetX - xStart}" height="96" rx="4" fill="rgba(239, 68, 68, 0.08)" />
+      <rect x="${targetX}" y="38" width="${xEnd - targetX}" height="96" rx="4" fill="rgba(16, 185, 129, 0.08)" />
 
-      <!-- Simulated Post-Resuscitation Bar -->
-      <text x="40" y="82" fill="var(--text-muted, #64748b)" font-size="11" font-weight="700">Simulated Post-Resuscitation MAP: ${simulatedMap} mmHg</text>
-      <rect x="40" y="90" width="360" height="24" rx="6" fill="var(--bg-inset, #f1f5f9)" stroke="var(--border-subtle, #e2e8f0)" />
-      <rect x="40" y="90" width="${simW}" height="24" rx="6" fill="${isAchieved ? '#10b981' : '#ef4444'}" />
+      <!-- Zone Indicator Labels -->
+      <text x="${(xStart + targetX) / 2}" y="18" fill="#b91c1c" font-size="11" font-weight="800" text-anchor="middle" letter-spacing="0.04em">
+        DANGER ZONE (&lt; 65 mmHg)
+      </text>
+      <text x="${(targetX + xEnd) / 2}" y="18" fill="#047857" font-size="11" font-weight="800" text-anchor="middle" letter-spacing="0.04em">
+        ADEQUATE PERFUSION ZONE (&ge; 65 mmHg)
+      </text>
 
-      <!-- Target 65 Goal Line -->
-      <line x1="${targetX}" y1="18" x2="${targetX}" y2="124" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="4,3" />
-      <text x="${targetX}" y="142" fill="#0284c7" font-size="11" font-weight="800" text-anchor="middle">Goal: 65 mmHg</text>
+      <!-- Track 1: Baseline MAP -->
+      <text x="${xStart}" y="36" fill="var(--text-primary)" font-size="13.5" font-weight="800">
+        Baseline MAP: <tspan fill="${baseColor}" font-weight="900">${baselineMap} mmHg</tspan>
+      </text>
+      <text x="${xEnd}" y="36" fill="${baseColor}" font-size="12" font-weight="800" text-anchor="end">
+        ${isBaseAchieved ? 'Target Met (&ge; 65 mmHg)' : 'Hypoperfusion Alert (&lt; 65)'}
+      </text>
+      <rect x="${xStart}" y="44" width="${xWidth}" height="26" rx="6" fill="var(--bg-inset, #f1f5f9)" stroke="var(--border-subtle, #cbd5e1)" stroke-width="1.2" />
+      <rect x="${xStart}" y="44" width="${baseW}" height="26" rx="6" fill="${baseColor}" />
+
+      <!-- Track 2: Simulated Post-Resuscitation MAP -->
+      <text x="${xStart}" y="96" fill="var(--text-primary)" font-size="13.5" font-weight="800">
+        Simulated Post-Resuscitation MAP: <tspan fill="${simColor}" font-weight="900">${simulatedMap} mmHg</tspan>
+      </text>
+      <text x="${xEnd}" y="96" fill="${simColor}" font-size="12" font-weight="800" text-anchor="end">
+        ${isAchieved ? `Target Achieved (${deltaStr} mmHg)` : 'Below Target (&lt; 65 mmHg)'}
+      </text>
+      <rect x="${xStart}" y="104" width="${xWidth}" height="26" rx="6" fill="var(--bg-inset, #f1f5f9)" stroke="var(--border-subtle, #cbd5e1)" stroke-width="1.2" />
+      <rect x="${xStart}" y="104" width="${simW}" height="26" rx="6" fill="${simColor}" />
+
+      <!-- Target 65 Goal Line (Only drawn through tracks, cleanly avoiding text collision) -->
+      <line x1="${targetX}" y1="40" x2="${targetX}" y2="74" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="4,3" />
+      <line x1="${targetX}" y1="100" x2="${targetX}" y2="148" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="4,3" />
+
+      <!-- Target 65 Badge & Pointer -->
+      <polygon points="${targetX - 5},148 ${targetX + 5},148 ${targetX},152" fill="#0284c7" />
+      <rect x="${targetX - 54}" y="152" width="108" height="24" rx="5" fill="#0284c7" />
+      <text x="${targetX}" y="168" fill="#ffffff" font-size="12" font-weight="900" text-anchor="middle">Goal: 65 mmHg</text>
 
       <!-- Tick Labels -->
-      <text x="40" y="142" fill="var(--text-muted)" font-size="10" font-weight="600">40</text>
-      <text x="400" y="142" fill="var(--text-muted)" font-size="10" font-weight="600" text-anchor="end">110 mmHg</text>
+      <text x="${xStart}" y="164" fill="var(--text-muted)" font-size="12" font-weight="700">40 mmHg</text>
+      <text x="${xEnd}" y="164" fill="var(--text-muted)" font-size="12" font-weight="700" text-anchor="end">110 mmHg</text>
     `;
 
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);

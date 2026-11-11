@@ -48,28 +48,52 @@ export function renderClinicalMarkdown(text) {
       }
       const isWarning = line.includes("WARNINGS");
       const iconHtml = isWarning
-        ? '<i class="bi bi-exclamation-triangle-fill"></i>'
+        ? '<i class="bi bi-shield-exclamation"></i>'
         : '<i class="bi bi-prescription2"></i>';
       const cleanTitle = line.replace(/<[^>]+>/g, '').replace(/[:*]/g, '').trim();
+
+      let legendHtml = "";
+      if (isWarning) {
+        legendHtml = `
+          <div class="safety-legend-bar">
+            <div class="safety-legend-header">
+              <i class="bi bi-info-circle-fill" style="color:var(--clinical-blue);"></i>
+              <strong>Color Meaning &amp; Severity Guide:</strong>
+            </div>
+            <div class="safety-legend-chips">
+              <span class="safety-legend-chip chip-critical">
+                <i class="bi bi-octagon-fill"></i>
+                <span><strong>Red (Critical Hazard):</strong> High-risk contraindication or severe organ toxicity &mdash; immediate clinical intervention required</span>
+              </span>
+              <span class="safety-legend-chip chip-warning">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span><strong>Amber (Caution):</strong> Organ impairment or drug synergy &mdash; close laboratory surveillance and dose adjustment required</span>
+              </span>
+            </div>
+          </div>
+        `;
+      }
+
       processed.push(`
         <div class="clinical-group-header ${isWarning ? 'header-warning' : 'header-regimen'}">
           <span class="group-icon" aria-hidden="true">${iconHtml}</span>
           <span class="group-title">${cleanTitle}</span>
         </div>
+        ${legendHtml}
       `);
       continue;
     }
 
     // B. Contraindication / Hazard alert lines (starts with ALERT:)
-    if (line.startsWith("ALERT:")) {
+    if (line.startsWith("ALERT")) {
       if (inList) {
         processed.push('</ul>');
         inList = false;
       }
       
-      const isCritical = line.toLowerCase().includes("contraindicated") || line.toLowerCase().includes("overload") || line.toLowerCase().includes("neurotoxicity");
+      const isCritical = line.includes("CRITICAL_HAZARD") || line.toLowerCase().includes("contraindicated") || line.toLowerCase().includes("overload") || line.toLowerCase().includes("neurotoxicity");
       
-      let alertBody = line.replace(/^ALERT:\s*/, "");
+      let alertBody = line.replace(/^ALERT(?:\s*\[[A-Z_]+\])?:\s*/, "");
       let actionPart = "";
       
       const actionMatch = alertBody.match(/<em class="clinical-italic">Recommended Action:<\/em>\s*(.*?)(?=(?:<button|$))/i);
@@ -87,11 +111,20 @@ export function renderClinicalMarkdown(text) {
         ? '<i class="bi bi-octagon-fill" style="color:var(--status-critical);"></i>'
         : '<i class="bi bi-exclamation-triangle-fill" style="color:var(--status-warning);"></i>';
 
+      const badgeText = isCritical
+        ? 'CRITICAL CONTRAINDICATION &bull; HIGH HAZARD'
+        : 'CAUTION &bull; SURVEILLANCE REQUIRED';
+
       processed.push(`
         <div class="clinical-alert-callout ${isCritical ? 'callout-critical' : 'callout-warning'}">
           <div class="callout-header-row">
             <span class="callout-icon" aria-hidden="true">${calloutIcon}</span>
-            <div class="callout-content-text">${alertBody}</div>
+            <div style="flex:1;">
+              <div class="alert-severity-badge ${isCritical ? 'badge-critical' : 'badge-warning'}">
+                ${calloutIcon} ${badgeText}
+              </div>
+              <div class="callout-content-text">${alertBody}</div>
+            </div>
           </div>
           ${actionPart}
         </div>

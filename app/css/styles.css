@@ -829,13 +829,67 @@ header.clinical-header {
   border-color: var(--clinical-blue);
 }
 
+/* Perfusion Gauge Color Meaning Legend */
+.gauge-legend-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  font-size: 0.94rem;
+}
+
+.gauge-legend-title {
+  font-weight: 800;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+}
+
+.gauge-legend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.legend-dot.dot-green {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+.legend-dot.dot-red {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+}
+
+.legend-dash-blue {
+  width: 18px;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, #0284c7, #0284c7 4px, transparent 4px, transparent 7px);
+  display: inline-block;
+}
+
 /* Contraindication Alerts */
 .contraindication-banner {
   border-radius: 10px;
-  padding: 16px 18px;
-  border-left: 6px solid;
-  margin-top: 12px;
-  font-size: 1.04rem;
+  padding: 18px 22px;
+  border-left: 7px solid;
+  margin-top: 14px;
+  font-size: 1.08rem;
+  line-height: 1.65;
 }
 
 .contraindication-banner.danger {
@@ -1084,52 +1138,137 @@ header.clinical-header {
   border: 1px solid rgba(2, 132, 199, 0.25);
 }
 
+/* Proactive Safety Color Meaning Legend Bar */
+.safety-legend-bar {
+  background: var(--bg-inset);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 10px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.safety-legend-header {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.safety-legend-chips {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.safety-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  border: 1.5px solid;
+}
+
+.chip-critical {
+  background: var(--status-critical-bg);
+  border-color: var(--status-critical-border);
+  color: var(--status-critical);
+}
+
+.chip-critical strong {
+  color: #991b1b;
+}
+
+.chip-warning {
+  background: var(--status-warning-bg);
+  border-color: var(--status-warning-border);
+  color: var(--status-warning);
+}
+
+.chip-warning strong {
+  color: #92400e;
+}
+
+/* Alert Severity Badges Inside Warning Cards */
+.alert-severity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  width: fit-content;
+}
+
+.alert-severity-badge.badge-critical {
+  background: var(--status-critical-bg);
+  color: var(--status-critical);
+  border: 1.5px solid var(--status-critical-border);
+}
+
+.alert-severity-badge.badge-warning {
+  background: var(--status-warning-bg);
+  color: var(--status-warning);
+  border: 1.5px solid var(--status-warning-border);
+}
+
 /* Clinical Safety Alerts Callouts */
 .clinical-alert-callout {
-  border-radius: 10px;
-  padding: 16px 20px;
-  margin: 14px 0;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 16px 0;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
 }
 
 .callout-warning {
   background: var(--status-warning-bg);
   border: 1.5px solid var(--status-warning-border);
-  border-left: 6px solid var(--status-warning);
+  border-left: 7px solid var(--status-warning);
 }
 
 .callout-critical {
   background: var(--status-critical-bg);
   border: 1.5px solid var(--status-critical-border);
-  border-left: 6px solid var(--status-critical);
+  border-left: 7px solid var(--status-critical);
 }
 
 .callout-header-row {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 14px;
 }
 
 .callout-icon {
-  font-size: 1.35rem;
+  font-size: 1.55rem;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .callout-content-text {
-  font-size: 1.1rem;
-  line-height: 1.65;
+  font-size: 1.18rem;
+  line-height: 1.74;
   color: var(--text-primary);
 }
 
 .alert-action-strip {
-  margin-top: 10px;
-  padding: 12px 16px;
+  margin-top: 14px;
+  padding: 14px 18px;
   background: var(--bg-card);
   border: 1.5px dashed var(--border-strong);
   border-radius: 8px;
-  font-size: 1.05rem;
-  line-height: 1.55;
+  font-size: 1.12rem;
+  line-height: 1.6;
   color: var(--text-primary);
 }
 
@@ -1232,14 +1371,14 @@ header.clinical-header {
   align-items: center;
   background: var(--clinical-blue-light);
   color: var(--clinical-blue);
-  border: 1px solid rgba(2, 132, 199, 0.4);
+  border: 1.5px solid rgba(2, 132, 199, 0.45);
   padding: 4px 10px;
   border-radius: 6px;
   font-family: var(--font-mono);
-  font-size: 0.92rem;
+  font-size: 0.96rem;
   font-weight: 800;
   cursor: pointer;
-  margin: 0 3px;
+  margin: 0 4px;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
@@ -1266,114 +1405,25 @@ header.clinical-header {
   color: var(--text-primary);
 }
 
-/* Monospace EHR Consult Note View (High-Visibility Clinical Scaling) */
+/* Monospace EHR Consult Note View */
 .consult-note-wrapper {
   background: var(--bg-card);
   border: 1.5px solid var(--border-strong);
-  border-radius: 12px;
-  padding: 24px 28px;
-  box-shadow: var(--card-shadow);
-}
-
-.consult-note-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.consult-note-title {
-  color: var(--clinical-navy);
-  font-size: 1.35rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.consult-note-tools {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.note-font-size-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--bg-inset);
-  padding: 4px 8px;
-  border-radius: 8px;
-  border: 1.5px solid var(--border-subtle);
-}
-
-.note-font-label {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-right: 2px;
-}
-
-.note-font-btn {
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.note-font-btn:hover {
-  color: var(--clinical-blue);
-  background: var(--bg-card);
-}
-
-.note-font-btn.active {
-  background: var(--clinical-blue);
-  color: #ffffff;
-  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.35);
+  border-radius: 10px;
+  padding: 20px;
 }
 
 .ehr-note-pre {
   font-family: var(--font-mono);
-  font-size: 1.32rem; /* Large High-Visibility Default Font Size (~22.5px) */
-  line-height: 1.88;
+  font-size: 1.02rem;
+  line-height: 1.7;
   white-space: pre-wrap;
-  word-break: break-word;
   color: var(--text-primary);
   background: var(--bg-inset);
-  border: 1.5px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 26px 30px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 18px;
   overflow-x: auto;
-  font-weight: 500;
-  letter-spacing: 0.015em;
-  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.04);
-  transition: font-size 0.15s ease, line-height 0.15s ease;
-}
-
-.ehr-note-pre.font-standard {
-  font-size: 1.15rem; /* ~19.5px */
-  line-height: 1.78;
-}
-
-.ehr-note-pre.font-large {
-  font-size: 1.32rem; /* ~22.5px - Default */
-  line-height: 1.88;
-}
-
-.ehr-note-pre.font-xlarge {
-  font-size: 1.58rem; /* ~27px - Maximum Bedside Visibility */
-  line-height: 2.05;
-  font-weight: 600;
 }
 
 /* Chart View Toggle in Step 1 */

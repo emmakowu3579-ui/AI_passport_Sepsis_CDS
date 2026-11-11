@@ -108,7 +108,7 @@ export class ClinicalSynthesizer {
     if (criticalDosingAlerts.length > 0) {
       drugPlan.push("**PROACTIVE SAFETY CONTRAINDICATION WARNINGS:**");
       for (const al of criticalDosingAlerts) {
-        drugPlan.push(`ALERT: **${al.drug} (${al.badge}):** ${al.message} *Recommended Action:* ${al.recommendation} [${al.citation}]`);
+        drugPlan.push(`ALERT [${al.level}]: **${al.drug} (${al.badge}):** ${al.message} *Recommended Action:* ${al.recommendation} [${al.citation}]`);
       }
       drugPlan.push("");
     }
