@@ -7,21 +7,27 @@
 export function renderClinicalMarkdown(text) {
   if (!text) return "";
 
-  // 1. Clean up bracketed citations with outer parentheses like "( [CITATION] )" or "([CITATION])"
-  let html = text.replace(/\(\s*\[([A-Z0-9_-]+)\]\s*\)/g, '[$1]');
+  // 1. Normalize list bullets (*, -, +, • at line start) to standard • bullet
+  let html = text.replace(/^([ \t]*)[*+-](?=\s)/gm, '$1• ');
+
+  // 2. Clean up bracketed citations with outer parentheses like "( [CITATION] )" or "([CITATION])"
+  html = html.replace(/\(\s*\[([A-Z0-9_-]+)\]\s*\)/g, '[$1]');
   html = html.replace(/\(\s*\[([A-Z0-9_-]+)\]\s*,\s*\[([A-Z0-9_-]+)\]\s*\)/g, '[$1] [$2]');
   html = html.replace(/\(\s*\[([A-Z0-9_-]+)\]\s*,\s*\[([A-Z0-9_-]+)\]\s*,\s*\[([A-Z0-9_-]+)\]\s*\)/g, '[$1] [$2] [$3]');
 
-  // 2. Convert Bold (**text**) into styled <strong>
+  // 3. Convert Bold (**text**) into styled <strong>
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="clinical-bold">$1</strong>');
 
-  // 3. Convert Italic (*text*) into styled <em>
-  html = html.replace(/\*([^*]+)\*/g, '<em class="clinical-italic">$1</em>');
+  // 4. Convert Italic (*text*) into styled <em>
+  html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em class="clinical-italic">$1</em>');
 
-  // 4. Convert Citation Bracket Pills [SSC-2021-...] into interactive buttons
+  // 5. Convert Citation Bracket Pills [SSC-2021-...] into interactive buttons
   html = html.replace(/\[([A-Z0-9_-]+)\]/g, (match, id) => {
     return `<button type="button" class="citation-pill" onclick="inspectCitation('${id}')" title="Inspect clinical evidence for ${id}"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>${id}</button>`;
   });
+
+  // 6. Strip any residual stray asterisks so no raw '*' ever appears in text
+  html = html.replace(/(?<![a-zA-Z0-9])\*+(?![a-zA-Z0-9])/g, '');
 
   // 5. Line-by-line processing
   const lines = html.split("\n");
@@ -132,13 +138,13 @@ export function renderClinicalMarkdown(text) {
       continue;
     }
 
-    // C. Bulleted action items (• or -)
-    if (line.startsWith("• ") || line.startsWith("- ")) {
+    // C. Bulleted action items (• or - or *)
+    if (line.startsWith("• ") || line.startsWith("- ") || line.startsWith("* ")) {
       if (!inList) {
         processed.push('<ul class="clinical-action-list">');
         inList = true;
       }
-      const itemContent = line.replace(/^[•-]\s*/, "");
+      const itemContent = line.replace(/^[•\-*]\s*/, "");
       
       // Determine professional vector icon based on clinical content
       let iconHtml = '<i class="bi bi-check2-circle" style="color:var(--clinical-blue);"></i>';
@@ -168,7 +174,18 @@ export function renderClinicalMarkdown(text) {
       continue;
     }
 
-    // D. Numbered section headers (1. , 2. , 3. ...)
+    // D1. Markdown Headers (## Heading, ### Heading, #### Heading)
+    if (/^#{1,6}\s+/.test(line)) {
+      if (inList) {
+        processed.push('</ul>');
+        inList = false;
+      }
+      const cleanHeading = line.replace(/^#{1,6}\s+/, "").trim();
+      processed.push(`<h3 class="clinical-section-header">${cleanHeading}</h3>`);
+      continue;
+    }
+
+    // D2. Numbered section headers (1. , 2. , 3. ...)
     if (/^[1-5]\.\s+/.test(line)) {
       if (inList) {
         processed.push('</ul>');

@@ -1424,29 +1424,117 @@
 
       if (currentRagTab === "consultNoteTab") {
         const consultWrapper = document.createElement("div");
-        consultWrapper.className = "consult-note-wrapper";
+        consultWrapper.className = "ehr-consult-document";
 
-        let noteText = `================================================================================\n`;
-        noteText += `ICU SEPSIS CONSULTATION NOTE & EVIDENCE-BASED RECOMMENDATION\n`;
-        noteText += `Patient ID : ${activePatient.id} (${activePatient.demographics.age}yo ${activePatient.demographics.gender}) | Category: ${activePatient.category}\n`;
-        noteText += `ICU Hour   : ${record.hour} | Sepsis Status: ${status.status} | Total SOFA: ${sofa.total}\n`;
-        noteText += `Perfusion  : MAP ${record.vitals.map} mmHg | Lactate: ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + ' mmol/L (' + record.labs.lactate_mg_dl + ' mg/dL)' : 'Pending'}\n`;
-        noteText += `Generated  : ${new Date().toLocaleTimeString()} | Mode: ${synth.mode}\n`;
-        noteText += `================================================================================\n\n`;
+        const nowFormatted = new Date().toLocaleString([], { 
+          year: 'numeric', month: 'short', day: '2-digit', 
+          hour: '2-digit', minute: '2-digit', second: '2-digit' 
+        });
 
+        const statusBadgeClass = (status.status.includes("Confirmed") || status.status.includes("Shock"))
+          ? "badge-critical" 
+          : (sofa.total >= 2 ? "badge-warning" : "badge-normal");
+
+        let sectionsHtml = "";
         for (const sec of synth.sections) {
-          noteText += `## ${sec.heading}\n`;
-          noteText += `${sec.body.replace(/<[^>]+>/g, '').replace(/\[([A-Z0-9_-]+)\]/g, '[$1]')}\n\n`;
+          const cleanHeading = sec.heading.replace(/^#{1,6}\s*/, "").trim();
+          const parsedBody = renderClinicalMarkdown(sec.body);
+          let extraTableHtml = "";
+          if (sec.showTable || sec.id === "antimicrobialSec") {
+            extraTableHtml = renderAntimicrobialTable(selectedDrugs, record.labs.creatinine_mg_dl || 0.9, alerts);
+          }
+
+          sectionsHtml += `
+            <div class="ehr-section-card">
+              <div class="ehr-section-heading">
+                <i class="bi bi-file-earmark-medical-fill"></i>
+                <span>${cleanHeading}</span>
+              </div>
+              <div class="ehr-section-content">
+                ${parsedBody}
+                ${extraTableHtml}
+              </div>
+            </div>
+          `;
         }
 
         consultWrapper.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <strong style="color:var(--clinical-navy); font-size:0.95rem;"><i class="bi bi-file-earmark-medical-fill" style="margin-right:4px;"></i>Complete EHR Consultation Note</strong>
-            <button class="action-btn action-btn-primary" style="padding:6px 14px; font-size:0.82rem;" onclick="copyConsultNoteToClipboard()">
-              <i class="bi bi-clipboard2-check-fill"></i> Copy Raw Text
-            </button>
+          <div class="ehr-doc-header-top">
+            <div>
+              <div class="ehr-hospital-name">
+                <i class="bi bi-hospital" style="margin-right:6px;"></i>ICU CLINICAL DECISION SUPPORT &bull; SEPSIS CARE PATHWAY
+              </div>
+              <h2 class="ehr-doc-title">EHR Consultation Note &amp; Grounded Orders</h2>
+              <div class="ehr-doc-subtitle">
+                Comprehensive, guideline-grounded electronic health record note formatted for clinical review and EHR integration.
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <span class="ehr-doc-status-badge">
+                  <i class="bi bi-patch-check-fill"></i> SSC-2021 &amp; Sepsis-3 Grounded
+                </span>
+                <span class="ehr-doc-mode-badge">
+                  <i class="bi bi-cpu-fill"></i> ${synth.mode}
+                </span>
+              </div>
+              <button class="action-btn action-btn-primary" onclick="copyConsultNoteToClipboard()">
+                <i class="bi bi-clipboard2-check-fill"></i> Copy Complete Note to EHR
+              </button>
+            </div>
           </div>
-          <pre class="ehr-note-pre">${noteText}</pre>
+
+          <div class="ehr-meta-grid">
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">Patient ID</span>
+              <span class="ehr-meta-val"><strong>${activePatient.id}</strong> (${activePatient.demographics.age}yo ${activePatient.demographics.gender})</span>
+            </div>
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">Clinical Archetype</span>
+              <span class="ehr-meta-val">${activePatient.category}</span>
+            </div>
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">ICU Timeline</span>
+              <span class="ehr-meta-val">Hour ${record.hour} of ICU Stay</span>
+            </div>
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">Sepsis-3 Classification</span>
+              <span class="ehr-meta-val">
+                <span class="exec-pill-badge ${statusBadgeClass}" style="font-size:0.85rem; padding:3px 10px;">
+                  ${status.status}
+                </span>
+              </span>
+            </div>
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">Deterministic SOFA</span>
+              <span class="ehr-meta-val"><strong>${sofa.total} pts</strong> (Resp: ${sofa.resp}, Coag: ${sofa.coag}, Liver: ${sofa.liver}, CV: ${sofa.cv}, Renal: ${sofa.renal})</span>
+            </div>
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">Bedside Hemodynamics</span>
+              <span class="ehr-meta-val"><strong>MAP ${record.vitals.map} mmHg</strong> (${record.vitals.map >= 65 ? "Target Met" : "Hypoperfusion &bull; Fluid/Vaso Target"})</span>
+            </div>
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">Serum Lactate</span>
+              <span class="ehr-meta-val">${record.labs.lactate_mmol_l !== null ? `<strong>${record.labs.lactate_mmol_l} mmol/L</strong> (${record.labs.lactate_mg_dl} mg/dL)` : 'Pending Laboratory Draw'}</span>
+            </div>
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">Baseline Creatinine</span>
+              <span class="ehr-meta-val"><strong>${record.labs.creatinine_mg_dl || 0.9} mg/dL</strong> (${(record.labs.creatinine_mg_dl || 0.9) >= 1.5 ? "AKI Stage Present" : "Preserved Clearance"})</span>
+            </div>
+            <div class="ehr-meta-item">
+              <span class="ehr-meta-label">Generated Timestamp</span>
+              <span class="ehr-meta-val">${nowFormatted}</span>
+            </div>
+          </div>
+
+          <div class="ehr-sections-container">
+            ${sectionsHtml}
+          </div>
+
+          <div class="ehr-doc-footer">
+            <i class="bi bi-shield-lock-fill" style="color:var(--status-normal); font-size:1.1rem; margin-right:8px;"></i>
+            <span><strong>Clinical CDS Attestation:</strong> Recommendations synthesized locally using deterministic vector retrieval over Surviving Sepsis Campaign 2021 and Sepsis-3 international guidelines. 100% Client-Side Privacy: No Protected Health Information (PHI) transmitted to external cloud endpoints.</span>
+          </div>
         `;
         box.appendChild(consultWrapper);
         return;
@@ -1561,21 +1649,51 @@
       if (!currentSynthState) return;
       const { synth, record, sofa, status } = currentSynthState;
 
-      let noteText = `================================================================================\n`;
-      noteText += `ICU SEPSIS CONSULTATION NOTE & EVIDENCE-BASED RECOMMENDATION\n`;
-      noteText += `Patient ID : ${activePatient.id} (${activePatient.demographics.age}yo ${activePatient.demographics.gender}) | Category: ${activePatient.category}\n`;
-      noteText += `ICU Hour   : ${record.hour} | Sepsis Status: ${status.status} | Total SOFA: ${sofa.total}\n`;
-      noteText += `Perfusion  : MAP ${record.vitals.map} mmHg | Lactate: ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + ' mmol/L (' + record.labs.lactate_mg_dl + ' mg/dL)' : 'Pending'}\n`;
-      noteText += `Generated  : ${new Date().toLocaleTimeString()} | Mode: ${synth.mode}\n`;
-      noteText += `================================================================================\n\n`;
+      let note = `================================================================================\n`;
+      note += `ICU SEPSIS CLINICAL CONSULTATION NOTE & EVIDENCE-BASED ORDERS\n`;
+      note += `================================================================================\n`;
+      note += `PATIENT ID    : ${activePatient.id} (${activePatient.demographics.age}yo ${activePatient.demographics.gender})\n`;
+      note += `ARCHETYPE     : ${activePatient.category}\n`;
+      note += `ICU TIMELINE  : Hour ${record.hour} of ICU Stay\n`;
+      note += `SEPSIS STATUS : ${status.status}\n`;
+      note += `SOFA SCORE    : Total ${sofa.total} pts (Resp:${sofa.resp}, Coag:${sofa.coag}, Liver:${sofa.liver}, CV:${sofa.cv}, Renal:${sofa.renal})\n`;
+      note += `HEMODYNAMICS  : MAP ${record.vitals.map} mmHg (${record.vitals.map >= 65 ? "Target Met (>=65)" : "Hypoperfusion (<65)"})\n`;
+      note += `SERUM LACTATE : ${record.labs.lactate_mmol_l !== null ? record.labs.lactate_mmol_l + " mmol/L (" + record.labs.lactate_mg_dl + " mg/dL)" : "Pending"}\n`;
+      note += `CREATININE    : ${record.labs.creatinine_mg_dl || 0.9} mg/dL\n`;
+      note += `TIMESTAMP     : ${new Date().toLocaleString()} | Mode: ${synth.mode}\n`;
+      note += `================================================================================\n\n`;
 
       for (const sec of synth.sections) {
-        noteText += `## ${sec.heading}\n`;
-        noteText += `${sec.body.replace(/<[^>]+>/g, '').replace(/\[([A-Z0-9_-]+)\]/g, '[$1]')}\n\n`;
+        const cleanHeading = sec.heading.replace(/^#{1,6}\s*/, "").trim();
+        note += `${cleanHeading.toUpperCase()}\n`;
+        note += `--------------------------------------------------------------------------------\n`;
+
+        let cleanBody = sec.body;
+        // Strip HTML
+        cleanBody = cleanBody.replace(/<[^>]+>/g, "");
+        // Replace Alert markers with clear textual bracket tags
+        cleanBody = cleanBody.replace(/ALERT\s*\[CRITICAL_HAZARD\]:\s*/gi, "[CRITICAL CONTRAINDICATION]: ");
+        cleanBody = cleanBody.replace(/ALERT\s*\[CAUTION\]:\s*/gi, "[CAUTION - SURVEILLANCE REQUIRED]: ");
+        cleanBody = cleanBody.replace(/ALERT:\s*/gi, "[SAFETY ALERT]: ");
+        // Strip markdown bold and italic syntax: **bold** -> bold, *italic* -> italic
+        cleanBody = cleanBody.replace(/\*\*(.*?)\*\*/g, "$1");
+        cleanBody = cleanBody.replace(/\*([^*\n]+)\*/g, "$1");
+        cleanBody = cleanBody.replace(/^#{1,6}\s+/gm, "");
+        cleanBody = cleanBody.replace(/\*{1,3}/g, ""); // clean residual asterisks
+        // Normalize bullet points to standard unicode bullet
+        cleanBody = cleanBody.replace(/^[ \t]*[*+-]\s+/gm, "• ");
+        // Clean citation formatting
+        cleanBody = cleanBody.replace(/\(\s*\[([A-Z0-9_-]+)\]\s*\)/g, "[$1]");
+
+        note += `${cleanBody.trim()}\n\n`;
       }
 
-      navigator.clipboard.writeText(noteText).then(() => {
-        alert("Grounded Sepsis Consultation Note copied to clipboard for EHR integration.");
+      note += `================================================================================\n`;
+      note += `ATTESTATION: Generated by ICU CDS System. 100% Client-Side Private.\n`;
+      note += `================================================================================\n`;
+
+      navigator.clipboard.writeText(note).then(() => {
+        alert("Grounded ICU Sepsis Consultation Note copied to clipboard for EHR integration.");
       }).catch(err => {
         console.error("Clipboard copy failed:", err);
       });
