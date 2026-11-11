@@ -323,16 +323,13 @@ export class ClinicalChartEngine {
       `);
     }
 
-    // SOFA Polyline Area & Curve
+    // SOFA Polyline Area & Curve (Historical Longitudinal Trajectory)
     const sofaPoints = [];
     const areaPoints = [];
     areaPoints.push(`${hourX(0).toFixed(1)},${(padTop + plotH).toFixed(1)}`);
 
     for (let i = 0; i < totalHours; i++) {
-      let score = this.getRecordSofa(timeline[i]);
-      if (i === currentHourIndex && typeof currentActiveSofa === "number") {
-        score = currentActiveSofa;
-      }
+      const score = this.getRecordSofa(timeline[i]);
       const pt = `${hourX(i).toFixed(1)},${sofaY(score).toFixed(1)}`;
       sofaPoints.push(pt);
       areaPoints.push(pt);
@@ -349,14 +346,26 @@ export class ClinicalChartEngine {
     // Active Hour Indicator
     if (currentHourIndex >= 0 && currentHourIndex < totalHours) {
       const curX = hourX(currentHourIndex);
-      let curScore = this.getRecordSofa(timeline[currentHourIndex]);
-      if (typeof currentActiveSofa === "number") {
-        curScore = currentActiveSofa;
-      }
+      const baselineScore = this.getRecordSofa(timeline[currentHourIndex]);
       elements.push(`
         <line x1="${curX}" y1="${padTop}" x2="${curX}" y2="${padTop + plotH}" stroke="var(--text-primary)" stroke-width="1.8" stroke-dasharray="3,3" />
-        <circle cx="${curX}" cy="${sofaY(curScore)}" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2" />
+        <circle cx="${curX}" cy="${sofaY(baselineScore)}" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2" />
       `);
+
+      // If active "What-If" intervention modifies SOFA at the current hour, display distinct simulation delta marker
+      if (typeof currentActiveSofa === "number" && currentActiveSofa !== baselineScore) {
+        const delta = currentActiveSofa - baselineScore;
+        const deltaStr = delta > 0 ? `+${delta}` : `${delta}`;
+        const simY = sofaY(currentActiveSofa);
+        const baseY = sofaY(baselineScore);
+        const tagX = curX > plotW - 120 ? curX - 110 : curX + 10;
+        elements.push(`
+          <line x1="${curX}" y1="${baseY}" x2="${curX}" y2="${simY}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="3,2" />
+          <circle cx="${curX}" cy="${simY}" r="7" fill="#f59e0b" stroke="#ffffff" stroke-width="2" />
+          <rect x="${tagX}" y="${simY - 11}" width="104" height="20" rx="4" fill="#f59e0b" />
+          <text x="${tagX + 52}" y="${simY + 3}" fill="#ffffff" font-size="10" font-weight="800" text-anchor="middle">What-If: ${currentActiveSofa} (${deltaStr})</text>
+        `);
+      }
     }
 
     // Invisible Click Targets for Scrubbing & Hover Tooltips
@@ -364,10 +373,9 @@ export class ClinicalChartEngine {
       const x = hourX(i);
       const stepW = plotW / totalHours;
       const rec = timeline[i];
-      let sVal = this.getRecordSofa(rec);
-      if (i === currentHourIndex && typeof currentActiveSofa === "number") {
-        sVal = currentActiveSofa;
-      }
+      const sVal = this.getRecordSofa(rec);
+      const isCurrent = i === currentHourIndex;
+      const simVal = (isCurrent && typeof currentActiveSofa === "number" && currentActiveSofa !== sVal) ? currentActiveSofa : "";
       const recMap = rec.vitals.map !== null ? rec.vitals.map : "--";
       const recLact = rec.labs.lactate_mmol_l !== null ? rec.labs.lactate_mmol_l : "--";
       const recHr = rec.vitals.hr !== null ? rec.vitals.hr : "--";
@@ -380,6 +388,7 @@ export class ClinicalChartEngine {
           data-lact="${recLact}"
           data-hr="${recHr}"
           data-sofa="${sVal}"
+          data-sim-sofa="${simVal}"
         />
       `);
     }
@@ -404,10 +413,21 @@ export class ClinicalChartEngine {
         const lact = tr.getAttribute("data-lact");
         const hr = tr.getAttribute("data-hr");
         const sofa = tr.getAttribute("data-sofa");
+        const simSofa = tr.getAttribute("data-sim-sofa");
+
+        let sofaHtml = `<div>Total SOFA: <strong style="color:${parseInt(sofa, 10) >= 2 ? '#ef4444' : 'var(--status-normal)'}; font-size:13px;">${sofa} pts</strong></div>`;
+        if (simSofa && simSofa !== sofa) {
+          const delta = parseInt(simSofa, 10) - parseInt(sofa, 10);
+          const dStr = delta > 0 ? `+${delta}` : `${delta}`;
+          sofaHtml = `
+            <div>Baseline SOFA: <strong>${sofa} pts</strong></div>
+            <div>Simulated SOFA: <strong style="color:#f59e0b; font-size:13px;">${simSofa} pts (${dStr})</strong></div>
+          `;
+        }
 
         this.hoverTooltip.innerHTML = `
           <div style="font-size:12px; font-weight:800; color:#7c3aed; margin-bottom:2px;">ICU Hour ${h}</div>
-          <div>Total SOFA: <strong style="color:${parseInt(sofa, 10) >= 2 ? '#ef4444' : 'var(--status-normal)'}; font-size:13px;">${sofa} pts</strong></div>
+          ${sofaHtml}
           <div>MAP: <strong style="color:${map < 65 ? '#ef4444' : '#10b981'};">${map} mmHg</strong></div>
           <div>Serum Lactate: <strong style="color:#f59e0b;">${lact} mmol/L</strong></div>
           <div>Heart Rate: <strong>${hr} bpm</strong></div>
