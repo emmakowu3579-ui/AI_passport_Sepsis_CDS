@@ -1,4 +1,22 @@
+# ==============================================================================
+# Sepsis Clinical Decision Support (CDS) Multi-Container Architecture
+#
+# Services:
+#   1. sepsis-cds    : High-performance Nginx web app running at http://localhost:8000
+#   2. ollama        : Air-gapped local LLM inference engine running at http://localhost:11434
+#   3. ollama-init   : Automatic model puller (downloads qwen2.5:1.5b on first startup)
+#
+# Quick Commands:
+#   - Start full system (Web + Ollama): docker compose up -d
+#   - Start Web App only (No Ollama)   : docker compose up -d sepsis-cds
+#   - Check logs                      : docker compose logs -f
+#   - Stop system                     : docker compose down
+# ==============================================================================
+
 services:
+  # ----------------------------------------------------------------------------
+  # 1. Point-of-Care Web Application (Nginx Alpine)
+  # ----------------------------------------------------------------------------
   sepsis-cds:
     build:
       context: .
@@ -7,3 +25,46 @@ services:
     ports:
       - "8000:80"
     restart: unless-stopped
+    depends_on:
+      - ollama
+
+  # ----------------------------------------------------------------------------
+  # 2. Local Air-Gapped LLM Inference Server (Framework 2B)
+  # ----------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: sepsis-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_HOST=0.0.0.0
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # 3. Automated One-Shot Model Initialization Service
+  #    Waits for Ollama to become healthy, then automatically pulls the default
+  #    clinical model (qwen2.5:1.5b) into the persistent volume.
+  # ----------------------------------------------------------------------------
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: sepsis-ollama-init
+    depends_on:
+      - ollama
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for Ollama container to be responsive...';
+      until curl -s http://ollama:11434/api/tags > /dev/null; do
+        sleep 2;
+      done;
+      echo 'Ollama is online. Pulling default model: qwen2.5:1.5b...';
+      curl -s -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:1.5b\"}';
+      echo 'Clinical model qwen2.5:1.5b pulled and cached in volume successfully.';
+      "
+
+volumes:
+  ollama_models:
+    name: sepsis_ollama_models
