@@ -14,7 +14,17 @@ export class ClinicalSynthesizer {
     this.webllmEngine = null;
     this.isWebllmLoading = false;
     this.selectedModel = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
+    this.currentAbortController = null;
     this.checkWebGpuSupport();
+  }
+
+  abortCurrentOllama() {
+    if (this.currentAbortController) {
+      try {
+        this.currentAbortController.abort();
+      } catch (e) {}
+      this.currentAbortController = null;
+    }
   }
 
   async checkWebGpuSupport() {
@@ -186,55 +196,102 @@ export class ClinicalSynthesizer {
   }
 
   /**
-   * Connects to Ollama on http://localhost:11434 if available (Framework 2B)
+   * Connects to Ollama on http://localhost:11434 with token streaming and active progress (Framework 2B)
    */
-  async synthesizeOllama(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation) {
+  async synthesizeOllama(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation, onProgress) {
+    this.abortCurrentOllama();
+    this.currentAbortController = new AbortController();
+    const signal = this.currentAbortController.signal;
+
     const startTime = performance.now();
     const extractive = this.synthesizeExtractiveNote(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation);
     const targetModel = await this.detectOllamaModel();
     
-    const contextPrompt = `You are a clinical decision support system for ICU sepsis care.
-Ground your recommendations strictly in these clinical guideline chunks:
-${retrievedChunks.map(c => `[${c.id}] ${c.title}: ${c.text}`).join("\n\n")}
+    const contextPrompt = `You are an expert ICU clinical decision support AI. Ground your advice strictly in these clinical guideline chunks:
+${retrievedChunks.slice(0, 3).map(c => `[${c.id}] ${c.title}: ${c.text}`).join("\n\n")}
 
 Patient Assessment:
-- Age/Gender: ${patient.demographics.age}yo ${patient.demographics.gender}
-- Sepsis Status: ${status.status}
-- Deterministic SOFA Score: ${sofa.total} (Respiration: ${sofa.resp}, Coagulation: ${sofa.coag}, Liver: ${sofa.liver}, Cardiovascular: ${sofa.cv}, Renal: ${sofa.renal})
-- Bedside Vitals: MAP ${vitals.map} mmHg, HR ${vitals.hr} bpm
-- Labs: Serum Lactate ${labs.lactate_mmol_l} mmol/L, Creatinine ${labs.creatinine_mg_dl} mg/dL
+- Patient: ${patient.demographics.age}yo ${patient.demographics.gender} | Sepsis Status: ${status.status}
+- Deterministic SOFA Score: ${sofa.total} (Resp: ${sofa.resp}, Coag: ${sofa.coag}, Liver: ${sofa.liver}, CV: ${sofa.cv}, Renal: ${sofa.renal})
+- Bedside Vitals: MAP ${vitals.map} mmHg, HR ${vitals.hr} bpm | Lactate: ${labs.lactate_mmol_l} mmol/L, Creatinine: ${labs.creatinine_mg_dl} mg/dL
 - Active Safety Alerts: ${alerts.map(a => `${a.drug} (${a.badge}): ${a.message}`).join("; ") || "None"}
 
-Generate a concise 3-paragraph clinical consultation note covering:
-1. Sepsis diagnostic status and hemodynamic resuscitation goals.
-2. SSC 1-hour bundle actions (cultures, empiric antibiotics, MAP >= 65 target).
-3. Organ safety precautions and dosing adjustments with citations [SSC-2021-...] or [DOSE-...].`;
+Provide a concise 3-bullet clinical SBAR recommendation note with citations:
+• Sepsis diagnostic classification and hemodynamic resuscitation target (MAP >= 65 mmHg)
+• Surviving Sepsis Campaign 1-hour bundle orders (cultures, empiric broad-spectrum coverage)
+• Renal safety adjustments and active contraindication precautions`;
 
     try {
+      // 25-second timeout safeguard to prevent hanging
+      const timeoutId = setTimeout(() => {
+        this.abortCurrentOllama();
+      }, 25000);
+
       const response = await fetch("http://localhost:11434/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal,
         body: JSON.stringify({
           model: targetModel,
           prompt: contextPrompt,
-          stream: false
+          stream: true,
+          options: {
+            num_predict: 200,
+            temperature: 0.2,
+            top_p: 0.9
+          }
         })
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Ollama returned status ${response.status}`);
       }
 
-      const resJson = await response.json();
-      const elapsedMs = performance.now() - startTime;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let accumulatedText = "";
+      let buffer = "";
 
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep last incomplete line
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const chunk = JSON.parse(trimmed);
+            if (chunk.response) {
+              accumulatedText += chunk.response;
+              if (onProgress) {
+                onProgress({
+                  model: targetModel,
+                  token: chunk.response,
+                  fullText: accumulatedText,
+                  done: chunk.done || false,
+                  elapsedMs: Math.round(performance.now() - startTime)
+                });
+              }
+            }
+            if (chunk.done) break;
+          } catch (err) {}
+        }
+      }
+
+      const elapsedMs = performance.now() - startTime;
       const sections = [...extractive.sections];
-      if (resJson.response) {
+
+      if (accumulatedText.trim()) {
         sections.unshift({
           id: "ollamaGenSec",
           tab: "bundleTab",
           heading: `Framework 2B: Local LLM Generative Synthesis (Ollama • ${targetModel})`,
-          body: `• **Ollama Generative Consultation:**\n\n${resJson.response.trim()}`
+          body: `• **Ollama Generative Consultation:**\n\n${accumulatedText.trim()}`
         });
       }
 
@@ -242,16 +299,22 @@ Generate a concise 3-paragraph clinical consultation note covering:
         mode: `OLLAMA_CPU (${targetModel})`,
         model: targetModel,
         confidence: extractive.confidence,
-        rawText: resJson.response,
+        rawText: accumulatedText,
         sections,
         elapsedMs: Math.round(elapsedMs),
         retrievedChunks
       };
     } catch (e) {
-      console.warn("[Synthesis] Ollama local connection failed, falling back to Instant Extractive RAG:", e);
+      if (e.name === "AbortError") {
+        console.log("[Synthesis] Ollama request was aborted or superseded.");
+      } else {
+        console.warn("[Synthesis] Ollama local connection failed, falling back to Instant Extractive RAG:", e);
+      }
       const fallback = this.synthesizeExtractiveNote(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation);
-      fallback.mode = "EXTRACTIVE_RAG (Ollama Offline)";
+      fallback.mode = "EXTRACTIVE_RAG (Ollama Fallback)";
       return fallback;
+    } finally {
+      this.currentAbortController = null;
     }
   }
 }

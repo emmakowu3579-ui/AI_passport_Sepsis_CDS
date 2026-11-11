@@ -850,6 +850,7 @@
       window.togglePlayTimeline = togglePlayTimeline;
       window.onSimulationInput = renderCurrentState;
       window.changeEngineMode = changeEngineMode;
+      window.cancelOllamaGeneration = cancelOllamaGeneration;
       window.executeFullBenchmark = executeFullBenchmark;
       window.inspectCitation = inspectCitation;
       window.copyConsultNoteToClipboard = copyConsultNoteToClipboard;
@@ -1569,40 +1570,28 @@
       }
     }
 
+    let ollamaTimerInterval = null;
+
+    function cancelOllamaGeneration() {
+      if (synthesizer) {
+        synthesizer.abortCurrentOllama();
+      }
+      if (ollamaTimerInterval) {
+        clearInterval(ollamaTimerInterval);
+        ollamaTimerInterval = null;
+      }
+      changeEngineMode("EXTRACTIVE_RAG");
+      const modeSelect = document.getElementById("engineModeSelect");
+      if (modeSelect) modeSelect.value = "EXTRACTIVE_RAG";
+    }
+
     async function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs) {
       if (!synthesizer) return;
 
-      let synth;
-      if (synthesizer.currentMode === "OLLAMA") {
-        document.getElementById("confidencePill").textContent = "GENERATING WITH OLLAMA CPU...";
-        document.getElementById("latencyBadge").innerHTML = '<i class="bi bi-hourglass-split"></i> Querying Ollama (127.0.0.1:11434)...';
-        synth = await synthesizer.synthesizeOllama(
-          activePatient,
-          record.hour,
-          record.vitals,
-          record.labs,
-          sofa,
-          status,
-          alerts,
-          retrievedChunks,
-          sim
-        );
-      } else {
-        synth = synthesizer.synthesizeExtractiveNote(
-          activePatient,
-          record.hour,
-          record.vitals,
-          record.labs,
-          sofa,
-          status,
-          alerts,
-          retrievedChunks,
-          sim
-        );
+      if (ollamaTimerInterval) {
+        clearInterval(ollamaTimerInterval);
+        ollamaTimerInterval = null;
       }
-
-      document.getElementById("confidencePill").textContent = synth.confidence.label;
-      document.getElementById("latencyBadge").textContent = `${synth.elapsedMs}ms (${synth.mode})`;
 
       // Update Executive Metric Strip
       const execDiag = document.getElementById("execDiagnosisPill");
@@ -1617,8 +1606,132 @@
       const execLact = document.getElementById("execLactPill");
       if (execLact) execLact.textContent = record.labs.lactate_mmol_l !== null ? `${record.labs.lactate_mmol_l} mmol/L` : "--";
 
-      // Cache state and render active tab content
-      currentSynthState = { synth, selectedDrugs, record, sofa, status, alerts };
+      // 1. Immediately compute the verified deterministic Extractive RAG note (< 2ms)
+      const baseSynth = synthesizer.synthesizeExtractiveNote(
+        activePatient,
+        record.hour,
+        record.vitals,
+        record.labs,
+        sofa,
+        status,
+        alerts,
+        retrievedChunks,
+        sim
+      );
+
+      // If user is in EXTRACTIVE_RAG or WEBGPU mode, render immediately
+      if (synthesizer.currentMode !== "OLLAMA") {
+        document.getElementById("confidencePill").textContent = baseSynth.confidence.label;
+        document.getElementById("latencyBadge").textContent = `${baseSynth.elapsedMs}ms (${baseSynth.mode})`;
+        currentSynthState = { synth: baseSynth, selectedDrugs, record, sofa, status, alerts };
+        renderActiveRagContent();
+        return;
+      }
+
+      // 2. Ollama CPU Mode: Render base note immediately so user is never stuck
+      currentSynthState = { synth: baseSynth, selectedDrugs, record, sofa, status, alerts };
+      renderActiveRagContent();
+
+      const confPill = document.getElementById("confidencePill");
+      const latencyBadge = document.getElementById("latencyBadge");
+      const box = document.getElementById("recommendationBox");
+
+      confPill.textContent = "GENERATING WITH OLLAMA CPU...";
+      confPill.className = "exec-pill-badge badge-warning";
+      latencyBadge.innerHTML = '<i class="bi bi-cpu-fill" style="color:var(--status-warning);"></i> Ollama Connecting (127.0.0.1:11434)...';
+
+      // Inject the Live Streaming Card at the very top of recommendationBox
+      const liveCard = document.createElement("div");
+      liveCard.id = "ollamaLiveCard";
+      liveCard.className = "ollama-live-block";
+      liveCard.innerHTML = `
+        <div class="ollama-live-header">
+          <div class="ollama-live-title">
+            <span class="ollama-pulsing-icon"><i class="bi bi-cpu-fill"></i></span>
+            <span>Framework 2B: Local LLM Active CPU Generation</span>
+            <span id="ollamaLiveModelBadge" class="ollama-model-badge">qwen2.5:1.5b</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span id="ollamaLiveTimer" class="ollama-timer-badge">
+              <i class="bi bi-stopwatch-fill"></i> 0.0s elapsed
+            </span>
+            <button type="button" class="action-btn" style="padding:4px 10px; font-size:0.78rem;" onclick="cancelOllamaGeneration()">
+              <i class="bi bi-x-circle"></i> Use Instant Note
+            </button>
+          </div>
+        </div>
+        <div class="ollama-progress-bar-wrap">
+          <div id="ollamaProgressBar" class="ollama-progress-bar-fill"></div>
+        </div>
+        <div class="ollama-streaming-meta">
+          <span id="ollamaTokenCount"><i class="bi bi-activity"></i> Connecting to local model weights on CPU...</span>
+          <span style="color:var(--text-muted); font-size:0.8rem;">Est. completion: ~5–8 seconds</span>
+        </div>
+        <div id="ollamaLiveContent" class="ollama-live-content">
+          <span class="ollama-cursor"></span> <em>Awaiting first token from local Ollama engine...</em>
+        </div>
+      `;
+      if (box) {
+        box.insertBefore(liveCard, box.firstChild);
+      }
+
+      const genStartTime = performance.now();
+      let tokenCounter = 0;
+
+      ollamaTimerInterval = setInterval(() => {
+        const sec = ((performance.now() - genStartTime) / 1000).toFixed(1);
+        const timerEl = document.getElementById("ollamaLiveTimer");
+        const progEl = document.getElementById("ollamaProgressBar");
+        if (timerEl) {
+          timerEl.innerHTML = `<i class="bi bi-stopwatch-fill"></i> ${sec}s elapsed`;
+        }
+        if (progEl) {
+          const pct = Math.min(95, Math.round((sec / 7.5) * 100));
+          progEl.style.width = `${pct}%`;
+        }
+        if (latencyBadge) {
+          latencyBadge.innerHTML = `<i class="bi bi-cpu-fill" style="color:var(--status-warning);"></i> Ollama CPU (${sec}s)`;
+        }
+      }, 100);
+
+      const onProgress = (data) => {
+        tokenCounter++;
+        const contentEl = document.getElementById("ollamaLiveContent");
+        const modelBadge = document.getElementById("ollamaLiveModelBadge");
+        const tokEl = document.getElementById("ollamaTokenCount");
+        const sec = ((performance.now() - genStartTime) / 1000).toFixed(1);
+
+        if (modelBadge && data.model) modelBadge.textContent = data.model;
+        if (tokEl) tokEl.innerHTML = `<i class="bi bi-activity" style="color:var(--clinical-blue);"></i> Streaming live: ${tokenCounter} tokens (${sec}s)`;
+        if (contentEl) {
+          contentEl.innerHTML = renderClinicalMarkdown(data.fullText) + '<span class="ollama-cursor"></span>';
+        }
+      };
+
+      const finalSynth = await synthesizer.synthesizeOllama(
+        activePatient,
+        record.hour,
+        record.vitals,
+        record.labs,
+        sofa,
+        status,
+        alerts,
+        retrievedChunks,
+        sim,
+        onProgress
+      );
+
+      if (ollamaTimerInterval) {
+        clearInterval(ollamaTimerInterval);
+        ollamaTimerInterval = null;
+      }
+
+      confPill.textContent = finalSynth.confidence.label;
+      confPill.className = "exec-pill-badge badge-normal";
+      latencyBadge.textContent = `${finalSynth.elapsedMs}ms (${finalSynth.mode})`;
+
+      // Cache state and re-render clean active tab content with generative section integrated
+      currentSynthState = { synth: finalSynth, selectedDrugs, record, sofa, status, alerts };
       renderActiveRagContent();
     }
 
