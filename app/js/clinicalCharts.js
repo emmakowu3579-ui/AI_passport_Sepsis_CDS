@@ -132,8 +132,8 @@ export class ClinicalChartEngine {
       `);
     }
 
-    // 6. Sepsis Onset Indicator Marker (if present)
-    if (sepsisOnsetHour && sepsisOnsetHour <= totalHours) {
+    // 6. Sepsis Onset Indicator Marker (if reached by timeline scrubber)
+    if (sepsisOnsetHour && sepsisOnsetHour <= totalHours && currentHourIndex >= sepsisOnsetHour - 1) {
       const onsetIdx = sepsisOnsetHour - 1;
       const onsetX = hourX(onsetIdx);
       elements.push(`
@@ -143,9 +143,12 @@ export class ClinicalChartEngine {
       `);
     }
 
-    // 7. Lactate Trajectory Path
+    // Number of elapsed ICU hours to render (plot only appears up to current scrubber hour)
+    const elapsedHours = Math.min(totalHours, Math.max(1, currentHourIndex + 1));
+
+    // 7. Lactate Trajectory Path (Elapsed hours only)
     const lactPoints = [];
-    for (let i = 0; i < totalHours; i++) {
+    for (let i = 0; i < elapsedHours; i++) {
       const val = timeline[i].labs.lactate_mmol_l;
       if (val !== null && val !== undefined) {
         lactPoints.push(`${hourX(i).toFixed(1)},${Math.min(padTop + plotH, Math.max(padTop, lactY(val))).toFixed(1)}`);
@@ -157,9 +160,9 @@ export class ClinicalChartEngine {
       `);
     }
 
-    // 8. MAP Trajectory Path
+    // 8. MAP Trajectory Path (Elapsed hours only)
     const mapPoints = [];
-    for (let i = 0; i < totalHours; i++) {
+    for (let i = 0; i < elapsedHours; i++) {
       const val = timeline[i].vitals.map;
       if (val !== null && val !== undefined) {
         mapPoints.push(`${hourX(i).toFixed(1)},${Math.min(padTop + plotH, Math.max(padTop, mapY(val))).toFixed(1)}`);
@@ -312,8 +315,8 @@ export class ClinicalChartEngine {
       `);
     }
 
-    // Sepsis-3 Onset Marker (if present)
-    if (sepsisOnsetHour && sepsisOnsetHour <= totalHours) {
+    // Sepsis-3 Onset Marker (if reached by timeline scrubber)
+    if (sepsisOnsetHour && sepsisOnsetHour <= totalHours && currentHourIndex >= sepsisOnsetHour - 1) {
       const onsetIdx = sepsisOnsetHour - 1;
       const onsetX = hourX(onsetIdx);
       elements.push(`
@@ -323,23 +326,29 @@ export class ClinicalChartEngine {
       `);
     }
 
-    // SOFA Polyline Area & Curve (Historical Longitudinal Trajectory)
+    // SOFA Polyline Area & Curve (Elapsed ICU Hours up to Current Point)
+    const elapsedHours = Math.min(totalHours, Math.max(1, currentHourIndex + 1));
     const sofaPoints = [];
     const areaPoints = [];
     areaPoints.push(`${hourX(0).toFixed(1)},${(padTop + plotH).toFixed(1)}`);
 
-    for (let i = 0; i < totalHours; i++) {
+    for (let i = 0; i < elapsedHours; i++) {
       const score = this.getRecordSofa(timeline[i]);
       const pt = `${hourX(i).toFixed(1)},${sofaY(score).toFixed(1)}`;
       sofaPoints.push(pt);
       areaPoints.push(pt);
     }
-    areaPoints.push(`${hourX(totalHours - 1).toFixed(1)},${(padTop + plotH).toFixed(1)}`);
+    areaPoints.push(`${hourX(elapsedHours - 1).toFixed(1)},${(padTop + plotH).toFixed(1)}`);
 
     if (sofaPoints.length > 1) {
       elements.push(`
         <polygon points="${areaPoints.join(' ')}" fill="rgba(124, 58, 237, 0.12)" />
         <polyline points="${sofaPoints.join(' ')}" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      `);
+    } else if (sofaPoints.length === 1) {
+      const score0 = this.getRecordSofa(timeline[0]);
+      elements.push(`
+        <circle cx="${hourX(0)}" cy="${sofaY(score0)}" r="4" fill="#7c3aed" />
       `);
     }
 
