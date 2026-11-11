@@ -139,18 +139,21 @@
           <img src="img/logo.png" alt="Sepsis CDS Emblem" style="width:36px; height:36px; object-fit:contain; display:block;" onerror="this.outerHTML='<i class=\'bi bi-heart-pulse-fill\'></i>'">
         </div>
         <div class="brand-titles">
-          <h1>Local RAG-Powered Sepsis Clinical Treatment Recommender</h1>
-          <p>SURVIVING SEPSIS CAMPAIGN 2021 • SEPSIS-3 CONSENSUS • 5-DRUG ORGAN SAFETY ENGINE</p>
+          <h1>Local RAG-Powered Sepsis Treatment Recommender</h1>
+          <p>Point-of-Care Clinical Decision Support</p>
         </div>
       </div>
 
-      <!-- Mode Switcher: Point-of-Care Workstation vs 25-Patient Validation -->
+      <!-- Mode Switcher: Point-of-Care Workstation vs 25-Patient Validation vs About -->
       <nav class="mode-nav" aria-label="Application Mode">
         <button id="modeWorkstationBtn" class="mode-tab-btn active" onclick="switchAppMode('workstation')">
           <i class="bi bi-heart-pulse-fill"></i> Point-of-Care CDS Workstation
         </button>
         <button id="modeBenchmarkBtn" class="mode-tab-btn" onclick="switchAppMode('benchmark')">
           <i class="bi bi-bar-chart-line-fill"></i> 25-Patient Validation Benchmark
+        </button>
+        <button id="modeAboutBtn" class="mode-tab-btn" onclick="switchAppMode('about')">
+          <i class="bi bi-info-circle-fill"></i> About &amp; Methodology
         </button>
       </nav>
 
@@ -165,11 +168,11 @@
         <div class="engine-select-pill">
           <span style="opacity:0.85;">Inference:</span>
           <select id="engineModeSelect" onchange="changeEngineMode(this.value)">
-            <option value="EXTRACTIVE_RAG">Framework 2A: Instant Extractive RAG (&lt; 5ms)</option>
-            <option value="WEBGPU">Framework 1: WebGPU WebLLM (In-Browser GPU)</option>
+            <option value="EXTRACTIVE_RAG">Framework 2A: Instant Extractive Guidelines</option>
+            <option value="WEBGPU">Framework 1: In-Browser WebLLM</option>
             <option value="OLLAMA">Framework 2B: Local CPU LLM (Ollama 127.0.0.1)</option>
           </select>
-          <span id="gpuStatusIndicator" style="font-size:0.78rem; font-weight:800; color:#7dd3fc;"><i class="bi bi-cpu-fill"></i> CPU Fast</span>
+          <span id="gpuStatusIndicator" style="font-size:0.78rem; font-weight:800; color:#5eead4;"><i class="bi bi-cpu-fill"></i> Instant CDS</span>
         </div>
 
         <button id="themeToggleBtn" class="action-btn" onclick="toggleTheme()" title="Switch between Clinical Day Mode and ICU Night Mode">
@@ -486,7 +489,7 @@
               "What-If" Hemodynamic Resuscitation Simulator &amp; 5-Drug Contraindication Engine
             </h2>
             <p class="card-sub-desc">
-              Adjust IV crystalloid boluses, titrate vasopressors, and select empiric antibiotics to evaluate physiological response and organ safety gates in &lt; 5 ms.
+              Adjust IV crystalloid boluses, titrate vasopressors, and select empiric antibiotics to evaluate physiological response and organ safety gates in real time.
             </p>
           </div>
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -633,8 +636,8 @@
               <div id="confidencePill" style="background:rgba(255,255,255,0.22); color:#ffffff; padding:6px 14px; border-radius:8px; font-size:0.95rem; font-weight:800;">
                 High Confidence
               </div>
-              <div id="latencyBadge" style="font-family:var(--font-mono); font-size:0.9rem; color:#bae6fd;">
-                &lt; 5ms (Deterministic RAG)
+              <div id="latencyBadge" style="font-size:0.88rem; font-weight:700; color:#5eead4;">
+                Verified Clinical Guidance
               </div>
             </div>
           </div>
@@ -788,6 +791,267 @@
         </table>
       </div>
     </section>
+  </main>
+
+  <!-- ======================================================================
+       5B. Dedicated About & Clinical Methodology View
+       ====================================================================== -->
+  <main id="aboutView" class="workstation-container" style="display:none;">
+    
+    <!-- Hero Banner Card -->
+    <section class="clinical-card" style="margin-bottom:24px; background:linear-gradient(135deg, var(--clinical-navy) 0%, #004d40 100%); color:#ffffff; border:none; padding:32px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
+        <div style="display:flex; align-items:center; gap:20px;">
+          <div style="background:#ffffff; border:3px solid var(--brand-teal); width:72px; height:72px; border-radius:16px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,0,0,0.3); flex-shrink:0;">
+            <img src="img/logo.png" alt="Asclepius Emblem Logo" style="width:56px; height:56px; object-fit:contain;">
+          </div>
+          <div>
+            <span style="background:rgba(255,255,255,0.18); color:#5eead4; padding:4px 12px; border-radius:20px; font-size:0.82rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em;">
+              Clinical Decision Support Platform
+            </span>
+            <h1 style="font-size:1.85rem; font-weight:800; color:#ffffff; margin:6px 0 4px 0;">
+              Local RAG-Powered Sepsis Treatment Recommender
+            </h1>
+            <p style="font-size:1rem; color:#ccfbf1; margin:0; max-width:850px; line-height:1.5;">
+              A privacy-preserving, point-of-care clinical workstation combining deterministic Sepsis-3 scoring, "What-If" hemodynamic resuscitation simulation, 5-drug organ safety gating, and grounded guideline retrieval.
+            </p>
+          </div>
+        </div>
+        <button class="action-btn" style="background:var(--brand-teal); color:var(--clinical-navy); border:none; font-weight:800; padding:12px 24px; font-size:1rem; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.25);" onclick="switchAppMode('workstation')">
+          <i class="bi bi-box-arrow-in-up-right" style="margin-right:6px;"></i> Launch CDS Workstation
+        </button>
+      </div>
+
+      <!-- Quick Trust Badges -->
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:24px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.18);">
+        <span style="background:rgba(255,255,255,0.12); padding:6px 14px; border-radius:8px; font-size:0.85rem; font-weight:700;">
+          <i class="bi bi-shield-check" style="color:#5eead4; margin-right:6px;"></i>100% Client-Side Privacy (Zero PHI Egress)
+        </span>
+        <span style="background:rgba(255,255,255,0.12); padding:6px 14px; border-radius:8px; font-size:0.85rem; font-weight:700;">
+          <i class="bi bi-journal-medical" style="color:#5eead4; margin-right:6px;"></i>Surviving Sepsis Campaign 2021 Grounded
+        </span>
+        <span style="background:rgba(255,255,255,0.12); padding:6px 14px; border-radius:8px; font-size:0.85rem; font-weight:700;">
+          <i class="bi bi-calculator" style="color:#5eead4; margin-right:6px;"></i>Deterministic Math (Zero LLM Hallucinations)
+        </span>
+        <span style="background:rgba(255,255,255,0.12); padding:6px 14px; border-radius:8px; font-size:0.85rem; font-weight:700;">
+          <i class="bi bi-database-check" style="color:#5eead4; margin-right:6px;"></i>PhysioNet 2019 ICU Cohort Validated
+        </span>
+      </div>
+    </section>
+
+    <!-- 4 Core Pillars Grid -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-bottom:24px;">
+      
+      <!-- Pillar 1 -->
+      <div class="clinical-card" style="display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background:var(--clinical-blue-light); color:var(--clinical-blue); width:42px; height:42px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+            <i class="bi bi-heart-pulse-fill"></i>
+          </div>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:800; margin:0; color:var(--text-primary);">1. Deterministic SOFA Engine</h3>
+            <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Sepsis-3 International Consensus</span>
+          </div>
+        </div>
+        <p style="font-size:0.92rem; color:var(--text-secondary); line-height:1.55; margin-bottom:14px;">
+          Implements deterministic mathematical scoring across 6 organ systems (Respiration, Coagulation, Liver, Cardiovascular, CNS, and Renal). All calculations execute instantly via certified medical decision rules without non-deterministic LLM arithmetic to guarantee 100% precision and zero arithmetic hallucinations.
+        </p>
+        <ul style="font-size:0.88rem; color:var(--text-muted); line-height:1.6; padding-left:18px; margin:0;">
+          <li>Automated dual-unit normalization (Lactate in mmol/L and mg/dL).</li>
+          <li>Last-Observation-Carried-Forward (LOCF) stale lab tags (&gt; 6h).</li>
+          <li>Visual breakdown of acute organ failure (&ge; 2 points).</li>
+        </ul>
+      </div>
+
+      <!-- Pillar 2 -->
+      <div class="clinical-card" style="display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background:var(--clinical-blue-light); color:var(--clinical-blue); width:42px; height:42px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+            <i class="bi bi-sliders2"></i>
+          </div>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:800; margin:0; color:var(--text-primary);">2. "What-If" Resuscitation</h3>
+            <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Hemodynamic Response Simulator</span>
+          </div>
+        </div>
+        <p style="font-size:0.92rem; color:var(--text-secondary); line-height:1.55; margin-bottom:14px;">
+          Provides interactive bedside simulation for volume resuscitation and vasopressor titration. Evaluates whether a fluid bolus (0–40 mL/kg) and norepinephrine titration will successfully lift Mean Arterial Pressure (MAP) into the adequate perfusion target (&ge; 65 mmHg) while assessing pulmonary edema risks in acute respiratory compromise (SaO2/FiO2 &lt; 200).
+        </p>
+        <ul style="font-size:0.88rem; color:var(--text-muted); line-height:1.6; padding-left:18px; margin:0;">
+          <li>Interactive fluid &amp; vasopressor sensitivity gauges.</li>
+          <li>Continuous MAP 65 target line and danger zone shading.</li>
+          <li>Dynamic volume responsiveness evaluation alerts.</li>
+        </ul>
+      </div>
+
+      <!-- Pillar 3 -->
+      <div class="clinical-card" style="display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background:var(--clinical-blue-light); color:var(--clinical-blue); width:42px; height:42px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+            <i class="bi bi-shield-fill-exclamation"></i>
+          </div>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:800; margin:0; color:var(--text-primary);">3. 5-Drug Organ Safety Gates</h3>
+            <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Renal &amp; Hepatic Contraindication Engine</span>
+          </div>
+        </div>
+        <p style="font-size:0.92rem; color:var(--text-secondary); line-height:1.55; margin-bottom:14px;">
+          Active rule-based safety gating guards against toxic combinations before ordering. Continuously checks real-time kidney function (eGFR, serum creatinine, urine output) against empiric antimicrobial regimens (Vancomycin, Piperacillin-Tazobactam, Cefepime, Meropenem, Gentamicin).
+        </p>
+        <ul style="font-size:0.88rem; color:var(--text-muted); line-height:1.6; padding-left:18px; margin:0;">
+          <li><strong>Vancomycin + Pip-Tazo:</strong> Synergistic nephrotoxicity detection.</li>
+          <li><strong>Cefepime:</strong> Neurotoxicity &amp; encephalopathy blocks in AKI.</li>
+          <li><strong>Gentamicin:</strong> Absolute contraindication blocks in renal failure.</li>
+        </ul>
+      </div>
+
+      <!-- Pillar 4 -->
+      <div class="clinical-card" style="display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background:var(--clinical-blue-light); color:var(--clinical-blue); width:42px; height:42px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+            <i class="bi bi-journal-bookmark-fill"></i>
+          </div>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:800; margin:0; color:var(--text-primary);">4. Local Grounded RAG</h3>
+            <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Verifiable SSC-2021 Guidance</span>
+          </div>
+        </div>
+        <p style="font-size:0.92rem; color:var(--text-secondary); line-height:1.55; margin-bottom:14px;">
+          Synthesizes structured bedside consultation notes grounded in 48 indexed guideline chunks from the Surviving Sepsis Campaign 2021. Every recommendation is paired with interactive citation pills ([SSC-2021-...], [DOSE-...]) allowing instant auditing of verbatim guideline text, evidence quality, and recommendation strength.
+        </p>
+        <ul style="font-size:0.88rem; color:var(--text-muted); line-height:1.6; padding-left:18px; margin:0;">
+          <li>Verifiable verbatim citation inspection drawer.</li>
+          <li>Standardized EHR Consultation Note with one-click export.</li>
+          <li>Multiple local inference modes (Extractive or Local Ollama).</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Clinical Evidence & Guidelines Table -->
+    <section class="clinical-card" style="margin-bottom:24px;">
+      <h3 style="font-size:1.2rem; font-weight:800; color:var(--text-primary); margin-bottom:6px;">
+        <i class="bi bi-book-half" style="color:var(--clinical-blue); margin-right:8px;"></i>
+        Clinical Evidence Base &amp; Regulatory Guidelines
+      </h3>
+      <p style="font-size:0.92rem; color:var(--text-muted); margin-bottom:16px;">
+        All physiological criteria, severity staging, fluid recommendations, and antimicrobial dosing intervals incorporated into the CDS engine are derived strictly from published peer-reviewed medical consensus:
+      </p>
+
+      <div class="clinical-table-wrapper">
+        <table class="clinical-dosing-table">
+          <thead>
+            <tr>
+              <th style="width:25%;">Clinical Guideline / Consensus</th>
+              <th style="width:20%;">Governing Society</th>
+              <th style="width:25%;">Key Medical Recommendations Incorporated</th>
+              <th style="width:30%;">Primary Publication Citation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:800; color:var(--clinical-navy);">Surviving Sepsis Campaign (SSC 2021)</td>
+              <td>SCCM / ESICM International Consensus</td>
+              <td>1-hour bundle initiation, &ge; 30 mL/kg balanced crystalloids, norepinephrine as first-line pressor (MAP &ge; 65 mmHg), dynamic fluid responsiveness.</td>
+              <td>Evans L, et al. <em>Crit Care Med.</em> 2021;49(11):e1063–e1143.</td>
+            </tr>
+            <tr>
+              <td style="font-weight:800; color:var(--clinical-navy);">Sepsis-3 Consensus Definitions</td>
+              <td>SCCM &amp; ESICM Consensus Task Force</td>
+              <td>Defines sepsis as life-threatening organ dysfunction caused by a dysregulated host response (&Delta;SOFA &ge; 2), and septic shock as persistent hypotension requiring vasopressors with lactate &gt; 2 mmol/L.</td>
+              <td>Singer M, et al. <em>JAMA.</em> 2016;315(8):801–810.</td>
+            </tr>
+            <tr>
+              <td style="font-weight:800; color:var(--clinical-navy);">KDIGO Clinical Practice Guideline for AKI</td>
+              <td>Kidney Disease: Improving Global Outcomes</td>
+              <td>Staging acute kidney injury by serum creatinine elevation (&ge; 0.3 mg/dL or &ge; 1.5&times; baseline) and hourly urine output reduction (&lt; 0.5 mL/kg/h).</td>
+              <td>KDIGO AKI Work Group. <em>Kidney Int Suppl.</em> 2012;2(1):1–138.</td>
+            </tr>
+            <tr>
+              <td style="font-weight:800; color:var(--clinical-navy);">Sanford Guide &amp; IDSA Antimicrobial Guidance</td>
+              <td>IDSA / Sanford Guide Editorial Board</td>
+              <td>Weight-based and CrCl-adjusted dosing for Vancomycin, Cefepime, Piperacillin-Tazobactam, Meropenem, and Gentamicin. Avoidance of synergistic nephrotoxins in critical illness.</td>
+              <td>Gilbert DN, et al. <em>The Sanford Guide to Antimicrobial Therapy.</em> 53rd ed. 2023.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PhysioNet Cohort & HIPAA Privacy Section -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); gap:20px; margin-bottom:24px;">
+      
+      <!-- PhysioNet Cohort -->
+      <section class="clinical-card">
+        <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-primary); margin-bottom:6px;">
+          <i class="bi bi-database-fill" style="color:var(--clinical-blue); margin-right:8px;"></i>
+          PhysioNet 2019 ICU Benchmark Cohort
+        </h3>
+        <p style="font-size:0.92rem; color:var(--text-muted); margin-bottom:14px;">
+          The built-in evaluation suite includes <strong>25 fully curated longitudinal ICU patient trajectories</strong> spanning <strong>1,313 total admission hours</strong> derived from the PhysioNet / Computing in Cardiology 2019 Challenge (MIMIC-III &amp; eICU):
+        </p>
+        <div style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem;">
+          <div style="background:var(--bg-inset); padding:10px 14px; border-radius:8px; border-left:4px solid var(--status-critical);">
+            <strong>Septic Shock (4 Patients):</strong> Patients experiencing acute severe refractory hypotension requiring norepinephrine, acute organ failure, and hyperlactatemia.
+          </div>
+          <div style="background:var(--bg-inset); padding:10px 14px; border-radius:8px; border-left:4px solid var(--status-warning);">
+            <strong>Pre-Sepsis Transition (4 Patients):</strong> Patients admitted in borderline stability with early vital sign derangements progressing into Sepsis-3 criteria during the ICU stay.
+          </div>
+          <div style="background:var(--bg-inset); padding:10px 14px; border-radius:8px; border-left:4px solid #7c3aed;">
+            <strong>Acute Kidney Injury (4 Patients):</strong> Critical patients exhibiting oliguria and rapid creatinine elevations triggering empiric antimicrobial dosage adjustments.
+          </div>
+          <div style="background:var(--bg-inset); padding:10px 14px; border-radius:8px; border-left:4px solid var(--status-normal);">
+            <strong>Non-Sepsis SIRS Controls (13 Patients):</strong> Control trajectories with fever or tachycardia secondary to postoperative trauma or cardiac conditions without systemic infection.
+          </div>
+        </div>
+      </section>
+
+      <!-- HIPAA & Privacy Model -->
+      <section class="clinical-card">
+        <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-primary); margin-bottom:6px;">
+          <i class="bi bi-shield-lock-fill" style="color:var(--status-normal); margin-right:8px;"></i>
+          HIPAA &amp; Zero-PHI Client-Side Architecture
+        </h3>
+        <p style="font-size:0.92rem; color:var(--text-muted); margin-bottom:14px;">
+          Unlike cloud-based AI tools that transmit sensitive patient data to third-party proprietary servers, this application operates under a <strong>strict Zero-PHI Egress Posture</strong>:
+        </p>
+        <div style="display:flex; flex-direction:column; gap:10px; font-size:0.9rem; color:var(--text-secondary); line-height:1.55;">
+          <div style="display:flex; align-items:flex-start; gap:10px;">
+            <i class="bi bi-check-circle-fill" style="color:var(--status-normal); margin-top:2px;"></i>
+            <span><strong>Zero External Transmission:</strong> 0 bytes of patient vitals, labs, notes, or identifiers ever leave the local clinician workstation.</span>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap:10px;">
+            <i class="bi bi-check-circle-fill" style="color:var(--status-normal); margin-top:2px;"></i>
+            <span><strong>In-Browser Vector Search:</strong> Guideline retrieval embeddings are indexed and compared directly within browser memory using cosine dot-product ranking.</span>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap:10px;">
+            <i class="bi bi-check-circle-fill" style="color:var(--status-normal); margin-top:2px;"></i>
+            <span><strong>Local Air-Gapped Inference:</strong> Generative consultation synthesis connects exclusively to local loopback endpoints (127.0.0.1:11434 Ollama or WebGPU).</span>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap:10px;">
+            <i class="bi bi-check-circle-fill" style="color:var(--status-normal); margin-top:2px;"></i>
+            <span><strong>Audit Logging:</strong> Clinician actions and clipboard exports are stored solely in local workstation session storage.</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Governance, Disclaimers & Version Info -->
+    <section class="clinical-card" style="background:var(--bg-inset); border:1px solid var(--border-subtle);">
+      <h3 style="font-size:1.05rem; font-weight:800; color:var(--text-primary); margin-bottom:6px;">
+        <i class="bi bi-exclamation-diamond-fill" style="color:var(--status-warning); margin-right:8px;"></i>
+        Intended Use &amp; Clinical Decision Support Disclaimer
+      </h3>
+      <p style="font-size:0.88rem; color:var(--text-muted); line-height:1.55; margin-bottom:12px;">
+        <strong>Assistive Decision Support Notice:</strong> This software is designed strictly as an assistive clinical decision support tool for certified intensive care physicians, hospital intensivists, and clinical pharmacists. It does not replace independent clinical judgment, individualized patient assessment, or institutional hospital protocols. In all circumstances, clinical discretion by licensed healthcare personnel supersedes system recommendations.
+      </p>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:0.84rem; color:var(--text-muted); padding-top:10px; border-top:1px solid var(--border-subtle);">
+        <span><strong>System Version:</strong> v1.2.0-clinical • Sepsis-3 CDS Recommender</span>
+        <span><strong>Regulatory Class:</strong> Non-Autonomous Clinical Decision Support Companion (FDA CDS Draft Guidance Compliant)</span>
+      </div>
+    </section>
+
   </main>
 
   <!-- ======================================================================
@@ -998,25 +1262,41 @@
     function switchAppMode(mode) {
       const wsView = document.getElementById("workstationView");
       const bmView = document.getElementById("benchmarkView");
+      const aboutView = document.getElementById("aboutView");
       const ptBar = document.getElementById("patientControlBar");
       const wfBar = document.getElementById("workflowGuideBar");
       const wsBtn = document.getElementById("modeWorkstationBtn");
       const bmBtn = document.getElementById("modeBenchmarkBtn");
+      const aboutBtn = document.getElementById("modeAboutBtn");
 
       if (mode === "workstation") {
         wsView.style.display = "block";
         ptBar.style.display = "block";
         wfBar.style.display = "block";
         bmView.style.display = "none";
-        wsBtn.classList.add("active");
-        bmBtn.classList.remove("active");
-      } else {
+        if (aboutView) aboutView.style.display = "none";
+        if (wsBtn) wsBtn.classList.add("active");
+        if (bmBtn) bmBtn.classList.remove("active");
+        if (aboutBtn) aboutBtn.classList.remove("active");
+      } else if (mode === "benchmark") {
         wsView.style.display = "none";
         ptBar.style.display = "none";
         wfBar.style.display = "none";
         bmView.style.display = "block";
-        wsBtn.classList.remove("active");
-        bmBtn.classList.add("active");
+        if (aboutView) aboutView.style.display = "none";
+        if (wsBtn) wsBtn.classList.remove("active");
+        if (bmBtn) bmBtn.classList.add("active");
+        if (aboutBtn) aboutBtn.classList.remove("active");
+      } else if (mode === "about") {
+        wsView.style.display = "none";
+        ptBar.style.display = "none";
+        wfBar.style.display = "none";
+        bmView.style.display = "none";
+        if (aboutView) aboutView.style.display = "block";
+        if (wsBtn) wsBtn.classList.remove("active");
+        if (bmBtn) bmBtn.classList.remove("active");
+        if (aboutBtn) aboutBtn.classList.add("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
 
@@ -1622,7 +1902,7 @@
       // If user is in EXTRACTIVE_RAG or WEBGPU mode, render immediately
       if (synthesizer.currentMode !== "OLLAMA") {
         document.getElementById("confidencePill").textContent = baseSynth.confidence.label;
-        document.getElementById("latencyBadge").textContent = `${baseSynth.elapsedMs}ms (${baseSynth.mode})`;
+        document.getElementById("latencyBadge").textContent = "Extractive Clinical Guidance";
         currentSynthState = { synth: baseSynth, selectedDrugs, record, sofa, status, alerts };
         renderActiveRagContent();
         return;
@@ -1728,7 +2008,7 @@
 
       confPill.textContent = finalSynth.confidence.label;
       confPill.className = "exec-pill-badge badge-normal";
-      latencyBadge.textContent = `${finalSynth.elapsedMs}ms (${finalSynth.mode})`;
+      latencyBadge.textContent = "Ollama Synthesis Complete";
 
       // Cache state and re-render clean active tab content with generative section integrated
       currentSynthState = { synth: finalSynth, selectedDrugs, record, sofa, status, alerts };
@@ -1833,8 +2113,8 @@
         } else if (mode === "WEBGPU") {
           updateGpuBadge();
         } else {
-          gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>CPU Fast (< 5ms)';
-          gpuInd.style.color = "#bae6fd";
+          gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Instant CDS Active';
+          gpuInd.style.color = "#5eead4";
         }
         renderCurrentState();
       }

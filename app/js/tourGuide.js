@@ -39,7 +39,7 @@ export const TOUR_STEPS = [
     pageStep: 1,
     title: "4. Page 1: Deterministic Sepsis-3 SOFA Scorecard",
     badge: "Step 4 of 7 • Page 1",
-    content: "Calculated in <strong>&lt; 2 ms</strong> without LLM arithmetic. Organ failure is highlighted in red whenever a sub-score reaches <strong>&ge; 2 points</strong> across Respiration, Coagulation, Liver, Cardiovascular, or Renal systems.",
+    content: "Calculated deterministically without LLM arithmetic to guarantee zero hallucinations. Organ failure is highlighted in red whenever a sub-score reaches <strong>&ge; 2 points</strong> across Respiration, Coagulation, Liver, Cardiovascular, or Renal systems.",
     position: "bottom"
   },
   {
