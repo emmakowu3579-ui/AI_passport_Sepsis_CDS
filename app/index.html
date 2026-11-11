@@ -234,370 +234,395 @@
   </section>
 
   <!-- ======================================================================
-       3. Guided 3-Step Clinical Workflow Ribbon ("Where to Start & Go Next")
+       3. Guided 3-Page Clinical Stepper Navigation Bar ("Step 1, Step 2, Step 3")
        ====================================================================== -->
-  <nav id="workflowGuideBar" class="workflow-guide-bar" aria-label="Guided Clinical Workflow">
+  <nav id="workflowGuideBar" class="workflow-guide-bar" aria-label="Guided 3-Page Clinical Workflow">
     <div class="workflow-guide-inner">
       <div class="workflow-steps">
-        <span style="font-size:0.82rem; font-weight:800; text-transform:uppercase; color:var(--text-muted);">
-          <i class="bi bi-compass-fill" style="color:var(--clinical-blue); margin-right:4px;"></i>Clinical Workflow:
+        <span style="font-size:0.95rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-right:4px;">
+          <i class="bi bi-compass-fill" style="color:var(--clinical-blue); margin-right:5px;"></i>Clinical Pages:
         </span>
-        <button class="workflow-step-pill" onclick="scrollToSection('step1Card')">
-          <span class="step-num-circle">1</span> Review Telemetry, SOFA &amp; Trajectory Plots
+        <button id="navStep1Btn" class="workflow-step-pill active-step-page" onclick="navigateToStepPage(1)">
+          <span class="step-num-circle">1</span> Page 1: Patient Vitals, SOFA &amp; Trajectory Plots
         </button>
-        <i class="bi bi-chevron-right" style="color:var(--text-dim); font-size:0.8rem;"></i>
-        <button class="workflow-step-pill" onclick="scrollToSection('step2Card')">
-          <span class="step-num-circle">2</span> Simulate "What-If" Fluids, Pressors &amp; 5-Drug Safety
+        <i class="bi bi-chevron-right" style="color:var(--text-dim); font-size:0.95rem;"></i>
+        <button id="navStep2Btn" class="workflow-step-pill" onclick="navigateToStepPage(2)">
+          <span class="step-num-circle">2</span> Page 2: "What-If" Fluids, Pressors &amp; 5-Drug Safety
         </button>
-        <i class="bi bi-chevron-right" style="color:var(--text-dim); font-size:0.8rem;"></i>
-        <button class="workflow-step-pill" onclick="scrollToSection('step3Card')">
-          <span class="step-num-circle">3</span> Inspect RAG Treatment Plan &amp; Verifiable Citations
+        <i class="bi bi-chevron-right" style="color:var(--text-dim); font-size:0.95rem;"></i>
+        <button id="navStep3Btn" class="workflow-step-pill" onclick="navigateToStepPage(3)">
+          <span class="step-num-circle">3</span> Page 3: Grounded RAG Treatment Plan &amp; Citations
         </button>
       </div>
-      <div style="font-size:0.82rem; color:var(--text-muted);">
-        <i class="bi bi-shield-lock-fill" style="color:var(--status-normal); margin-right:4px;"></i><strong>100% Client-Side Privacy:</strong> 0 bytes patient data transmitted externally
+      <div style="font-size:0.92rem; color:var(--text-muted);">
+        <i class="bi bi-shield-lock-fill" style="color:var(--status-normal); margin-right:5px;"></i><strong>100% Client-Side Privacy:</strong> 0 bytes patient data transmitted externally
       </div>
     </div>
   </nav>
 
   <!-- ======================================================================
-       4. Main Point-of-Care Workstation View (2-Column Synchronized Layout)
+       4. Main Point-of-Care Workstation View (3 Dedicated Full-Width Pages)
        ====================================================================== -->
   <main id="workstationView" class="workstation-container">
-    <div class="workstation-grid">
 
-      <!-- ==============================================================
-           LEFT COLUMN: Step 1 (Telemetry, SOFA & Plots) + Step 2 (What-If Simulator)
-           ============================================================== -->
-      <div class="left-clinical-col">
+    <!-- ==============================================================
+         PAGE 1 (STEP 1): Patient Vitals, Dual-Unit Labs, Deterministic SOFA & Trajectory Plots
+         ============================================================== -->
+    <div id="step1Page" class="step-page-view active-page">
+      <section id="step1Card" class="clinical-card" aria-labelledby="step1Title">
+        <div class="card-title-row">
+          <div>
+            <span class="step-badge-tag">Step 1 of 3 • Patient Assessment &amp; Longitudinal Physiology</span>
+            <h2 id="step1Title" class="card-main-title">
+              Bedside Vitals, Organ Function Labs &amp; Deterministic SOFA Scorecard
+            </h2>
+            <p class="card-sub-desc">
+              Automated unit normalization (Lactate in both mmol/L and mg/dL) and Last-Observation-Carried-Forward (LOCF) stale lab detection (&gt;6h).
+            </p>
+          </div>
+          <button class="step-nav-action-btn step-nav-next" style="padding:10px 20px; font-size:0.96rem;" onclick="navigateToStepPage(2)">
+            Next: Step 2 Simulator <i class="bi bi-arrow-right-circle-fill"></i>
+          </button>
+        </div>
 
-        <!-- --------------------------------------------------------------
-             STEP 1: Patient Vitals, Dual-Unit Labs, Deterministic SOFA & Trajectory Plots
-             -------------------------------------------------------------- -->
-        <section id="step1Card" class="clinical-card" aria-labelledby="step1Title">
-          <div class="card-title-row">
+        <!-- Vital Signs 4-Box Grid -->
+        <div class="metrics-section-label"><i class="bi bi-activity" style="color:var(--clinical-blue); margin-right:6px;"></i>Hourly Vital Signs</div>
+        <div class="vitals-labs-grid">
+          <div id="tileMap" class="metric-box">
+            <div class="metric-top-row">
+              <span class="metric-name"><i class="bi bi-heart-pulse" style="margin-right:4px;"></i>MAP</span>
+              <span class="metric-ref">Target &ge; 65</span>
+            </div>
+            <div class="metric-val-row">
+              <span id="valMap" class="metric-number">--</span>
+              <span class="metric-unit">mmHg</span>
+            </div>
+          </div>
+
+          <div id="tileHr" class="metric-box">
+            <div class="metric-top-row">
+              <span class="metric-name"><i class="bi bi-heart-fill" style="margin-right:4px;"></i>Heart Rate</span>
+              <span class="metric-ref">60–100</span>
+            </div>
+            <div class="metric-val-row">
+              <span id="valHr" class="metric-number">--</span>
+              <span class="metric-unit">bpm</span>
+            </div>
+          </div>
+
+          <div id="tileResp" class="metric-box">
+            <div class="metric-top-row">
+              <span class="metric-name"><i class="bi bi-lungs" style="margin-right:4px;"></i>Resp Rate</span>
+              <span class="metric-ref">12–20</span>
+            </div>
+            <div class="metric-val-row">
+              <span id="valResp" class="metric-number">--</span>
+              <span class="metric-unit">/min</span>
+            </div>
+          </div>
+
+          <div id="tileTemp" class="metric-box">
+            <div class="metric-top-row">
+              <span class="metric-name"><i class="bi bi-thermometer-half" style="margin-right:4px;"></i>Temperature</span>
+              <span class="metric-ref">36.5–37.5</span>
+            </div>
+            <div class="metric-val-row">
+              <span id="valTemp" class="metric-number">--</span>
+              <span class="metric-unit">&deg;C</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Organ Function Labs 4-Box Grid -->
+        <div class="metrics-section-label"><i class="bi bi-eyedropper" style="color:var(--clinical-blue); margin-right:6px;"></i>Critical Organ Function Labs (Dual-Unit Normalized)</div>
+        <div class="vitals-labs-grid">
+          <div id="tileLactate" class="metric-box">
+            <div class="metric-top-row">
+              <span class="metric-name"><i class="bi bi-droplet-fill" style="margin-right:4px;"></i>Serum Lactate</span>
+              <span class="metric-ref">&lt; 2.0 mmol/L</span>
+            </div>
+            <div class="metric-val-row">
+              <span id="valLactMmol" class="metric-number">--</span>
+              <span class="metric-unit">mmol/L</span>
+            </div>
+            <div class="metric-subtext">
+              Raw: <strong id="valLactMgDl">--</strong> mg/dL
+            </div>
+            <div id="staleLactate" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+          </div>
+
+          <div id="tileCreatinine" class="metric-box">
+            <div class="metric-top-row">
+              <span class="metric-name"><i class="bi bi-filter-circle" style="margin-right:4px;"></i>Creatinine</span>
+              <span class="metric-ref">0.7–1.3</span>
+            </div>
+            <div class="metric-val-row">
+              <span id="valCr" class="metric-number">--</span>
+              <span class="metric-unit">mg/dL</span>
+            </div>
+            <div id="staleCr" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+          </div>
+
+          <div id="tilePlatelets" class="metric-box">
+            <div class="metric-top-row">
+              <span class="metric-name"><i class="bi bi-droplet-half" style="margin-right:4px;"></i>Platelets</span>
+              <span class="metric-ref">&ge; 150</span>
+            </div>
+            <div class="metric-val-row">
+              <span id="valPlt" class="metric-number">--</span>
+              <span class="metric-unit">k/&mu;L</span>
+            </div>
+            <div id="stalePlt" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+          </div>
+
+          <div id="tileBili" class="metric-box">
+            <div class="metric-top-row">
+              <span class="metric-name"><i class="bi bi-clipboard2-pulse" style="margin-right:4px;"></i>Total Bilirubin</span>
+              <span class="metric-ref">&lt; 1.2</span>
+            </div>
+            <div class="metric-val-row">
+              <span id="valBili" class="metric-number">--</span>
+              <span class="metric-unit">mg/dL</span>
+            </div>
+            <div id="staleBili" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+          </div>
+        </div>
+
+        <!-- Deterministic SOFA Scorecard Strip (Automatically Calculated) -->
+        <div class="metrics-section-label"><i class="bi bi-calculator-fill" style="color:var(--clinical-blue); margin-right:6px;"></i>Deterministic Sepsis-3 SOFA Scorecard (Auto-Computed from EHR Data)</div>
+        <div class="sofa-scorecard-strip">
+          <div class="sofa-total-block">
+            <div id="sofaTotalVal" class="sofa-total-num">0</div>
             <div>
-              <span class="step-badge-tag">Step 1 • Patient Assessment &amp; Longitudinal Physiology</span>
-              <h2 id="step1Title" class="card-main-title">
-                Bedside Vitals, Organ Function Labs &amp; Deterministic SOFA Scorecard
-              </h2>
-              <p class="card-sub-desc">
-                Automated unit normalization (Lactate in both mmol/L and mg/dL) and Last-Observation-Carried-Forward (LOCF) stale lab detection (&gt;6h).
-              </p>
+              <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);">Total SOFA Score</div>
+              <div style="font-size:0.92rem; color:var(--text-muted);">Sepsis-3 Criteria: Acute &Delta;SOFA &ge; 2</div>
             </div>
           </div>
 
-          <!-- Vital Signs 4-Box Grid -->
-          <div class="metrics-section-label"><i class="bi bi-activity" style="color:var(--clinical-blue); margin-right:6px;"></i>Hourly Vital Signs</div>
-          <div class="vitals-labs-grid">
-            <div id="tileMap" class="metric-box">
-              <div class="metric-top-row">
-                <span class="metric-name"><i class="bi bi-heart-pulse" style="margin-right:4px;"></i>MAP</span>
-                <span class="metric-ref">Target &ge; 65</span>
-              </div>
-              <div class="metric-val-row">
-                <span id="valMap" class="metric-number">--</span>
-                <span class="metric-unit">mmHg</span>
-              </div>
+          <div class="sofa-organs-row">
+            <div id="pillSofaResp" class="sofa-organ-pill">
+              <div class="sofa-organ-name"><i class="bi bi-lungs" style="margin-right:4px;"></i>Respiration</div>
+              <div id="sofaRespVal" class="sofa-organ-val">0</div>
             </div>
-
-            <div id="tileHr" class="metric-box">
-              <div class="metric-top-row">
-                <span class="metric-name"><i class="bi bi-heart-fill" style="margin-right:4px;"></i>Heart Rate</span>
-                <span class="metric-ref">60–100</span>
-              </div>
-              <div class="metric-val-row">
-                <span id="valHr" class="metric-number">--</span>
-                <span class="metric-unit">bpm</span>
-              </div>
+            <div id="pillSofaCoag" class="sofa-organ-pill">
+              <div class="sofa-organ-name"><i class="bi bi-droplet-half" style="margin-right:4px;"></i>Coagulation</div>
+              <div id="sofaCoagVal" class="sofa-organ-val">0</div>
             </div>
-
-            <div id="tileResp" class="metric-box">
-              <div class="metric-top-row">
-                <span class="metric-name"><i class="bi bi-lungs" style="margin-right:4px;"></i>Resp Rate</span>
-                <span class="metric-ref">12–20</span>
-              </div>
-              <div class="metric-val-row">
-                <span id="valResp" class="metric-number">--</span>
-                <span class="metric-unit">/min</span>
-              </div>
+            <div id="pillSofaLiver" class="sofa-organ-pill">
+              <div class="sofa-organ-name"><i class="bi bi-shield-plus" style="margin-right:4px;"></i>Liver</div>
+              <div id="sofaLiverVal" class="sofa-organ-val">0</div>
             </div>
+            <div id="pillSofaCv" class="sofa-organ-pill">
+              <div class="sofa-organ-name"><i class="bi bi-heart-pulse" style="margin-right:4px;"></i>Cardiovascular</div>
+              <div id="sofaCvVal" class="sofa-organ-val">0</div>
+            </div>
+            <div id="pillSofaRenal" class="sofa-organ-pill">
+              <div class="sofa-organ-name"><i class="bi bi-filter-circle" style="margin-right:4px;"></i>Renal</div>
+              <div id="sofaRenalVal" class="sofa-organ-val">0</div>
+            </div>
+          </div>
+        </div>
 
-            <div id="tileTemp" class="metric-box">
-              <div class="metric-top-row">
-                <span class="metric-name"><i class="bi bi-thermometer-half" style="margin-right:4px;"></i>Temperature</span>
-                <span class="metric-ref">36.5–37.5</span>
-              </div>
-              <div class="metric-val-row">
-                <span id="valTemp" class="metric-number">--</span>
-                <span class="metric-unit">&deg;C</span>
-              </div>
+        <!-- Longitudinal Trajectory Plots with Segmented View Control -->
+        <div style="margin-top:26px;">
+          <div class="chart-view-toggle-row">
+            <div class="metrics-section-label" style="margin-bottom:0;">
+              <i class="bi bi-graph-up-arrow" style="color:var(--clinical-blue); margin-right:6px;"></i>Longitudinal ICU Physiology (Click any hour to scrub timeline)
+            </div>
+            <div class="chart-toggle-pills" role="radiogroup" aria-label="Trajectory chart selection">
+              <button id="toggleBtnHemo" class="chart-toggle-pill active" onclick="switchChartView('hemo')">
+                <i class="bi bi-activity"></i> MAP &amp; Lactate Perfusion
+              </button>
+              <button id="toggleBtnSofa" class="chart-toggle-pill" onclick="switchChartView('sofa')">
+                <i class="bi bi-bar-chart-steps"></i> SOFA Organ Failure
+              </button>
+              <button id="toggleBtnBoth" class="chart-toggle-pill" onclick="switchChartView('both')">
+                <i class="bi bi-layout-split"></i> Both Charts
+              </button>
             </div>
           </div>
 
-          <!-- Organ Function Labs 4-Box Grid -->
-          <div class="metrics-section-label"><i class="bi bi-eyedropper" style="color:var(--clinical-blue); margin-right:6px;"></i>Critical Organ Function Labs (Dual-Unit Normalized)</div>
-          <div class="vitals-labs-grid">
-            <div id="tileLactate" class="metric-box">
-              <div class="metric-top-row">
-                <span class="metric-name"><i class="bi bi-droplet-fill" style="margin-right:4px;"></i>Serum Lactate</span>
-                <span class="metric-ref">&lt; 2.0 mmol/L</span>
-              </div>
-              <div class="metric-val-row">
-                <span id="valLactMmol" class="metric-number">--</span>
-                <span class="metric-unit">mmol/L</span>
-              </div>
-              <div class="metric-subtext">
-                Raw: <strong id="valLactMgDl">--</strong> mg/dL
-              </div>
-              <div id="staleLactate" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+          <div id="hemoChartContainer">
+            <div style="display:flex; justify-content:flex-end; gap:18px; font-size:0.95rem; font-weight:800; margin-bottom:8px;">
+              <span style="color:#0284c7;"><i class="bi bi-circle-fill" style="font-size:0.65rem; margin-right:5px;"></i>MAP (mmHg)</span>
+              <span style="color:#10b981;">--- Target &ge; 65 mmHg</span>
+              <span style="color:#f59e0b;"><i class="bi bi-circle-fill" style="font-size:0.65rem; margin-right:5px;"></i>Lactate (mmol/L)</span>
+              <span style="color:#ef4444;"><i class="bi bi-exclamation-triangle-fill" style="margin-right:5px;"></i>Sepsis-3 Onset</span>
             </div>
-
-            <div id="tileCreatinine" class="metric-box">
-              <div class="metric-top-row">
-                <span class="metric-name"><i class="bi bi-filter-circle" style="margin-right:4px;"></i>Creatinine</span>
-                <span class="metric-ref">0.7–1.3</span>
-              </div>
-              <div class="metric-val-row">
-                <span id="valCr" class="metric-number">--</span>
-                <span class="metric-unit">mg/dL</span>
-              </div>
-              <div id="staleCr" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
-            </div>
-
-            <div id="tilePlatelets" class="metric-box">
-              <div class="metric-top-row">
-                <span class="metric-name"><i class="bi bi-droplet-half" style="margin-right:4px;"></i>Platelets</span>
-                <span class="metric-ref">&ge; 150</span>
-              </div>
-              <div class="metric-val-row">
-                <span id="valPlt" class="metric-number">--</span>
-                <span class="metric-unit">k/&mu;L</span>
-              </div>
-              <div id="stalePlt" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
-            </div>
-
-            <div id="tileBili" class="metric-box">
-              <div class="metric-top-row">
-                <span class="metric-name"><i class="bi bi-clipboard2-pulse" style="margin-right:4px;"></i>Total Bilirubin</span>
-                <span class="metric-ref">&lt; 1.2</span>
-              </div>
-              <div class="metric-val-row">
-                <span id="valBili" class="metric-number">--</span>
-                <span class="metric-unit">mg/dL</span>
-              </div>
-              <div id="staleBili" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+            <div style="background:var(--bg-inset); border:1.5px solid var(--border-subtle); border-radius:10px; padding:16px;">
+              <svg id="hemodynamicTrajectorySvg" style="width:100%; height:auto; min-height:260px; display:block;" role="img" aria-label="Longitudinal MAP and Lactate Trajectory Plot"></svg>
             </div>
           </div>
 
-          <!-- Deterministic SOFA Scorecard Strip (Automatically Calculated) -->
-          <div class="metrics-section-label"><i class="bi bi-calculator-fill" style="color:var(--clinical-blue); margin-right:6px;"></i>Deterministic Sepsis-3 SOFA Scorecard (Auto-Computed from EHR Data)</div>
-          <div class="sofa-scorecard-strip">
-            <div class="sofa-total-block">
-              <div id="sofaTotalVal" class="sofa-total-num">0</div>
-              <div>
-                <div style="font-size:0.9rem; font-weight:800; color:var(--text-primary);">Total SOFA Score</div>
-                <div style="font-size:0.78rem; color:var(--text-muted);">Sepsis-3 Criteria: Acute &Delta;SOFA &ge; 2</div>
-              </div>
-            </div>
-
-            <div class="sofa-organs-row">
-              <div id="pillSofaResp" class="sofa-organ-pill">
-                <div class="sofa-organ-name"><i class="bi bi-lungs" style="margin-right:3px;"></i>Respiration</div>
-                <div id="sofaRespVal" class="sofa-organ-val">0</div>
-              </div>
-              <div id="pillSofaCoag" class="sofa-organ-pill">
-                <div class="sofa-organ-name"><i class="bi bi-droplet-half" style="margin-right:3px;"></i>Coagulation</div>
-                <div id="sofaCoagVal" class="sofa-organ-val">0</div>
-              </div>
-              <div id="pillSofaLiver" class="sofa-organ-pill">
-                <div class="sofa-organ-name"><i class="bi bi-shield-plus" style="margin-right:3px;"></i>Liver</div>
-                <div id="sofaLiverVal" class="sofa-organ-val">0</div>
-              </div>
-              <div id="pillSofaCv" class="sofa-organ-pill">
-                <div class="sofa-organ-name"><i class="bi bi-heart-pulse" style="margin-right:3px;"></i>Cardiovascular</div>
-                <div id="sofaCvVal" class="sofa-organ-val">0</div>
-              </div>
-              <div id="pillSofaRenal" class="sofa-organ-pill">
-                <div class="sofa-organ-name"><i class="bi bi-filter-circle" style="margin-right:3px;"></i>Renal</div>
-                <div id="sofaRenalVal" class="sofa-organ-val">0</div>
-              </div>
+          <div id="sofaChartContainer" style="margin-top:20px; display:none;">
+            <div class="metrics-section-label"><i class="bi bi-bar-chart-steps" style="color:var(--clinical-blue); margin-right:6px;"></i>Longitudinal SOFA Organ Failure Progression</div>
+            <div style="background:var(--bg-inset); border:1.5px solid var(--border-subtle); border-radius:10px; padding:16px;">
+              <svg id="sofaProgressionSvg" style="width:100%; height:auto; min-height:200px; display:block;" role="img" aria-label="Longitudinal SOFA Score Progression Plot"></svg>
             </div>
           </div>
+        </div>
+      </section>
 
-          <!-- Longitudinal Trajectory Plots with Segmented View Control -->
-          <div style="margin-top:20px;">
-            <div class="chart-view-toggle-row">
-              <div class="metrics-section-label" style="margin-bottom:0;">
-                <i class="bi bi-graph-up-arrow" style="color:var(--clinical-blue); margin-right:6px;"></i>Longitudinal ICU Physiology (Click any hour to scrub timeline)
-              </div>
-              <div class="chart-toggle-pills" role="radiogroup" aria-label="Trajectory chart selection">
-                <button id="toggleBtnHemo" class="chart-toggle-pill active" onclick="switchChartView('hemo')">
-                  <i class="bi bi-activity"></i> MAP &amp; Lactate Perfusion
-                </button>
-                <button id="toggleBtnSofa" class="chart-toggle-pill" onclick="switchChartView('sofa')">
-                  <i class="bi bi-bar-chart-steps"></i> SOFA Organ Failure
-                </button>
-                <button id="toggleBtnBoth" class="chart-toggle-pill" onclick="switchChartView('both')">
-                  <i class="bi bi-layout-split"></i> Both Charts
-                </button>
-              </div>
-            </div>
-
-            <div id="hemoChartContainer">
-              <div style="display:flex; justify-content:flex-end; gap:14px; font-size:0.8rem; font-weight:700; margin-bottom:6px;">
-                <span style="color:#0284c7;"><i class="bi bi-circle-fill" style="font-size:0.55rem; margin-right:4px;"></i>MAP (mmHg)</span>
-                <span style="color:#10b981;">--- Target &ge; 65 mmHg</span>
-                <span style="color:#f59e0b;"><i class="bi bi-circle-fill" style="font-size:0.55rem; margin-right:4px;"></i>Lactate (mmol/L)</span>
-                <span style="color:#ef4444;"><i class="bi bi-exclamation-triangle-fill" style="margin-right:4px;"></i>Sepsis-3 Onset</span>
-              </div>
-              <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px;">
-                <svg id="hemodynamicTrajectorySvg" style="width:100%; height:auto; min-height:220px; display:block;" role="img" aria-label="Longitudinal MAP and Lactate Trajectory Plot"></svg>
-              </div>
-            </div>
-
-            <div id="sofaChartContainer" style="margin-top:16px; display:none;">
-              <div class="metrics-section-label"><i class="bi bi-bar-chart-steps" style="color:var(--clinical-blue); margin-right:6px;"></i>Longitudinal SOFA Organ Failure Progression</div>
-              <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px;">
-                <svg id="sofaProgressionSvg" style="width:100%; height:auto; min-height:160px; display:block;" role="img" aria-label="Longitudinal SOFA Score Progression Plot"></svg>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- --------------------------------------------------------------
-             STEP 2: Interactive "What-If" Resuscitation Simulator & 5-Drug Selector
-             -------------------------------------------------------------- -->
-        <section id="step2Card" class="clinical-card" aria-labelledby="step2Title">
-          <div class="card-title-row">
-            <div>
-              <span class="step-badge-tag">Step 2 • Interactive Intervention Workspace</span>
-              <h2 id="step2Title" class="card-main-title">
-                "What-If" Hemodynamic Resuscitation Simulator &amp; 5-Drug Contraindication Engine
-              </h2>
-              <p class="card-sub-desc">
-                Adjust IV crystalloid boluses, titrate vasopressors, and select empiric antibiotics to evaluate physiological response and organ safety gates in &lt; 5 ms.
-              </p>
-            </div>
-            <span id="targetStatusPill" class="sepsis-status-pill status-normal"><i class="bi bi-check-circle-fill"></i> TARGET MET</span>
-          </div>
-
-          <div class="simulator-two-col">
-            <!-- Left Side: Sliders & 5-Drug Checkboxes -->
-            <div>
-              <div class="slider-control-group">
-                <div class="slider-header">
-                  <span>IV Balanced Crystalloid Bolus:</span>
-                  <span class="slider-val-badge"><span id="valFluidBolus">30</span> mL/kg (<span id="valFluidTotalMl">2100</span> mL)</span>
-                </div>
-                <input type="range" id="fluidSlider" class="clinical-slider" min="0" max="40" step="5" value="30" oninput="onSimulationInput()">
-                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
-                  SSC 2021 recommends 30 mL/kg within first 3 hours for sepsis-induced hypoperfusion.
-                </div>
-              </div>
-
-              <div class="slider-control-group">
-                <div class="slider-header">
-                  <span>Norepinephrine Titration:</span>
-                  <span class="slider-val-badge"><span id="valNorepi">0.05</span> &mu;g/kg/min</span>
-                </div>
-                <input type="range" id="norepiSlider" class="clinical-slider" min="0" max="0.5" step="0.02" value="0.05" oninput="onSimulationInput()">
-                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
-                  First-line vasopressor to maintain target MAP &ge; 65 mmHg.
-                </div>
-              </div>
-
-              <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-inset); padding:10px 14px; border-radius:6px; border:1px solid var(--border-subtle); margin-bottom:16px;">
-                <div>
-                  <div style="font-size:0.88rem; font-weight:800;">Add Vasopressin (0.03 units/min)</div>
-                  <div style="font-size:0.76rem; color:var(--text-muted);">Second-line adjunct for refractory shock</div>
-                </div>
-                <input type="checkbox" id="checkVaso" style="width:20px; height:20px; cursor:pointer;" onchange="onSimulationInput()">
-              </div>
-
-              <!-- 5-Drug Empiric Antimicrobial Selector -->
-              <div class="metrics-section-label"><i class="bi bi-capsule" style="color:var(--clinical-blue); margin-right:6px;"></i>5-Drug Empiric Antimicrobial Selector</div>
-              <div class="drug-checkbox-grid">
-                <label class="drug-check-card">
-                  <input type="checkbox" id="drugVanc" value="vancomycin" checked onchange="onSimulationInput()">
-                  <span>Vancomycin (MRSA)</span>
-                </label>
-                <label class="drug-check-card">
-                  <input type="checkbox" id="drugPipTazo" value="piperacillin_tazobactam" checked onchange="onSimulationInput()">
-                  <span>Pip-Tazo (Zosyn)</span>
-                </label>
-                <label class="drug-check-card">
-                  <input type="checkbox" id="drugCefepime" value="cefepime" onchange="onSimulationInput()">
-                  <span>Cefepime (Maxipime)</span>
-                </label>
-                <label class="drug-check-card">
-                  <input type="checkbox" id="drugMero" value="meropenem" onchange="onSimulationInput()">
-                  <span>Meropenem (Merrem)</span>
-                </label>
-                <label class="drug-check-card" style="grid-column: 1 / -1;">
-                  <input type="checkbox" id="drugGent" value="gentamicin" onchange="onSimulationInput()">
-                  <span>Gentamicin (Aminoglycoside Synergy)</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Right Side: Perfusion Gauge & Contraindication Alerts -->
-            <div>
-              <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px; margin-bottom:12px;">
-                <div class="metrics-section-label" style="margin-bottom:4px;"><i class="bi bi-speedometer2" style="color:var(--clinical-blue); margin-right:6px;"></i>Hemodynamic Response Forecast Gauge</div>
-                <svg id="simComparisonSvg" style="width:100%; height:145px; display:block;"></svg>
-              </div>
-
-              <div style="background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; font-size:0.9rem;">
-                <div style="display:flex; justify-content:space-between;">
-                  <span style="color:var(--text-muted); font-weight:700;">Simulated Post-Resuscitation MAP:</span>
-                  <span id="simMapVal" style="font-family:var(--font-mono); font-weight:900; color:var(--clinical-blue);">-- mmHg</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                  <span style="color:var(--text-muted); font-weight:700;">Expected Lactate Clearance (2–4h):</span>
-                  <span id="simLactVal" style="font-family:var(--font-mono); font-weight:800; color:var(--status-normal);">-- mmol/L</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                  <span style="color:var(--text-muted); font-weight:700;">Volume Overload / Pulmonary Edema Risk:</span>
-                  <span id="simOverloadVal" style="font-family:var(--font-mono); font-weight:900; color:var(--status-warning);">0%</span>
-                </div>
-              </div>
-
-              <!-- Deterministic Contraindication Alerts -->
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
-                <span class="metrics-section-label" style="margin-bottom:0;"><i class="bi bi-shield-exclamation" style="color:var(--status-warning); margin-right:6px;"></i>Proactive Organ Safety Gates</span>
-                <span id="alertCountBadge" style="font-size:0.82rem; font-weight:800; color:var(--status-critical);">0 Alerts</span>
-              </div>
-              <div id="contraindicationList">
-                <!-- Populated dynamically -->
-              </div>
-            </div>
-          </div>
-        </section>
-
+      <!-- Page 1 Footer Navigation -->
+      <div class="page-step-footer-nav">
+        <div style="font-size:1rem; font-weight:700; color:var(--text-muted);">
+          <i class="bi bi-check2-circle" style="color:var(--status-normal); margin-right:6px;"></i>Step 1 of 3 Complete: Bedside Vitals, Dual-Unit Labs &amp; SOFA Verified
+        </div>
+        <button class="step-nav-action-btn step-nav-next" onclick="navigateToStepPage(2)">
+          Proceed to Step 2: "What-If" Resuscitation &amp; 5-Drug Safety Simulator <i class="bi bi-arrow-right-circle-fill"></i>
+        </button>
       </div>
+    </div>
 
-      <!-- ==============================================================
-           RIGHT COLUMN (STICKY): Step 3 — RAG Clinical Synthesis & Verifiable Citations
-           ============================================================== -->
-      <aside id="step3Card" class="right-recommendation-col" aria-labelledby="step3Title">
+    <!-- ==============================================================
+         PAGE 2 (STEP 2): Interactive "What-If" Resuscitation Simulator & 5-Drug Selector
+         ============================================================== -->
+    <div id="step2Page" class="step-page-view">
+      <section id="step2Card" class="clinical-card" aria-labelledby="step2Title">
+        <div class="card-title-row">
+          <div>
+            <span class="step-badge-tag">Step 2 of 3 • Interactive Intervention Workspace</span>
+            <h2 id="step2Title" class="card-main-title">
+              "What-If" Hemodynamic Resuscitation Simulator &amp; 5-Drug Contraindication Engine
+            </h2>
+            <p class="card-sub-desc">
+              Adjust IV crystalloid boluses, titrate vasopressors, and select empiric antibiotics to evaluate physiological response and organ safety gates in &lt; 5 ms.
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <span id="targetStatusPill" class="sepsis-status-pill status-normal" style="font-size:1rem; padding:8px 16px;"><i class="bi bi-check-circle-fill"></i> TARGET MET</span>
+            <button class="step-nav-action-btn step-nav-next" style="padding:10px 20px; font-size:0.96rem;" onclick="navigateToStepPage(3)">
+              Next: Step 3 RAG Plan <i class="bi bi-arrow-right-circle-fill"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="simulator-two-col">
+          <!-- Left Side: Sliders & 5-Drug Checkboxes -->
+          <div>
+            <div class="slider-control-group">
+              <div class="slider-header">
+                <span>IV Balanced Crystalloid Bolus:</span>
+                <span class="slider-val-badge"><span id="valFluidBolus">30</span> mL/kg (<span id="valFluidTotalMl">2100</span> mL)</span>
+              </div>
+              <input type="range" id="fluidSlider" class="clinical-slider" min="0" max="40" step="5" value="30" oninput="onSimulationInput()">
+              <div style="font-size:0.94rem; color:var(--text-muted); margin-top:8px;">
+                SSC 2021 recommends 30 mL/kg within first 3 hours for sepsis-induced hypoperfusion.
+              </div>
+            </div>
+
+            <div class="slider-control-group">
+              <div class="slider-header">
+                <span>Norepinephrine Titration:</span>
+                <span class="slider-val-badge"><span id="valNorepi">0.05</span> &mu;g/kg/min</span>
+              </div>
+              <input type="range" id="norepiSlider" class="clinical-slider" min="0" max="0.5" step="0.02" value="0.05" oninput="onSimulationInput()">
+              <div style="font-size:0.94rem; color:var(--text-muted); margin-top:8px;">
+                First-line vasopressor to maintain target MAP &ge; 65 mmHg.
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-inset); padding:16px 20px; border-radius:10px; border:1.5px solid var(--border-subtle); margin-bottom:22px;">
+              <div>
+                <div style="font-size:1.06rem; font-weight:800;">Add Vasopressin (0.03 units/min)</div>
+                <div style="font-size:0.92rem; color:var(--text-muted);">Second-line adjunct for refractory shock</div>
+              </div>
+              <input type="checkbox" id="checkVaso" style="width:24px; height:24px; cursor:pointer;" onchange="onSimulationInput()">
+            </div>
+
+            <!-- 5-Drug Empiric Antimicrobial Selector -->
+            <div class="metrics-section-label"><i class="bi bi-capsule" style="color:var(--clinical-blue); margin-right:6px;"></i>5-Drug Empiric Antimicrobial Selector</div>
+            <div class="drug-checkbox-grid">
+              <label class="drug-check-card">
+                <input type="checkbox" id="drugVanc" value="vancomycin" checked onchange="onSimulationInput()">
+                <span>Vancomycin (MRSA)</span>
+              </label>
+              <label class="drug-check-card">
+                <input type="checkbox" id="drugPipTazo" value="piperacillin_tazobactam" checked onchange="onSimulationInput()">
+                <span>Pip-Tazo (Zosyn)</span>
+              </label>
+              <label class="drug-check-card">
+                <input type="checkbox" id="drugCefepime" value="cefepime" onchange="onSimulationInput()">
+                <span>Cefepime (Maxipime)</span>
+              </label>
+              <label class="drug-check-card">
+                <input type="checkbox" id="drugMero" value="meropenem" onchange="onSimulationInput()">
+                <span>Meropenem (Merrem)</span>
+              </label>
+              <label class="drug-check-card" style="grid-column: 1 / -1;">
+                <input type="checkbox" id="drugGent" value="gentamicin" onchange="onSimulationInput()">
+                <span>Gentamicin (Aminoglycoside Synergy)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Right Side: Perfusion Gauge & Contraindication Alerts -->
+          <div>
+            <div style="background:var(--bg-inset); border:1.5px solid var(--border-subtle); border-radius:10px; padding:18px; margin-bottom:16px;">
+              <div class="metrics-section-label" style="margin-bottom:8px;"><i class="bi bi-speedometer2" style="color:var(--clinical-blue); margin-right:6px;"></i>Hemodynamic Response Forecast Gauge</div>
+              <svg id="simComparisonSvg" style="width:100%; height:170px; display:block;"></svg>
+            </div>
+
+            <div style="background:var(--bg-inset); border:1.5px solid var(--border-subtle); border-radius:10px; padding:16px 20px; display:flex; flex-direction:column; gap:10px; font-size:1.06rem;">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-muted); font-weight:700;">Simulated Post-Resuscitation MAP:</span>
+                <span id="simMapVal" style="font-family:var(--font-mono); font-weight:900; color:var(--clinical-blue);">-- mmHg</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-muted); font-weight:700;">Expected Lactate Clearance (2–4h):</span>
+                <span id="simLactVal" style="font-family:var(--font-mono); font-weight:800; color:var(--status-normal);">-- mmol/L</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-muted); font-weight:700;">Volume Overload / Pulmonary Edema Risk:</span>
+                <span id="simOverloadVal" style="font-family:var(--font-mono); font-weight:900; color:var(--status-warning);">0%</span>
+              </div>
+            </div>
+
+            <!-- Deterministic Contraindication Alerts -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+              <span class="metrics-section-label" style="margin-bottom:0;"><i class="bi bi-shield-exclamation" style="color:var(--status-warning); margin-right:6px;"></i>Proactive Organ Safety Gates</span>
+              <span id="alertCountBadge" style="font-size:1rem; font-weight:800; color:var(--status-critical);">0 Alerts</span>
+            </div>
+            <div id="contraindicationList">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page 2 Footer Navigation -->
+      <div class="page-step-footer-nav">
+        <button class="step-nav-action-btn step-nav-prev" onclick="navigateToStepPage(1)">
+          <i class="bi bi-arrow-left-circle-fill"></i> Back to Step 1: Patient Vitals, Labs &amp; SOFA
+        </button>
+        <button class="step-nav-action-btn step-nav-next" onclick="navigateToStepPage(3)">
+          Proceed to Step 3: Grounded RAG Treatment Plan &amp; Verifiable Citations <i class="bi bi-arrow-right-circle-fill"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==============================================================
+         PAGE 3 (STEP 3): Full-Width RAG Clinical Synthesis & Verifiable Citations
+         ============================================================== -->
+    <div id="step3Page" class="step-page-view">
+      <section id="step3Card" aria-labelledby="step3Title">
         <div class="rag-recommendation-card">
           
-          <!-- Sticky Header Banner with Confidence & Latency -->
+          <!-- Header Banner with Confidence & Latency -->
           <div class="rag-card-banner">
             <div>
-              <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; opacity:0.9;">
-                Step 3 • Grounded Clinical Treatment Recommender
+              <div style="font-size:0.9rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; opacity:0.92;">
+                Step 3 of 3 • Grounded Clinical Treatment Recommender
               </div>
-              <h2 id="step3Title" style="font-size:1.15rem; font-weight:800; color:#ffffff; margin-top:2px;">
-                Evidence-Based Consultation &amp; Dosing
+              <h2 id="step3Title" style="font-size:1.55rem; font-weight:800; color:#ffffff; margin-top:4px;">
+                Evidence-Based Sepsis Consultation, 5-Drug Dosing Matrix &amp; Verifiable Citations
               </h2>
             </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
-              <div id="confidencePill" style="background:rgba(255,255,255,0.22); color:#ffffff; padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:800;">
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+              <div id="confidencePill" style="background:rgba(255,255,255,0.22); color:#ffffff; padding:6px 14px; border-radius:8px; font-size:0.95rem; font-weight:800;">
                 High Confidence
               </div>
-              <div id="latencyBadge" style="font-family:var(--font-mono); font-size:0.75rem; color:#bae6fd;">
+              <div id="latencyBadge" style="font-family:var(--font-mono); font-size:0.9rem; color:#bae6fd;">
                 &lt; 5ms (Deterministic RAG)
               </div>
             </div>
@@ -626,58 +651,63 @@
           <!-- Progressive Disclosure Tabs Strip -->
           <div class="rag-tabs-strip" role="tablist" aria-label="Recommendation sections">
             <button id="tabBtnBundle" class="rag-tab-btn active" role="tab" aria-selected="true" onclick="switchRagTab('bundleTab')">
-              <i class="bi bi-lightning-charge-fill"></i> 1-Hr Bundle
+              <i class="bi bi-lightning-charge-fill"></i> 1-Hr SSC Bundle
             </button>
             <button id="tabBtnAntimicrobial" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('antimicrobialTab')">
-              <i class="bi bi-table"></i> Dosing Matrix
+              <i class="bi bi-table"></i> 5-Drug Dosing Matrix
             </button>
             <button id="tabBtnHemo" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('hemoTab')">
-              <i class="bi bi-heart-pulse-fill"></i> Resuscitation
+              <i class="bi bi-heart-pulse-fill"></i> Hemodynamic Resuscitation
             </button>
             <button id="tabBtnSofa" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('sofaTab')">
-              <i class="bi bi-clipboard2-data-fill"></i> SOFA Criteria
+              <i class="bi bi-clipboard2-data-fill"></i> SOFA Organ Breakdown
             </button>
             <button id="tabBtnNote" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('consultNoteTab')">
               <i class="bi bi-file-earmark-medical-fill"></i> EHR Consult Note
             </button>
             <button id="tabBtnAll" class="rag-tab-btn" role="tab" aria-selected="false" onclick="switchRagTab('allTab')" title="View all sections continuously">
-              <i class="bi bi-list-ul"></i> All
+              <i class="bi bi-list-ul"></i> View All Sections
             </button>
           </div>
 
-          <!-- Scrollable Body: Tab Content + Citation Drawer + Copy Button -->
+          <!-- Full-Width Body: Tab Content + Citation Drawer + Copy Button -->
           <div class="rag-card-body">
             
             <!-- Synthesized Recommendation Sections -->
-            <div id="recommendationBox" style="display:flex; flex-direction:column; gap:14px;">
-              <div style="color:var(--text-muted); text-align:center; padding:24px;">
+            <div id="recommendationBox" style="display:flex; flex-direction:column; gap:18px;">
+              <div style="color:var(--text-muted); text-align:center; padding:28px; font-size:1.1rem;">
                 Synthesizing grounded sepsis treatment plan...
               </div>
             </div>
 
             <!-- Verifiable Literature Citation Inspector Drawer -->
             <div class="citation-inspector-section">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size:0.85rem; font-weight:800; text-transform:uppercase; color:var(--clinical-blue); display:flex; align-items:center; gap:6px;">
-                  <i class="bi bi-journal-medical"></i> Verifiable Citation Inspector
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:1.05rem; font-weight:800; text-transform:uppercase; color:var(--clinical-blue); display:flex; align-items:center; gap:8px;">
+                  <i class="bi bi-journal-medical"></i> Verifiable Literature Citation Inspector
                 </span>
-                <span style="font-size:0.75rem; color:var(--text-muted);">Click any [CHUNK-ID]</span>
+                <span style="font-size:0.92rem; color:var(--text-muted);">Click any inline [CHUNK-ID] badge above</span>
               </div>
               <div id="citationDrawer" class="citation-drawer-box">
                 Click any inline citation pill (e.g., <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-BUNDLE-01')"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>SSC-2021-BUNDLE-01</button> or <button type="button" class="citation-pill" onclick="inspectCitation('DOSE-VANC-01')"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>DOSE-VANC-01</button>) to inspect the verbatim guideline excerpt, evidence grade, and source publication.
               </div>
             </div>
 
-            <!-- Copy Note Button -->
-            <button class="action-btn action-btn-primary" style="width:100%; justify-content:center; padding:12px; font-size:0.95rem;" onclick="copyConsultNoteToClipboard()">
-              <i class="bi bi-clipboard2-check-fill"></i> Copy Complete Consultation Note to EHR
-            </button>
-
           </div>
         </div>
-      </aside>
+      </section>
 
+      <!-- Page 3 Footer Navigation -->
+      <div class="page-step-footer-nav">
+        <button class="step-nav-action-btn step-nav-prev" onclick="navigateToStepPage(2)">
+          <i class="bi bi-arrow-left-circle-fill"></i> Back to Step 2: "What-If" Resuscitation Simulator
+        </button>
+        <button class="step-nav-action-btn step-nav-next" onclick="copyConsultNoteToClipboard()">
+          <i class="bi bi-clipboard2-check-fill"></i> Copy Complete Consultation Note to EHR
+        </button>
+      </div>
     </div>
+
   </main>
 
   <!-- ======================================================================
@@ -815,6 +845,7 @@
       window.toggleTheme = toggleTheme;
       window.switchAppMode = switchAppMode;
       window.scrollToSection = scrollToSection;
+      window.navigateToStepPage = navigateToStepPage;
       window.switchRagTab = switchRagTab;
       window.switchChartView = switchChartView;
       
@@ -825,6 +856,12 @@
       window.handleQuickDemoLogin = handleQuickDemoLogin;
       window.handleSignOut = handleSignOut;
       window.startGuidedTour = startGuidedTour;
+
+      // Support URL hash navigation (#step-1, #step-2, #step-3)
+      const hashMatch = window.location.hash.match(/#step-([123])/);
+      if (hashMatch) {
+        navigateToStepPage(parseInt(hashMatch[1], 10), false);
+      }
     });
 
     // ------------------------------------------------------------------------
@@ -971,12 +1008,54 @@
       }
     }
 
+    let activeStepPage = 1;
+
+    function navigateToStepPage(stepNum, shouldScroll = true) {
+      switchAppMode("workstation");
+      activeStepPage = stepNum;
+
+      const pages = {
+        1: document.getElementById("step1Page"),
+        2: document.getElementById("step2Page"),
+        3: document.getElementById("step3Page")
+      };
+      const navBtns = {
+        1: document.getElementById("navStep1Btn"),
+        2: document.getElementById("navStep2Btn"),
+        3: document.getElementById("navStep3Btn")
+      };
+
+      for (const [numStr, pageEl] of Object.entries(pages)) {
+        const num = parseInt(numStr, 10);
+        if (pageEl) {
+          pageEl.classList.toggle("active-page", num === stepNum);
+        }
+      }
+
+      for (const [numStr, btnEl] of Object.entries(navBtns)) {
+        const num = parseInt(numStr, 10);
+        if (btnEl) {
+          btnEl.classList.toggle("active-step-page", num === stepNum);
+        }
+      }
+
+      if (history.replaceState) {
+        history.replaceState(null, "", `#step-${stepNum}`);
+      }
+
+      // Re-render current state so SVG charts on newly visible pages calculate full width accurately
+      renderCurrentState();
+
+      if (shouldScroll) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
     function scrollToSection(elementId) {
       switchAppMode("workstation");
-      const el = document.getElementById(elementId);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      if (elementId === "step1Card") navigateToStepPage(1);
+      else if (elementId === "step2Card") navigateToStepPage(2);
+      else if (elementId === "step3Card") navigateToStepPage(3);
     }
 
     // ------------------------------------------------------------------------

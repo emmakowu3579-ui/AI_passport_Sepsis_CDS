@@ -96,7 +96,7 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 17px;
   scroll-behavior: smooth;
 }
 
@@ -107,8 +107,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  line-height: 1.6;
-  font-size: 1rem;
+  line-height: 1.65;
+  font-size: 1.05rem;
 }
 
 /* ==========================================================================
@@ -388,12 +388,12 @@ header.clinical-header {
 }
 
 /* ==========================================================================
-   3. Guided Step Navigation Bar ("Where to Start & Where to Go Next")
+   3. Guided 3-Page Clinical Stepper Navigation Bar
    ========================================================================== */
 .workflow-guide-bar {
   background: var(--bg-inset);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 8px 24px;
+  border-bottom: 2px solid var(--border-subtle);
+  padding: 12px 24px;
 }
 
 .workflow-guide-inner {
@@ -415,81 +415,139 @@ header.clinical-header {
 
 .workflow-step-pill {
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  border: 2px solid var(--border-subtle);
   color: var(--text-secondary);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.86rem;
-  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.96rem;
+  font-weight: 800;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .workflow-step-pill:hover {
   border-color: var(--clinical-blue);
   color: var(--clinical-blue);
+  transform: translateY(-1px);
+}
+
+.workflow-step-pill.active-step-page {
+  background: var(--clinical-blue);
+  border-color: var(--clinical-blue);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.28);
 }
 
 .step-num-circle {
   background: var(--clinical-blue);
   color: #ffffff;
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.85rem;
+  font-weight: 900;
+  transition: all 0.15s ease;
+}
+
+.workflow-step-pill.active-step-page .step-num-circle {
+  background: #ffffff;
+  color: var(--clinical-navy);
 }
 
 /* ==========================================================================
-   4. Main 2-Column Clinical Workstation Grid
+   4. Main Full-Width 3-Page Clinical Workstation Layout
    ========================================================================== */
 .workstation-container {
   max-width: 1520px;
-  margin: 20px auto;
-  padding: 0 24px;
+  margin: 24px auto 48px auto;
+  padding: 0 28px;
   width: 100%;
   flex: 1;
 }
 
-.workstation-grid {
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 24px;
-  align-items: start;
+.step-page-view {
+  display: none;
+  width: 100%;
 }
 
-@media (max-width: 1150px) {
-  .workstation-grid {
-    grid-template-columns: 1fr;
+.step-page-view.active-page {
+  display: block;
+  animation: fadeInPage 0.2s ease-out;
+}
+
+@keyframes fadeInPage {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.left-clinical-col {
+.page-step-footer-nav {
   display: flex;
-  flex-direction: column;
-  gap: 22px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 22px;
+  padding: 18px 24px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  flex-wrap: wrap;
 }
 
-.right-recommendation-col {
-  position: sticky;
-  top: 76px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+.step-nav-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
+}
+
+.step-nav-prev {
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.step-nav-prev:hover {
+  border-color: var(--clinical-blue);
+  color: var(--clinical-blue);
+}
+
+.step-nav-next {
+  background: var(--clinical-blue);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+.step-nav-next:hover {
+  background: var(--clinical-blue-hover);
+  transform: translateY(-1px);
 }
 
 /* Clinical Section Card */
 .clinical-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 22px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 28px 32px;
   box-shadow: var(--card-shadow);
 }
 
@@ -497,58 +555,58 @@ header.clinical-header {
   display: inline-block;
   background: var(--clinical-blue-light);
   color: var(--clinical-blue);
-  font-size: 0.75rem;
+  font-size: 0.88rem;
   font-weight: 800;
   text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
   letter-spacing: 0.04em;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .card-title-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border-subtle);
   flex-wrap: wrap;
 }
 
 .card-main-title {
-  font-size: 1.18rem;
+  font-size: 1.55rem;
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .card-sub-desc {
-  font-size: 0.88rem;
+  font-size: 1.04rem;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 6px;
 }
 
 /* ==========================================================================
-   5. Vitals, Labs & Deterministic SOFA Scorecard
+   5. Vitals, Labs & Deterministic SOFA Scorecard (Page 1)
    ========================================================================== */
 .metrics-section-label {
-  font-size: 0.82rem;
+  font-size: 1.02rem;
   font-weight: 800;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   letter-spacing: 0.04em;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .vitals-labs-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 16px;
+  margin-bottom: 26px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .vitals-labs-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -556,15 +614,16 @@ header.clinical-header {
 
 .metric-box {
   background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 12px 14px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px 20px;
   transition: all 0.15s ease;
 }
 
 .metric-box.flagged-critical {
   background: var(--status-critical-bg);
   border-color: var(--status-critical-border);
+  border-left: 6px solid var(--status-critical);
 }
 
 .metric-top-row {
@@ -574,97 +633,98 @@ header.clinical-header {
 }
 
 .metric-name {
-  font-size: 0.82rem;
+  font-size: 1rem;
   font-weight: 800;
   color: var(--text-secondary);
   text-transform: uppercase;
 }
 
 .metric-ref {
-  font-size: 0.74rem;
+  font-size: 0.88rem;
+  font-weight: 700;
   color: var(--text-dim);
 }
 
 .metric-val-row {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .metric-number {
   font-family: var(--font-mono);
-  font-size: 1.65rem;
+  font-size: 2.35rem;
   font-weight: 900;
   color: var(--text-primary);
 }
 
 .metric-unit {
-  font-size: 0.82rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-muted);
 }
 
 .metric-subtext {
-  font-size: 0.78rem;
+  font-size: 0.92rem;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 6px;
 }
 
 .stale-badge {
   display: inline-block;
-  margin-top: 4px;
+  margin-top: 6px;
   background: var(--status-warning-bg);
   color: var(--status-warning);
   border: 1px solid var(--status-warning-border);
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 5px;
 }
 
 /* Deterministic SOFA Scorecard Strip */
 .sofa-scorecard-strip {
   background: var(--bg-inset);
   border: 2px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 14px 16px;
+  border-radius: 12px;
+  padding: 20px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .sofa-total-block {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .sofa-total-num {
   background: var(--clinical-navy);
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 1.9rem;
+  font-size: 2.55rem;
   font-weight: 900;
-  padding: 6px 16px;
-  border-radius: 8px;
+  padding: 10px 22px;
+  border-radius: 12px;
 }
 
 .sofa-organs-row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: 14px;
   flex: 1;
   min-width: 320px;
 }
 
 .sofa-organ-pill {
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 8px 6px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 10px;
   text-align: center;
 }
 
@@ -674,7 +734,7 @@ header.clinical-header {
 }
 
 .sofa-organ-name {
-  font-size: 0.72rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -682,10 +742,10 @@ header.clinical-header {
 
 .sofa-organ-val {
   font-family: var(--font-mono);
-  font-size: 1.2rem;
+  font-size: 1.65rem;
   font-weight: 900;
   color: var(--text-primary);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .sofa-organ-pill.organ-dysfunction .sofa-organ-val {
@@ -693,44 +753,48 @@ header.clinical-header {
 }
 
 /* ==========================================================================
-   6. "What-If" Hemodynamic Simulator & 5-Drug Selector
+   6. "What-If" Hemodynamic Simulator & 5-Drug Selector (Page 2)
    ========================================================================== */
 .simulator-two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 28px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .simulator-two-col {
     grid-template-columns: 1fr;
   }
 }
 
 .slider-control-group {
-  margin-bottom: 16px;
+  background: var(--bg-inset);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
 }
 
 .slider-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 0.92rem;
-  font-weight: 700;
-  margin-bottom: 6px;
+  font-size: 1.06rem;
+  font-weight: 800;
+  margin-bottom: 10px;
 }
 
 .slider-val-badge {
   font-family: var(--font-mono);
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 900;
   color: var(--clinical-blue);
 }
 
 .clinical-slider {
   width: 100%;
-  height: 8px;
-  border-radius: 4px;
+  height: 10px;
+  border-radius: 5px;
   background: var(--border-strong);
   cursor: pointer;
 }
@@ -738,20 +802,26 @@ header.clinical-header {
 .drug-checkbox-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .drug-check-card {
   background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 10px 12px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.88rem;
-  font-weight: 700;
+  gap: 10px;
+  font-size: 1.04rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.drug-check-card input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
   cursor: pointer;
 }
 
@@ -761,11 +831,11 @@ header.clinical-header {
 
 /* Contraindication Alerts */
 .contraindication-banner {
-  border-radius: 8px;
-  padding: 12px 14px;
-  border-left: 5px solid;
-  margin-top: 10px;
-  font-size: 0.88rem;
+  border-radius: 10px;
+  padding: 16px 18px;
+  border-left: 6px solid;
+  margin-top: 12px;
+  font-size: 1.04rem;
 }
 
 .contraindication-banner.danger {
@@ -781,35 +851,36 @@ header.clinical-header {
 }
 
 /* ==========================================================================
-   7. Right Column: Sticky RAG Clinical Recommendation & Citations
+   7. Page 3: Full-Width RAG Clinical Recommendation & Citations
    ========================================================================== */
 .rag-recommendation-card {
   background: var(--bg-card);
   border: 2px solid var(--clinical-blue);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: var(--card-shadow-lg);
   overflow: hidden;
+  width: 100%;
 }
 
 .rag-card-banner {
   background: linear-gradient(135deg, var(--clinical-navy) 0%, var(--clinical-blue) 100%);
   color: #ffffff;
-  padding: 16px 20px;
+  padding: 22px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 14px;
 }
 
 /* Executive Clinical Metric Strip */
 .rag-executive-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 16px;
   background: var(--bg-inset);
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 16px 28px;
+  border-bottom: 1.5px solid var(--border-subtle);
 }
 
 @media (max-width: 600px) {
@@ -821,19 +892,19 @@ header.clinical-header {
 .exec-pill-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .exec-pill-label {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--text-dim);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 
 .exec-pill-val {
-  font-size: 0.88rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--text-primary);
 }
@@ -841,10 +912,11 @@ header.clinical-header {
 .exec-pill-badge {
   display: inline-flex;
   align-items: center;
-  font-size: 0.78rem;
+  font-size: 0.98rem;
   font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  width: fit-content;
 }
 
 .badge-normal {
@@ -868,8 +940,8 @@ header.clinical-header {
 /* Progressive Disclosure Tabs */
 .rag-tabs-strip {
   display: flex;
-  gap: 4px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 12px 28px;
   background: var(--bg-card);
   border-bottom: 2px solid var(--border-subtle);
   overflow-x: auto;
@@ -878,68 +950,67 @@ header.clinical-header {
 
 .rag-tab-btn {
   background: transparent;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 0.82rem;
-  font-weight: 700;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 1.02rem;
+  font-weight: 800;
   color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
 }
 
 .rag-tab-btn:hover {
   background: var(--bg-inset);
   color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
 .rag-tab-btn.active {
   background: var(--clinical-blue);
   color: #ffffff;
   font-weight: 800;
-  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
 }
 
 .rag-card-body {
-  padding: 18px 20px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: calc(100vh - 240px);
-  overflow-y: auto;
+  gap: 22px;
 }
 
 .clinical-section-block {
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 16px 18px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 22px 26px;
   box-shadow: var(--card-shadow);
 }
 
 .clinical-section-header {
-  font-size: 0.98rem;
+  font-size: 1.18rem;
   font-weight: 800;
   color: var(--clinical-navy);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  letter-spacing: 0.03em;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
   border-bottom: 2px solid var(--border-subtle);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .clinical-p {
-  font-size: 0.96rem;
-  line-height: 1.65;
+  font-size: 1.14rem;
+  line-height: 1.72;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .clinical-bold {
@@ -957,29 +1028,29 @@ header.clinical-header {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin: 8px 0;
+  gap: 14px;
+  margin: 12px 0;
 }
 
 .clinical-action-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 14px;
   background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-left: 4px solid var(--clinical-blue);
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-size: 0.94rem;
-  line-height: 1.55;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  border: 1.5px solid var(--border-subtle);
+  border-left: 6px solid var(--clinical-blue);
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-size: 1.1rem;
+  line-height: 1.65;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .action-icon {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   line-height: 1;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .action-text {
@@ -991,11 +1062,11 @@ header.clinical-header {
 .clinical-group-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: 14px 0 8px 0;
-  font-size: 0.84rem;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin: 18px 0 10px 0;
+  font-size: 1.02rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1015,66 +1086,66 @@ header.clinical-header {
 
 /* Clinical Safety Alerts Callouts */
 .clinical-alert-callout {
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin: 10px 0;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 14px 0;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
 }
 
 .callout-warning {
   background: var(--status-warning-bg);
-  border: 1px solid var(--status-warning-border);
-  border-left: 5px solid var(--status-warning);
+  border: 1.5px solid var(--status-warning-border);
+  border-left: 6px solid var(--status-warning);
 }
 
 .callout-critical {
   background: var(--status-critical-bg);
-  border: 1px solid var(--status-critical-border);
-  border-left: 5px solid var(--status-critical);
+  border: 1.5px solid var(--status-critical-border);
+  border-left: 6px solid var(--status-critical);
 }
 
 .callout-header-row {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
 }
 
 .callout-icon {
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .callout-content-text {
-  font-size: 0.92rem;
-  line-height: 1.5;
+  font-size: 1.1rem;
+  line-height: 1.65;
   color: var(--text-primary);
 }
 
 .alert-action-strip {
-  margin-top: 8px;
-  padding: 8px 12px;
+  margin-top: 10px;
+  padding: 12px 16px;
   background: var(--bg-card);
-  border: 1px dashed var(--border-strong);
-  border-radius: 6px;
-  font-size: 0.88rem;
-  line-height: 1.45;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 8px;
+  font-size: 1.05rem;
+  line-height: 1.55;
   color: var(--text-primary);
 }
 
 /* Antimicrobial Table & Dosing Badges */
 .clinical-table-wrapper {
   overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid var(--border-strong);
-  margin-top: 12px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  border-radius: 10px;
+  border: 1.5px solid var(--border-strong);
+  margin-top: 16px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
 }
 
 .clinical-dosing-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 1.04rem;
   text-align: left;
   background: var(--bg-card);
 }
@@ -1084,14 +1155,14 @@ header.clinical-header {
   color: var(--text-muted);
   font-weight: 800;
   text-transform: uppercase;
-  font-size: 0.75rem;
-  padding: 11px 14px;
+  font-size: 0.9rem;
+  padding: 14px 18px;
   border-bottom: 2px solid var(--border-strong);
   letter-spacing: 0.03em;
 }
 
 .clinical-dosing-table td {
-  padding: 12px 14px;
+  padding: 16px 18px;
   border-bottom: 1px solid var(--border-subtle);
   vertical-align: middle;
 }
@@ -1107,21 +1178,21 @@ header.clinical-header {
 .drug-name-cell {
   font-weight: 800;
   color: var(--clinical-navy);
-  font-size: 0.95rem;
+  font-size: 1.08rem;
 }
 
 .drug-spec-sub {
-  font-size: 0.76rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .dose-badge {
   display: inline-block;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
   font-weight: 800;
-  font-size: 0.82rem;
+  font-size: 0.96rem;
 }
 
 .dose-standard {
@@ -1143,16 +1214,16 @@ header.clinical-header {
 }
 
 .safety-cell-text {
-  font-size: 0.88rem;
-  line-height: 1.45;
+  font-size: 1.02rem;
+  line-height: 1.55;
   color: var(--text-secondary);
 }
 
 .evidence-pills-row {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 /* Citation Pills & Inspector */
@@ -1162,13 +1233,13 @@ header.clinical-header {
   background: var(--clinical-blue-light);
   color: var(--clinical-blue);
   border: 1px solid rgba(2, 132, 199, 0.4);
-  padding: 2px 7px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
-  margin: 0 2px;
+  margin: 0 3px;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
@@ -1181,38 +1252,38 @@ header.clinical-header {
 
 .citation-inspector-section {
   border-top: 2px solid var(--border-subtle);
-  padding-top: 14px;
-  margin-top: 6px;
+  padding-top: 18px;
+  margin-top: 10px;
 }
 
 .citation-drawer-box {
   background: var(--bg-inset);
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 14px;
-  font-size: 0.9rem;
-  line-height: 1.6;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 18px 22px;
+  font-size: 1.06rem;
+  line-height: 1.65;
   color: var(--text-primary);
 }
 
 /* Monospace EHR Consult Note View */
 .consult-note-wrapper {
   background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 16px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 20px;
 }
 
 .ehr-note-pre {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  line-height: 1.65;
+  font-size: 1.02rem;
+  line-height: 1.7;
   white-space: pre-wrap;
   color: var(--text-primary);
   background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 14px;
+  border-radius: 8px;
+  padding: 18px;
   overflow-x: auto;
 }
 
@@ -1222,26 +1293,26 @@ header.clinical-header {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .chart-toggle-pills {
   display: inline-flex;
   background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 3px;
-  gap: 4px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 6px;
 }
 
 .chart-toggle-pill {
   background: transparent;
   border: none;
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.94rem;
+  font-weight: 800;
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1255,7 +1326,7 @@ header.clinical-header {
   background: var(--bg-card);
   color: var(--clinical-blue);
   font-weight: 800;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
 }
 
 

@@ -9,55 +9,62 @@ const TOUR_COMPLETED_KEY = "sepsis_cds_tour_completed";
 export const TOUR_STEPS = [
   {
     targetId: "patientControlBar",
+    pageStep: 1,
     title: "1. Select ICU Patient & Clinical Archetype",
-    badge: "Step 1 of 7",
+    badge: "Step 1 of 7 • Page 1",
     content: "Start here: Select any of the <strong>25 curated PhysioNet ICU patients</strong> representing 4 clinical archetypes (<em>Septic Shock</em>, <em>Pre-Sepsis Transition</em>, <em>Acute Kidney Injury</em>, and <em>Non-Sepsis SIRS Controls</em>).",
     position: "bottom"
   },
   {
     targetId: "patientControlBar",
     subSelector: ".timeline-scrubber-box",
+    pageStep: 1,
     title: "2. Hourly ICULOS Timeline Scrubber",
-    badge: "Step 2 of 7",
+    badge: "Step 2 of 7 • Page 1",
     content: "Scrub hour-by-hour through the patient's entire admission or press <strong><i class='bi bi-play-fill'></i> Play</strong> to observe vitals, lab trends, and sepsis progression unfold dynamically.",
     position: "bottom"
   },
   {
     targetId: "step1Card",
-    title: "3. Bedside Vitals & Dual-Unit Normalized Labs",
-    badge: "Step 3 of 7",
-    content: "Review real-time vitals and critical labs. Notice automated dual-unit normalization (<strong>Lactate in both mmol/L and mg/dL</strong>) and <strong>Last-Observation-Carried-Forward (LOCF)</strong> stale lab tags for draws older than 6 hours.",
+    pageStep: 1,
+    title: "3. Page 1: Bedside Vitals & Dual-Unit Normalized Labs",
+    badge: "Step 3 of 7 • Page 1",
+    content: "On <strong>Page 1</strong>, review full-screen vitals and critical labs. Notice automated dual-unit normalization (<strong>Lactate in both mmol/L and mg/dL</strong>) and <strong>Last-Observation-Carried-Forward (LOCF)</strong> stale lab tags for draws older than 6 hours.",
     position: "bottom"
   },
   {
     targetId: "sofaTotalVal",
     parentTargetId: "step1Card",
     subSelector: ".sofa-scorecard-strip",
-    title: "4. Deterministic Sepsis-3 SOFA Scorecard",
-    badge: "Step 4 of 7",
+    pageStep: 1,
+    title: "4. Page 1: Deterministic Sepsis-3 SOFA Scorecard",
+    badge: "Step 4 of 7 • Page 1",
     content: "Calculated in <strong>&lt; 2 ms</strong> without LLM arithmetic. Organ failure is highlighted in red whenever a sub-score reaches <strong>&ge; 2 points</strong> across Respiration, Coagulation, Liver, Cardiovascular, or Renal systems.",
     position: "bottom"
   },
   {
     targetId: "hemodynamicTrajectorySvg",
-    title: "5. Longitudinal Trajectory & Target Plots",
-    badge: "Step 5 of 7",
+    pageStep: 1,
+    title: "5. Page 1: Longitudinal Trajectory & Target Plots",
+    badge: "Step 5 of 7 • Page 1",
     content: "Continuous hemodynamic curves displaying <strong>Mean Arterial Pressure (MAP)</strong> with the <strong>65 mmHg target goal line</strong>, shaded red <strong>Hypoperfusion Danger Zone</strong>, Serum Lactate curve, and <strong>Sepsis-3 Onset</strong> marker. <em>Click anywhere on the curve to scrub to that hour!</em>",
     position: "top"
   },
   {
     targetId: "step2Card",
-    title: "6. 'What-If' Resuscitation & 5-Drug Safety Gates",
-    badge: "Step 6 of 7",
-    content: "Simulate balanced crystalloid boluses (0–40 mL/kg), norepinephrine titration, and select from 5 empiric antimicrobials. The safety engine immediately alerts to <strong>nephrotoxic synergy (Vanc + Pip-Tazo)</strong>, <strong>neurotoxicity (Cefepime)</strong>, and <strong>AKI blocks (Gentamicin)</strong>.",
-    position: "top"
+    pageStep: 2,
+    title: "6. Page 2: 'What-If' Resuscitation & 5-Drug Safety Gates",
+    badge: "Step 6 of 7 • Page 2",
+    content: "On <strong>Page 2</strong>, simulate balanced crystalloid boluses (0–40 mL/kg), norepinephrine titration, and select from 5 empiric antimicrobials. The safety engine immediately alerts to <strong>nephrotoxic synergy (Vanc + Pip-Tazo)</strong>, <strong>neurotoxicity (Cefepime)</strong>, and <strong>AKI blocks (Gentamicin)</strong>.",
+    position: "bottom"
   },
   {
     targetId: "step3Card",
-    title: "7. Evidence-Based RAG Note & Verifiable Citations",
-    badge: "Step 7 of 7",
-    content: "Inspect the synthesized SBAR consultation note and structured 5-drug dosing table. <strong>Click any [SSC-2021-...] or [DOSE-...] citation pill</strong> to view verbatim guideline text and evidence grades, then click <strong>Copy Note to EHR</strong> to export to hospital charts.",
-    position: "left"
+    pageStep: 3,
+    title: "7. Page 3: Evidence-Based RAG Note & Verifiable Citations",
+    badge: "Step 7 of 7 • Page 3",
+    content: "On <strong>Page 3</strong>, inspect the full-width consultation note and structured 5-drug dosing table. <strong>Click any [SSC-2021-...] or [DOSE-...] citation pill</strong> to view verbatim guideline text and evidence grades, then click <strong>Copy Note to EHR</strong> to export to hospital charts.",
+    position: "bottom"
   }
 ];
 
@@ -130,6 +137,10 @@ export class TourGuide {
 
     this.currentStepIndex = index;
     const step = TOUR_STEPS[index];
+
+    if (step.pageStep && typeof window !== "undefined" && window.navigateToStepPage) {
+      window.navigateToStepPage(step.pageStep, false);
+    }
 
     let targetEl = document.getElementById(step.targetId);
     if (step.subSelector && targetEl) {
