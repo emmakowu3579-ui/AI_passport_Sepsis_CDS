@@ -8,7 +8,7 @@ const TOUR_COMPLETED_KEY = "sepsis_cds_tour_completed";
 
 export const TOUR_STEPS = [
   {
-    targetId: "patientControlBar",
+    targetId: "patientSelect",
     pageStep: 1,
     title: "1. Select ICU Patient & Clinical Archetype",
     badge: "Step 1 of 7 • Page 1",
@@ -99,6 +99,28 @@ export class TourGuide {
       document.body.appendChild(card);
     }
     this.cardElement = card;
+    this.bindWindowListeners();
+  }
+
+  bindWindowListeners() {
+    if (typeof window === "undefined") return;
+    this._repositionHandler = () => {
+      if (this.isActive && this.cardElement && this.cardElement.style.display !== "none") {
+        const step = TOUR_STEPS[this.currentStepIndex];
+        if (step) {
+          let targetEl = document.getElementById(step.targetId);
+          if (step.subSelector && targetEl) {
+            const sub = targetEl.querySelector(step.subSelector);
+            if (sub) targetEl = sub;
+          } else if (step.subSelector && !targetEl) {
+            targetEl = document.querySelector(step.subSelector);
+          }
+          this.positionCard(targetEl, step.position);
+        }
+      }
+    };
+    window.addEventListener("resize", this._repositionHandler, { passive: true });
+    window.addEventListener("orientationchange", this._repositionHandler, { passive: true });
   }
 
   hasCompletedTour() {
@@ -200,35 +222,69 @@ export class TourGuide {
   }
 
   positionCard(targetEl, preferredPos = "bottom") {
-    if (!targetEl || !this.cardElement) return;
+    if (!this.cardElement) return;
 
+    // Use a short delay to ensure target geometry and DOM layout have completed
     setTimeout(() => {
-      const rect = targetEl.getBoundingClientRect();
-      const cardRect = this.cardElement.getBoundingClientRect();
+      const vpWidth = window.visualViewport ? window.visualViewport.width : (document.documentElement.clientWidth || window.innerWidth);
+      const vpHeight = window.visualViewport ? window.visualViewport.height : (document.documentElement.clientHeight || window.innerHeight);
       const pad = 16;
 
-      let top = 100;
-      let left = (window.innerWidth - cardRect.width) / 2;
+      // Adaptive card width strictly capped at available viewport width minus margins
+      const cardWidth = Math.min(380, vpWidth - (pad * 2));
+      this.cardElement.style.width = `${cardWidth}px`;
+      this.cardElement.style.maxWidth = `calc(100vw - ${pad * 2}px)`;
 
+      // If no valid target, safely center card in visible viewport
+      if (!targetEl) {
+        this.cardElement.style.top = `${Math.round(Math.max(pad, (vpHeight - 240) / 2))}px`;
+        this.cardElement.style.left = `${Math.round(Math.max(pad, (vpWidth - cardWidth) / 2))}px`;
+        this.cardElement.style.right = "auto";
+        return;
+      }
+
+      const rect = targetEl.getBoundingClientRect();
+      const cardHeight = this.cardElement.offsetHeight || 220;
+
+      let top = 100;
+      let idealLeft = rect.left + (rect.width - cardWidth) / 2;
+
+      // Positioning logic with smart vertical flipping
       if (preferredPos === "bottom") {
         top = rect.bottom + pad;
-        left = Math.max(pad, Math.min(window.innerWidth - cardRect.width - pad, rect.left + (rect.width - cardRect.width) / 2));
+        if (top + cardHeight > vpHeight - pad) {
+          if (rect.top - cardHeight - pad >= pad) {
+            top = rect.top - cardHeight - pad;
+          } else {
+            top = Math.max(pad, vpHeight - cardHeight - pad);
+          }
+        }
       } else if (preferredPos === "top") {
-        top = Math.max(pad, rect.top - cardRect.height - pad);
-        left = Math.max(pad, Math.min(window.innerWidth - cardRect.width - pad, rect.left + (rect.width - cardRect.width) / 2));
+        top = rect.top - cardHeight - pad;
+        if (top < pad) {
+          if (rect.bottom + pad + cardHeight <= vpHeight - pad) {
+            top = rect.bottom + pad;
+          } else {
+            top = pad;
+          }
+        }
       } else if (preferredPos === "left") {
         top = Math.max(pad, rect.top);
-        left = Math.max(pad, rect.left - cardRect.width - pad);
+        idealLeft = rect.left - cardWidth - pad;
+        if (idealLeft < pad) {
+          idealLeft = rect.left;
+          top = rect.bottom + pad;
+        }
       }
 
-      // Keep inside viewport vertically
-      if (top + cardRect.height > window.innerHeight) {
-        top = Math.max(pad, window.innerHeight - cardRect.height - pad);
-      }
+      // Hard viewport boundary clamping guarantees: Card NEVER overflows screen
+      const left = Math.max(pad, Math.min(vpWidth - cardWidth - pad, idealLeft));
+      top = Math.max(pad, Math.min(vpHeight - cardHeight - pad, top));
 
       this.cardElement.style.top = `${Math.round(top)}px`;
       this.cardElement.style.left = `${Math.round(left)}px`;
-    }, 150);
+      this.cardElement.style.right = "auto";
+    }, 100);
   }
 
   next() {

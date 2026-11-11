@@ -98,6 +98,8 @@
 html {
   font-size: 17px;
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 body {
@@ -109,6 +111,9 @@ body {
   flex-direction: column;
   line-height: 1.65;
   font-size: 1.05rem;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
 }
 
 /* ==========================================================================
@@ -288,8 +293,9 @@ header.clinical-header {
 .patient-selector-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+  flex: 1 1 auto;
 }
 
 .patient-dropdown {
@@ -301,6 +307,7 @@ header.clinical-header {
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
+  max-width: 100%;
 }
 
 .meta-tag {
@@ -310,6 +317,8 @@ header.clinical-header {
   border-radius: 6px;
   font-size: 0.86rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .meta-tag strong {
@@ -2167,16 +2176,20 @@ header.clinical-header {
 .tour-card {
   position: fixed;
   z-index: 9002;
-  width: 380px;
-  max-width: 90vw;
+  width: min(380px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
   background: var(--bg-card);
   border: 2px solid var(--clinical-blue);
   border-radius: 12px;
-  padding: 20px;
+  padding: 18px 20px;
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.35);
   display: none;
   flex-direction: column;
   gap: 12px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
   transition: top 0.2s ease, left 0.2s ease;
 }
 
@@ -2184,6 +2197,7 @@ header.clinical-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
 .tour-badge {
@@ -2231,12 +2245,16 @@ header.clinical-header {
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1.3;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .tour-card-body {
   font-size: 0.92rem;
   line-height: 1.55;
   color: var(--text-secondary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .tour-card-body strong {
@@ -2247,6 +2265,8 @@ header.clinical-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 6px;
   padding-top: 10px;
   border-top: 1px solid var(--border-subtle);
@@ -2279,4 +2299,62 @@ header.clinical-header {
 
 .tour-btn-primary:hover {
   background: var(--clinical-blue-hover);
+}
+
+/* ==========================================================================
+   Responsive Clinical Layout & Mobile Adaptability Rules
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .patient-control-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .patient-selector-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .timeline-scrubber-box {
+    max-width: 100%;
+    width: 100%;
+  }
+  .workflow-guide-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .workflow-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 820px) {
+  .workflow-steps {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .workflow-steps > i.bi-chevron-right {
+    display: none;
+  }
+  .workflow-step-pill {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .patient-dropdown {
+    width: 100%;
+    max-width: 100%;
+  }
+  .header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .header-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
 }
