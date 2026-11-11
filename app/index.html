@@ -345,7 +345,7 @@
 
         <!-- Organ Function Labs 4-Box Grid -->
         <div class="metrics-section-label"><i class="bi bi-eyedropper" style="color:var(--clinical-blue); margin-right:6px;"></i>Critical Organ Function Labs (Dual-Unit Normalized)</div>
-        <div class="vitals-labs-grid">
+        <div class="vitals-labs-grid labs-grid">
           <div id="tileLactate" class="metric-box">
             <div class="metric-top-row">
               <span class="metric-name"><i class="bi bi-droplet-fill" style="margin-right:4px;"></i>Serum Lactate</span>
@@ -355,10 +355,10 @@
               <span id="valLactMmol" class="metric-number">--</span>
               <span class="metric-unit">mmol/L</span>
             </div>
-            <div class="metric-subtext">
-              Raw: <strong id="valLactMgDl">--</strong> mg/dL
+            <div class="metric-footer-row">
+              <span class="metric-subtext">Raw: <strong id="valLactMgDl">--</strong> mg/dL</span>
+              <span id="staleLactate" class="stale-badge"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</span>
             </div>
-            <div id="staleLactate" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
           </div>
 
           <div id="tileCreatinine" class="metric-box">
@@ -370,7 +370,10 @@
               <span id="valCr" class="metric-number">--</span>
               <span class="metric-unit">mg/dL</span>
             </div>
-            <div id="staleCr" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+            <div class="metric-footer-row">
+              <span class="metric-subtext">Renal Clearance</span>
+              <span id="staleCr" class="stale-badge"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</span>
+            </div>
           </div>
 
           <div id="tilePlatelets" class="metric-box">
@@ -382,7 +385,10 @@
               <span id="valPlt" class="metric-number">--</span>
               <span class="metric-unit">k/&mu;L</span>
             </div>
-            <div id="stalePlt" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+            <div class="metric-footer-row">
+              <span class="metric-subtext">Coagulation Count</span>
+              <span id="stalePlt" class="stale-badge"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</span>
+            </div>
           </div>
 
           <div id="tileBili" class="metric-box">
@@ -394,7 +400,10 @@
               <span id="valBili" class="metric-number">--</span>
               <span class="metric-unit">mg/dL</span>
             </div>
-            <div id="staleBili" class="stale-badge" style="display:none;"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</div>
+            <div class="metric-footer-row">
+              <span class="metric-subtext">Hepatic Function</span>
+              <span id="staleBili" class="stale-badge"><i class="bi bi-clock-history"></i> &gt;6h Stale (LOCF)</span>
+            </div>
           </div>
         </div>
 
@@ -1675,10 +1684,14 @@
       document.getElementById("tileCreatinine").classList.toggle("flagged-critical", labs.creatinine_mg_dl !== null && labs.creatinine_mg_dl >= 1.5);
 
       const stale = record.stale_labs || {};
-      document.getElementById("staleLactate").style.display = stale.Lactate ? "inline-block" : "none";
-      document.getElementById("staleCr").style.display = stale.Creatinine ? "inline-block" : "none";
-      document.getElementById("stalePlt").style.display = stale.Platelets ? "inline-block" : "none";
-      document.getElementById("staleBili").style.display = stale.Bilirubin_total ? "inline-block" : "none";
+      const setStaleState = (id, isStale) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle("stale-active", !!isStale);
+      };
+      setStaleState("staleLactate", stale.Lactate);
+      setStaleState("staleCr", stale.Creatinine);
+      setStaleState("stalePlt", stale.Platelets);
+      setStaleState("staleBili", stale.Bilirubin_total);
 
       // 3. Read "What-If" Simulation Controls
       const fluidBolus = parseFloat(document.getElementById("fluidSlider").value);

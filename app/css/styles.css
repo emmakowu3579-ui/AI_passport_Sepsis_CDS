@@ -349,12 +349,15 @@ header.clinical-header {
 .sepsis-status-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 6px 14px;
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 800;
   border: 1px solid;
+  min-width: 175px;
+  text-align: center;
 }
 
 .status-normal {
@@ -386,6 +389,8 @@ header.clinical-header {
   border: 1px solid var(--border-subtle);
   flex: 1;
   max-width: 540px;
+  min-height: 48px;
+  box-sizing: border-box;
 }
 
 .scrub-control-btn {
@@ -397,6 +402,8 @@ header.clinical-header {
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .scrub-control-btn:hover {
@@ -411,8 +418,11 @@ header.clinical-header {
   font-size: 0.88rem;
   padding: 5px 12px;
   border-radius: 6px;
-  min-width: 92px;
+  min-width: 96px;
   text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.25;
 }
 
 /* ==========================================================================
@@ -643,15 +653,25 @@ header.clinical-header {
 .metric-box {
   background: var(--bg-inset);
   border: 1.5px solid var(--border-subtle);
+  border-left: 5px solid transparent;
   border-radius: 10px;
-  padding: 16px 20px;
-  transition: all 0.15s ease;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 106px;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.vitals-labs-grid.labs-grid .metric-box {
+  min-height: 138px;
 }
 
 .metric-box.flagged-critical {
   background: var(--status-critical-bg);
   border-color: var(--status-critical-border);
-  border-left: 6px solid var(--status-critical);
+  border-left-color: var(--status-critical);
 }
 
 .metric-top-row {
@@ -661,7 +681,7 @@ header.clinical-header {
 }
 
 .metric-name {
-  font-size: 1rem;
+  font-size: 0.96rem;
   font-weight: 800;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -677,7 +697,7 @@ header.clinical-header {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .metric-number {
@@ -693,22 +713,45 @@ header.clinical-header {
   color: var(--text-muted);
 }
 
+.metric-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 28px;
+}
+
 .metric-subtext {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   color: var(--text-muted);
-  margin-top: 6px;
+  white-space: nowrap;
 }
 
 .stale-badge {
-  display: inline-block;
-  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: var(--status-warning-bg);
   color: var(--status-warning);
   border: 1px solid var(--status-warning-border);
-  font-size: 0.85rem;
+  font-size: 0.80rem;
   font-weight: 800;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 5px;
+  white-space: nowrap;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.stale-badge.stale-active {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 /* Deterministic SOFA Scorecard Strip */
@@ -736,8 +779,13 @@ header.clinical-header {
   font-family: var(--font-mono);
   font-size: 2.55rem;
   font-weight: 900;
-  padding: 10px 22px;
+  padding: 10px 18px;
   border-radius: 12px;
+  min-width: 84px;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .sofa-organs-row {
