@@ -1,7 +1,9 @@
 # Engineering Architecture & System Lineage Log
 **Project:** Local RAG-Powered Sepsis Clinical Treatment Recommender  
 **Audience:** Software Engineers, Backend Developers, ML Researchers, Institutional Reviewers  
-**Last Updated:** November 2026 • v1.2.0-clinical  
+**Last Updated:** November 2026 • v1.3.0-clinical  
+
+> **v1.3.0 Release Note:** Added **Tier 1 Early Warning (6-Hour Predictive Sepsis Forecast)** powered by a browser-native causal `5-Fold PLE-ResNet` neural ensemble (`app/js/predictiveModel.js`), full-cohort 23-variable z-score de-standardization (`scaler.json`), `24` clinical partner ICU trajectories with progress notes (`colleague_cohort.json`), and an updated 8-step interactive guided tour (`tourGuide.js`).
 
 ---
 
@@ -60,7 +62,7 @@ The knowledge base is built from the **Surviving Sepsis Campaign 2021 (SSC 2021)
 
 * **Embedding Model:** Sentence-Transformers `all-MiniLM-L6-v2`.
 * **Embedding Vector Dimensions:** 384-dimensional dense floating-point unit vectors ($\mathbf{v} \in \mathbb{R}^{384}$).
-* **Index Size:** 48 curated chunks covering:
+* **Index Size:** 165 curated chunks covering:
   - 1-Hour Sepsis Bundles (`SSC-2021-BUNDLE-01`)
   - Fluid Resuscitation & Crystalloid Boluses (`SSC-2021-FLUID-01` to `03`)
   - Vasopressor & Inotrope Titration (`SSC-2021-PRESSOR-01` to `04`)
@@ -94,6 +96,18 @@ The knowledge base is built from the **Surviving Sepsis Campaign 2021 (SSC 2021)
 
 ---
 
+### 4.3. Tier 1 Predictive Early Warning Engine (`5-Fold PLE-ResNet`)
+Alongside deterministic SOFA scoring (`4.1`), `SepsisPredictiveEngine` (`app/js/predictiveModel.js`) executes an in-browser forward pass using weights exported in `app/data/predictive_model.json` (`1.45 MB`), trained in `notebooks/kaggle-sepsis-predictive-model.ipynb` / `scripts/train_predictive_model.py` across `3,998` ICU patients (`2,798` train / `600` val / `600` held-out test; `155,406` total hours; `359` sepsis-positive patients):
+
+* **Strict Causal Feature Engineering (`79` -> `261D` PLE):** Extracts `79` strictly causal per-hour features from raw clinical units (zero future leakage), spanning raw vitals/labs, shock indices (`ShockIndex`, `ROX_proxy`, `PulsePressure`), clinical hinges (`Lactate_hinge`, `Creat_high_hinge`, etc.), staleness timers (`Hrs_since_Lactate/WBC/Creatinine`), 6h/12h rolling min/max/mean/std/deltas, and partial acuity scores (`qSOFA_partial`, `SIRS_count`, `SOFA_partial`, `NEWS2_proxy`). Features are encoded via **Piecewise Linear Encoding (PLE)** bins plus missingness indicators (`261` total dimensions).
+* **5-Fold Residual MLP & Platt Calibration:** Averages logits across 5 fold-trained `LayerNorm + SiLU + Residual Skip` (`hidden_dim = 64`, `skip_scale = 0.5`, `34,119` params/fold) networks (`train OOF AUROC = 0.7651`; fold val AUROCs `[0.7232, 0.7866, 0.8086, 0.7949, 0.7754]`) and applies validation-fitted Platt sigmoid scaling (`a = 0.495428`, `b = -2.313451`).
+* **Two-Tier Alarm Discipline & Held-Out Test Metrics (`N = 600`):**
+  * **Watchlist (`>= 2.92%`):** Early surveillance tier flagging `50/54` sepsis test patients prior to onset.
+  * **Critical Action (`>= 6.98%`):** High-specificity tier evaluated both hourly (`AUROC 0.8227`, `Patient AUROC 0.8269`, `AUPRC 0.092`, `Patient AUPRC 0.4527`, `PhysioNet Utility 0.5322`, `Brier 0.0202`, `ECE 0.0014`, `Sensitivity 0.3340`, `Specificity 0.9511`, `4.79 FP/100h`, `median lead 13.5h`) and with **2-of-3-hour sustained confirmation** (`Sensitivity 0.4630`, `Specificity 0.9231`, `PPV 0.3731`).
+* **Bedside Interpretability & Cohort Z-Score Bridge:** Performs real-time single-feature zero-baseline ablation to rank the **Top Risk Drivers** in physical units and standard deviations. Full-cohort parameters (`data/scaler.json`, `23` physiological variables) de-standardize `24` clinical partner trajectories (`app/data/colleague_cohort.json`) for unified inference and Page 3 inspection.
+
+---
+
 ## 5. Quantitative 25-Patient Validation Benchmark
 
 Evaluated across 25 curated ICU patient trajectories ($1,313$ total patient hours) from the PhysioNet / Computing in Cardiology 2019 challenge cohort:
@@ -109,4 +123,7 @@ Evaluated across 25 curated ICU patient trajectories ($1,313$ total patient hour
 
 1. **In-Browser Drawer:** Press `Ctrl + Shift + D` or click the **Dev Telemetry** button in the header.
 2. **Browser Developer Tools (F12):** Click **Dump Telemetry to DevTools** in the Dev Drawer to inspect color-coded tables and object states.
-3. **Automated Unit Tests:** Run `uv run python -m unittest discover tests -v` to verify math and rule integrity.
+3. **Automated Unit, Parity & Server Tests (`20` tests):**
+   * Python clinical rules, cohort contract, and Python-vs-Node `PLE-ResNet` parity (`< 1e-4` tolerance): `python -m unittest discover -s tests -v` (or `uv run python -m unittest discover -s tests -v`)
+   * JavaScript ES module syntax verification: `node --check app/js/predictiveModel.js` and `node --check app/js/tourGuide.js`
+   * Static server endpoint verification: `python scripts/test_server.py`

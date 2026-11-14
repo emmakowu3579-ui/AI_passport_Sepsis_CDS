@@ -1,9 +1,12 @@
 [project]
 name = "sepsis-rag-cds"
 version = "1.0.0"
-description = "Local RAG-Powered Sepsis Clinical Treatment Recommender"
+description = "Local RAG-Powered Sepsis Clinical Treatment Recommender with Causal 5-Fold PLE-ResNet Early Warning"
 readme = "README.md"
 requires-python = ">=3.10"
+# Zero third-party runtime dependencies required for browser CDS inference, parity tests, or static serving.
+# Optional offline Kaggle/GPU model training packages (notebooks/kaggle-sepsis-predictive-model.ipynb):
+#   torch, numpy, pandas, scikit-learn, matplotlib, seaborn
 dependencies = []
 
 [project.optional-dependencies]

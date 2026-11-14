@@ -31,6 +31,7 @@ The entire system runs **100% locally on the client workstation** with **0 bytes
 | **Milestone 2:** Client-Side Engine & Hybrid Safety Rules | Deterministic SOFA sub-score calculation, MAP/lactate thresholds, and renal/hepatic contraindication rules in $< 10\text{ ms}$. | **COMPLETED** | • `app/js/sofaEngine.js` ($< 1\text{ ms}$)<br>• `app/js/contraindications.js` ($< 1\text{ ms}$) |
 | **Milestone 3:** Bedside UI & "What-If" Workspace | Hourly `ICULOS` timeline scrubber, sparklines, crystalloid bolus slider ($30\text{ mL/kg}$), vasopressor titration, and verifiable citation pills. | **COMPLETED** | • `app/index.html` & `app/css/styles.css`<br>• Real-time "What-If" simulator with dynamic volume overload & MAP response modeling |
 | **Milestone 4:** Clinical Validation & Benchmarking | Benchmark retrieval precision, contraindication recall, and engine latency across all 25 patient trajectories. | **COMPLETED** | • `scripts/run_benchmarks.py`<br>• Interactive in-app Benchmark View auditing 1,313 ICU hours |
+| **Milestone 5:** Tier 1 Predictive Early Warning (`5-Fold PLE-ResNet`) & Partner Cohort Integration | Deliver causal 6-hour sepsis risk forecasting, Platt probability calibration, ablation risk drivers, and full-cohort z-score de-standardization for partner trajectories. | **COMPLETED** | • `notebooks/kaggle-sepsis-predictive-model.ipynb` & `app/data/predictive_model.json`<br>• `app/js/predictiveModel.js` + `app/data/scaler.json` + `app/data/colleague_cohort.json` (24 windows)<br>• `tests/test_predictive_parity.py` (4 parity tests; 20 unit/integration tests total)<br>• Updated 8-step guided tour (`app/js/tourGuide.js`) |
 
 ---
 
@@ -100,6 +101,14 @@ The system was evaluated using an automated audit suite across all **25 curated 
 
 ---
 
+#### Tier 1 Predictive Early Warning Validation (`5-Fold PLE-ResNet`, Held-Out `N = 600` Patients):
+Alongside the 25 curated trajectory audit, the causal 6-hour predictive forecaster (`3,998` total patients / `155,406` ICU hours: `2,798` train, `600` val, `600` held-out test) achieved the following held-out metrics (`app/data/predictive_model.json`):
+* **Discrimination & Utility:** `0.8227` hourly AUROC (`0.7931` LogReg baseline), `0.8269` patient-level AUROC, `0.4527` patient AUPRC, `0.5322` PhysioNet Utility Score.
+* **Calibration Integrity:** Validation-fitted Platt scaling (`a = 0.495428`, `b = -2.313451`) yielding `0.0202` Brier score and `0.0014` Expected Calibration Error (ECE).
+* **Two-Tier Bedside Alarm Discipline:**
+  * **Watchlist (`>= 2.92%`):** Flags `50/54` sepsis patients within the 24-hour pre-onset window for heightened clinical surveillance.
+  * **Critical Action (`>= 6.98%`):** Achieves `0.9511` hourly specificity (`4.79 FP / 100h`, `0.3340` sensitivity, `13.5h` median lead time; `30/54` caught in 24h) and **`0.9231` specificity / `0.3731` PPV / `0.4630` sensitivity** under **2-of-3-hour sustained confirmation**.
+
 ### Instructions for Supervisor Evaluation
 
 #### Step 1: Launch the Interactive Web Dashboard
@@ -122,6 +131,16 @@ python scripts/run_benchmarks.py
 * Audits all 1,313 ICU hours in $< 1\text{ second}$ and prints the per-patient precision and recall matrix.
 
 ---
+
+#### Step 3: Verify Neural Parity, JS Syntax & Server Health (20 Automated Tests)
+Verify zero-divergence parity (`< 1e-4`) between Python training math and the client-side `SepsisPredictiveEngine` (`app/js/predictiveModel.js`), plus SOFA rules, partner cohort (`24` windows + `scaler.json`), and HTTP serving:
+```bash
+node --check app/js/predictiveModel.js
+node --check app/js/tourGuide.js
+python -m unittest discover -s tests -v
+python scripts/test_server.py
+```
+In the browser dashboard, click **Interactive Tour** for the 8-step walkthrough covering both SOFA scoring and **Tier 1 6-Hour Predictive Early Warning** (`#predictiveRiskCard`), or select any of the `24` clinical partner windows to inspect bedside **ICU Progress Notes** and **Scaler Bridge** de-standardization on Page 3.
 
 ### Conclusion & Recommendation
 

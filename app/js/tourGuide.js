@@ -11,8 +11,8 @@ export const TOUR_STEPS = [
     targetId: "patientSelect",
     pageStep: 1,
     title: "1. Select ICU Patient & Clinical Archetype",
-    badge: "Step 1 of 7 • Page 1",
-    content: "Start here: Select any of the <strong>25 curated PhysioNet ICU patients</strong> representing 4 clinical archetypes (<em>Septic Shock</em>, <em>Pre-Sepsis Transition</em>, <em>Acute Kidney Injury</em>, and <em>Non-Sepsis SIRS Controls</em>).",
+    badge: "Step 1 of 8 • Page 1",
+    content: "Start here: Select from <strong>25 curated PhysioNet ICU patients</strong> across 4 clinical archetypes (<em>Septic Shock</em>, <em>Pre-Sepsis Transition</em>, <em>Acute Kidney Injury</em>, and <em>Non-Sepsis SIRS Controls</em>), or inspect <strong>24 clinical partner ICU windows</strong> enriched with full-cohort Z-scores and bedside progress notes.",
     position: "bottom"
   },
   {
@@ -20,16 +20,16 @@ export const TOUR_STEPS = [
     subSelector: ".timeline-scrubber-box",
     pageStep: 1,
     title: "2. Hourly ICULOS Timeline Scrubber",
-    badge: "Step 2 of 7 • Page 1",
-    content: "Scrub hour-by-hour through the patient's entire admission or press <strong><i class='bi bi-play-fill'></i> Play</strong> to observe vitals, lab trends, and sepsis progression unfold dynamically.",
+    badge: "Step 2 of 8 • Page 1",
+    content: "Scrub hour-by-hour through the patient's entire admission or press <strong><i class='bi bi-play-fill'></i> Play</strong> to observe vitals, lab trends, early warning risk forecasts, and sepsis progression unfold dynamically.",
     position: "bottom"
   },
   {
     targetId: "step1Card",
     pageStep: 1,
     title: "3. Page 1: Bedside Vitals & Dual-Unit Normalized Labs",
-    badge: "Step 3 of 7 • Page 1",
-    content: "On <strong>Page 1</strong>, review full-screen vitals and critical labs. Notice automated dual-unit normalization (<strong>Lactate in both mmol/L and mg/dL</strong>) and <strong>Last-Observation-Carried-Forward (LOCF)</strong> stale lab tags for draws older than 6 hours.",
+    badge: "Step 3 of 8 • Page 1",
+    content: "On <strong>Page 1</strong>, review full-screen vitals and critical labs. Notice automated dual-unit normalization (<strong>Lactate in both mmol/L and mg/dL</strong>), cohort-scaler Z-score de-standardization for partner windows, and <strong>Last-Observation-Carried-Forward (LOCF)</strong> stale lab tags for draws older than 6 hours.",
     position: "bottom"
   },
   {
@@ -38,32 +38,40 @@ export const TOUR_STEPS = [
     subSelector: ".sofa-scorecard-strip",
     pageStep: 1,
     title: "4. Page 1: Deterministic Sepsis-3 SOFA Scorecard",
-    badge: "Step 4 of 7 • Page 1",
+    badge: "Step 4 of 8 • Page 1",
     content: "Calculated deterministically without LLM arithmetic to guarantee zero hallucinations. Organ failure is highlighted in red whenever a sub-score reaches <strong>&ge; 2 points</strong> across Respiration, Coagulation, Liver, Cardiovascular, or Renal systems.",
+    position: "bottom"
+  },
+  {
+    targetId: "predictiveRiskCard",
+    pageStep: 1,
+    title: "5. Page 1: Tier 1 Predictive 6-Hour Sepsis Forecast",
+    badge: "Step 5 of 8 • Page 1",
+    content: "Runs a causal <strong>5-Fold PLE-ResNet</strong> neural network across 79 temporal features to forecast sepsis risk <strong>up to 6 hours before Sepsis-3 onset</strong>. Displays Two-Tier alert states (<strong>Watch &ge; 2.9%</strong> early surveillance and <strong>Crit &ge; 7%</strong> with <strong>2-of-3h sustained</strong> alarm confirmation) alongside the <strong>Top Risk Drivers</strong> pushing the prediction.",
     position: "bottom"
   },
   {
     targetId: "hemodynamicTrajectorySvg",
     pageStep: 1,
-    title: "5. Page 1: Longitudinal Trajectory & Target Plots",
-    badge: "Step 5 of 7 • Page 1",
+    title: "6. Page 1: Longitudinal Trajectory & Target Plots",
+    badge: "Step 6 of 8 • Page 1",
     content: "Continuous hemodynamic curves displaying <strong>Mean Arterial Pressure (MAP)</strong> with the <strong>65 mmHg target goal line</strong>, shaded red <strong>Hypoperfusion Danger Zone</strong>, Serum Lactate curve, and <strong>Sepsis-3 Onset</strong> marker. <em>Click anywhere on the curve to scrub to that hour!</em>",
     position: "top"
   },
   {
     targetId: "step2Card",
     pageStep: 2,
-    title: "6. Page 2: 'What-If' Resuscitation & 5-Drug Safety Gates",
-    badge: "Step 6 of 7 • Page 2",
+    title: "7. Page 2: 'What-If' Resuscitation & 5-Drug Safety Gates",
+    badge: "Step 7 of 8 • Page 2",
     content: "On <strong>Page 2</strong>, simulate balanced crystalloid boluses (0–40 mL/kg), norepinephrine titration, and select from 5 empiric antimicrobials. The safety engine immediately alerts to <strong>nephrotoxic synergy (Vanc + Pip-Tazo)</strong>, <strong>neurotoxicity (Cefepime)</strong>, and <strong>AKI blocks (Gentamicin)</strong>.",
     position: "bottom"
   },
   {
     targetId: "step3Card",
     pageStep: 3,
-    title: "7. Page 3: Evidence-Based RAG Note & Verifiable Citations",
-    badge: "Step 7 of 7 • Page 3",
-    content: "On <strong>Page 3</strong>, inspect the full-width consultation note and structured 5-drug dosing table. <strong>Click any [SSC-2021-...] or [DOSE-...] citation pill</strong> to view verbatim guideline text and evidence grades, then click <strong>Copy Note to EHR</strong> to export to hospital charts.",
+    title: "8. Page 3: Evidence-Based RAG Note, Progress Notes & Citations",
+    badge: "Step 8 of 8 • Page 3",
+    content: "On <strong>Page 3</strong>, inspect the full-width consultation note, structured 5-drug dosing table, and (for clinical partner windows) the bedside <strong>ICU Progress Note</strong> and <strong>Scaler Bridge</strong>. <strong>Click any [SSC-2021-...] or [DOSE-...] citation pill</strong> to view verbatim guideline text, then click <strong>Copy Note to EHR</strong>.",
     position: "bottom"
   }
 ];
