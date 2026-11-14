@@ -442,6 +442,43 @@
           </div>
         </div>
 
+        <!-- Tier 1: Early Warning Predictive Sepsis Risk Card (6-Hour Forward Forecast) -->
+        <div id="predictiveRiskCard" class="predictive-risk-card">
+          <div class="predictive-risk-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <i class="bi bi-cpu-fill" style="color:var(--clinical-blue); font-size:1.15rem;"></i>
+              <span style="font-size:1.0rem; font-weight:800; text-transform:uppercase; color:var(--text-heading);">
+                Tier 1 Early Warning: 6-Hour Sepsis Onset Risk Forecast
+              </span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <span id="predModelMeta" style="font-size:0.82rem; color:var(--text-muted); font-weight:600;">
+                Neural Network (PLE-ResNet 5-Fold) &bull; Real-Time 6h Sepsis Forecast
+              </span>
+              <span id="predRiskBadge" class="exec-pill-badge badge-normal" style="font-size:0.84rem; padding:4px 12px;">
+                LOW RISK (Baseline Surveillance)
+              </span>
+            </div>
+          </div>
+
+          <div class="predictive-risk-score-row">
+            <div id="predRiskPct" class="predictive-risk-pct">--%</div>
+            <div class="predictive-bar-wrap" aria-label="Predicted 6-hour sepsis risk gauge">
+              <div id="predRiskBar" class="predictive-bar-fill"></div>
+            </div>
+            <div id="predSubScores" style="font-size:0.84rem; color:var(--text-muted); font-family:var(--font-mono);">
+              Neural Net: --% | LogReg Ref: --% | Alert &ge; --%
+            </div>
+          </div>
+
+          <div class="predictive-drivers-row">
+            <span style="font-size:0.85rem; font-weight:800; color:var(--text-muted);">Top Risk Drivers:</span>
+            <div id="predDriversList" style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span style="font-size:0.85rem; color:var(--text-muted);">Evaluating physiological telemetry...</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Longitudinal Trajectory Plots with Segmented View Control -->
         <div style="margin-top:26px;">
           <div class="chart-view-toggle-row">
@@ -1223,11 +1260,15 @@
     import { ClinicalChartEngine } from "./js/clinicalCharts.js";
     import { AuthService } from "./js/authService.js";
     import { TourGuide } from "./js/tourGuide.js";
+    import { SepsisPredictiveEngine } from "./js/predictiveModel.js";
 
     // Application Global State
     let vectorIndex = null;
     let synthesizer = null;
     let cohortData = null;
+    let colleagueCohortData = null;
+    let predictiveEngine = null;
+    let scalerData = null;
     let activePatient = null;
     let activeHourIndex = 0;
     let playTimer = null;
@@ -1292,7 +1333,33 @@
       synthesizer = new ClinicalSynthesizer(vectorIndex);
       updateGpuBadge();
 
-      // 6. Load 25 Curated PhysioNet 2019 Patient Trajectories
+      // 6. Load Predictive Model & Cohort Scaler Parameters
+      try {
+        const [modelResp, scalerResp] = await Promise.all([
+          fetch("data/predictive_model.json"),
+          fetch("data/scaler.json")
+        ]);
+        if (modelResp.ok) {
+          const modelJson = await modelResp.json();
+          predictiveEngine = new SepsisPredictiveEngine(modelJson);
+          const metaEl = document.getElementById("predModelMeta");
+          if (metaEl && modelJson.ensemble?.test_metrics) {
+            const tm = modelJson.ensemble.test_metrics;
+            const ptExtra = tm.patient_auroc !== undefined ? ` • Pt AUROC ${tm.patient_auroc.toFixed(3)}` : "";
+            const prExtra = tm.auprc !== undefined ? ` • AUPRC ${tm.auprc.toFixed(3)}` : "";
+            const fpExtra = tm.fp_per_100h !== undefined ? ` • ${tm.fp_per_100h} FP/100h` : "";
+            const titleLabel = modelJson.neural_network ? "Neural Net (PLE-ResNet 5-Fold)" : "Hybrid Calibrated GBDT+LogReg";
+            metaEl.textContent = `${titleLabel} • Test AUROC ${tm.auroc.toFixed(3)}${ptExtra}${prExtra}${fpExtra} (N=${modelJson.cohort_summary.total_patients.toLocaleString()})`;
+          }
+        }
+        if (scalerResp.ok) {
+          scalerData = await scalerResp.json();
+        }
+      } catch (err) {
+        console.warn("[Sepsis CDS] Predictive model or scaler failed to load:", err);
+      }
+
+      // 7. Load 25 Curated PhysioNet 2019 Patient Trajectories + 24 Colleague Windows
       await loadPhysioNetCohort();
 
       window.addEventListener("keydown", (e) => {
@@ -1568,8 +1635,15 @@
     // ------------------------------------------------------------------------
     async function loadPhysioNetCohort() {
       try {
-        const resp = await fetch("data/physionet_cohort.json");
+        const [resp, colResp] = await Promise.all([
+          fetch("data/physionet_cohort.json"),
+          fetch("data/colleague_cohort.json").catch(() => null)
+        ]);
         cohortData = await resp.json();
+        if (colResp && colResp.ok) {
+          colleagueCohortData = await colResp.json();
+        }
+
         const select = document.getElementById("patientSelect");
         select.innerHTML = "";
 
@@ -1591,6 +1665,25 @@
           select.appendChild(optgroup);
         }
 
+        if (colleagueCohortData && colleagueCohortData.patients) {
+          const colGroups = {};
+          for (const p of colleagueCohortData.patients) {
+            if (!colGroups[p.category]) colGroups[p.category] = [];
+            colGroups[p.category].push(p);
+          }
+          for (const [cat, pts] of Object.entries(colGroups)) {
+            const optgroup = document.createElement("optgroup");
+            optgroup.label = cat;
+            for (const pt of pts) {
+              const opt = document.createElement("option");
+              opt.value = pt.patient_id;
+              opt.textContent = `${pt.short_id} (${Math.round(pt.demographics.age)}yo | ${pt.timeline.length}h window | Opus Note + Z-Scores)`;
+              optgroup.appendChild(opt);
+            }
+            select.appendChild(optgroup);
+          }
+        }
+
         // Default to p000203 (Septic Shock + AKI) or first patient
         const defaultPt = cohortData.patients.find(p => p.patient_id === "p000203") || cohortData.patients[0];
         select.value = defaultPt.patient_id;
@@ -1602,20 +1695,28 @@
 
     function onPatientSelect(patientId) {
       if (!cohortData) return;
-      activePatient = cohortData.patients.find(p => p.patient_id === patientId);
+      activePatient = cohortData.patients.find(p => p.patient_id === patientId)
+        || (colleagueCohortData?.patients?.find(p => p.patient_id === patientId));
       if (!activePatient) return;
 
       const slider = document.getElementById("hourSlider");
       slider.min = 1;
       slider.max = activePatient.timeline.length;
 
-      // Start at Sepsis Onset hour if present, else hour 1
-      activeHourIndex = activePatient.sepsis_onset_hour ? Math.max(0, activePatient.sepsis_onset_hour - 1) : 0;
+      if (activePatient.source === "colleague_extracted") {
+        const onsetIdx = activePatient.sepsis_onset_hour
+          ? activePatient.timeline.findIndex(r => r.hour === activePatient.sepsis_onset_hour)
+          : 0;
+        activeHourIndex = onsetIdx >= 0 ? onsetIdx : 0;
+      } else {
+        // Start at Sepsis Onset hour if present, else hour 1
+        activeHourIndex = activePatient.sepsis_onset_hour ? Math.max(0, activePatient.sepsis_onset_hour - 1) : 0;
+      }
       slider.value = activeHourIndex + 1;
 
       document.getElementById("patientCategoryLabel").textContent = activePatient.category;
       document.getElementById("patientDemographicsLabel").textContent = `${Math.round(activePatient.demographics.age)} yo ${activePatient.demographics.gender}`;
-      document.getElementById("patientOnsetLabel").textContent = activePatient.sepsis_onset_hour ? `ICU Hour ${activePatient.sepsis_onset_hour}` : "None (SIRS Control)";
+      document.getElementById("patientOnsetLabel").textContent = activePatient.sepsis_onset_hour ? `ICU Hour ${activePatient.sepsis_onset_hour}` : "None (Control)";
 
       renderCurrentState();
     }
@@ -1734,6 +1835,36 @@
       else if (status.status.includes("Sepsis")) statusClass = "status-warning";
       statusBadge.className = `sepsis-status-pill ${statusClass}`;
       statusBadge.innerHTML = `<i class="bi bi-circle-fill" style="font-size:0.55rem;" aria-hidden="true"></i> ${status.status}`;
+
+      // 5B. Tier 1 Early Warning Sepsis Prediction (6-Hour Forward Forecast)
+      if (predictiveEngine) {
+        const pred = predictiveEngine.predict(activePatient, activeHourIndex);
+        if (pred) {
+          document.getElementById("predRiskPct").textContent = `${pred.percentage}%`;
+          const barEl = document.getElementById("predRiskBar");
+          barEl.style.width = `${pred.barWidthPct ?? pred.percentage}%`;
+          barEl.style.backgroundColor = pred.badgeClass === "badge-critical"
+            ? "var(--status-critical-border)"
+            : (pred.badgeClass === "badge-warning" ? "var(--status-warning-border)" : "var(--status-normal)");
+
+          const badgeEl = document.getElementById("predRiskBadge");
+          badgeEl.className = `exec-pill-badge ${pred.badgeClass}`;
+          badgeEl.textContent = pred.sustained2of3 ? `${pred.tier} (2-of-3h Sustained)` : pred.tier;
+
+          document.getElementById("predSubScores").textContent = pred.modelType === "neural_network"
+            ? `PLE-ResNet (Uncal): ${pred.pNeuralPct}% (Spread +/-${pred.pFoldSpreadPct}%) | Watch >= ${pred.watchThresholdPct}% | Crit >= ${pred.thresholdPct}%`
+            : `LogReg: ${pred.pLogRegPct}% | GBDT: ${pred.pTreesPct ?? pred.pStumpsPct}% | Alert >= ${pred.thresholdPct}%`;
+
+          const driversEl = document.getElementById("predDriversList");
+          if (pred.topDrivers.length > 0) {
+            driversEl.innerHTML = pred.topDrivers.map(d =>
+              `<span class="predictive-driver-chip"><i class="bi bi-arrow-up-right-circle-fill" style="color:var(--status-warning);"></i> ${d.label}: ${d.rawValue} (${d.zScore >= 0 ? "+" : ""}${d.zScore} SD)</span>`
+            ).join("");
+          } else {
+            driversEl.innerHTML = '<span class="predictive-driver-chip"><i class="bi bi-check-circle-fill" style="color:var(--status-normal);"></i> All features within baseline range</span>';
+          }
+        }
+      }
 
       // 6. Run "What-If" Hemodynamic Simulation
       const sim = simulateHemodynamics(vitals, labs, {
@@ -2034,6 +2165,24 @@
           </div>
 
           <div class="ehr-sections-container">
+            ${activePatient.progress_note ? `
+              <div class="colleague-note-card">
+                <div class="ehr-section-heading">
+                  <i class="bi bi-journal-text"></i>
+                  <span>Colleague ICU Progress Note (Opus Narrative &bull; Cluster ${activePatient.cluster ?? "--"})</span>
+                </div>
+                <pre class="colleague-note-pre">${activePatient.progress_note.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+                ${record.z_scores && scalerData ? `
+                  <div style="padding:12px 20px; border-top:1px solid var(--border-subtle); font-size:0.86rem; color:var(--text-muted);">
+                    <strong>Scaler Bridge (Z-Score &rarr; Raw Physical Unit at Hour ${record.hour}):</strong>
+                    HR ${record.z_scores.HR ?? "--"} SD &rarr; <strong>${record.vitals.hr ?? "--"} bpm</strong> (&mu;=${scalerData.HR?.mean}, &sigma;=${scalerData.HR?.sd}) &bull;
+                    MAP ${record.z_scores.MAP ?? "--"} SD &rarr; <strong>${record.vitals.map ?? "--"} mmHg</strong> &bull;
+                    Cr ${record.z_scores.Creatinine ?? "--"} SD &rarr; <strong>${record.labs.creatinine_mg_dl ?? "--"} mg/dL</strong> &bull;
+                    Plt ${record.z_scores.Platelets ?? "--"} SD &rarr; <strong>${record.labs.platelets_k_ul ?? "--"} k/&mu;L</strong>
+                  </div>
+                ` : ""}
+              </div>
+            ` : ""}
             ${sectionsHtml}
           </div>
 

@@ -2704,3 +2704,97 @@ header.clinical-header {
   color: #ffffff;
   border-color: #ef4444;
 }
+
+/* ============================================================================
+   Tier 1: Early Warning Sepsis Predictive Risk Card & Colleague Notes
+   ============================================================================ */
+.predictive-risk-card {
+  margin-top: 22px;
+  background: var(--bg-inset);
+  border: 1.5px solid var(--border-strong);
+  border-left: 6px solid var(--clinical-blue);
+  border-radius: 12px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.predictive-risk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.predictive-risk-score-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.predictive-risk-pct {
+  font-size: 2.1rem;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--text-heading);
+  line-height: 1;
+}
+
+.predictive-bar-wrap {
+  flex: 1;
+  min-width: 200px;
+  height: 12px;
+  background: var(--border-subtle);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.predictive-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  transition: width 0.35s ease, background-color 0.35s ease;
+  background: var(--status-normal);
+}
+
+.predictive-drivers-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.predictive-driver-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+}
+
+.colleague-note-card {
+  margin-top: 20px;
+  background: var(--bg-inset);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.colleague-note-pre {
+  margin: 0;
+  padding: 16px 20px;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
