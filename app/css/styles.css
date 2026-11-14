@@ -33,6 +33,7 @@
 
   /* High-Legibility Typography */
   --text-primary: #06182c;
+  --text-heading: #002757;
   --text-secondary: #274059;
   --text-muted: #4b667e;
   --text-dim: #6c8397;
@@ -78,6 +79,7 @@
   --card-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
 
   --text-primary: #f0fdfa;
+  --text-heading: #f0fdfa;
   --text-secondary: #ccfbf1;
   --text-muted: #99f6e4;
   --text-dim: #5eead4;
@@ -86,13 +88,13 @@
   --status-normal-bg: rgba(0, 205, 176, 0.18);
   --status-normal-border: #009e86;
 
-  --status-warning: #f59e0b;
+  --status-warning: #fcd34d;
   --status-warning-bg: rgba(245, 158, 11, 0.18);
   --status-warning-border: #d97706;
 
-  --status-critical: #ef4444;
+  --status-critical: #fca5a5;
   --status-critical-bg: rgba(239, 68, 68, 0.22);
-  --status-critical-border: #dc2626;
+  --status-critical-border: #ef4444;
 
   accent-color: var(--clinical-blue);
 }
@@ -1125,7 +1127,7 @@ header.clinical-header {
 .clinical-section-header {
   font-size: 1.18rem;
   font-weight: 800;
-  color: var(--clinical-navy);
+  color: var(--text-heading);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   margin-bottom: 16px;
@@ -1262,6 +1264,10 @@ header.clinical-header {
   color: #991b1b;
 }
 
+[data-theme="dark"] .chip-critical strong {
+  color: #fecaca;
+}
+
 .chip-warning {
   background: var(--status-warning-bg);
   border-color: var(--status-warning-border);
@@ -1270,6 +1276,10 @@ header.clinical-header {
 
 .chip-warning strong {
   color: #92400e;
+}
+
+[data-theme="dark"] .chip-warning strong {
+  color: #fde68a;
 }
 
 /* ============================================================================
@@ -1515,7 +1525,7 @@ header.clinical-header {
   gap: 8px;
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--clinical-navy);
+  color: var(--text-heading);
 }
 
 .ollama-pulsing-icon i {
@@ -1653,7 +1663,7 @@ header.clinical-header {
 
 .drug-name-cell {
   font-weight: 800;
-  color: var(--clinical-navy);
+  color: var(--text-heading);
   font-size: 1.08rem;
 }
 
@@ -1774,7 +1784,7 @@ header.clinical-header {
 .ehr-doc-title {
   font-size: 1.45rem;
   font-weight: 800;
-  color: var(--clinical-navy);
+  color: var(--text-heading);
   margin: 0 0 4px 0;
   letter-spacing: -0.01em;
 }
@@ -1879,7 +1889,7 @@ header.clinical-header {
   padding: 12px 18px;
   font-size: 1.08rem;
   font-weight: 800;
-  color: var(--clinical-navy);
+  color: var(--text-heading);
   display: flex;
   align-items: center;
   gap: 8px;
