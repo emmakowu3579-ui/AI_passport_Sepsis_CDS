@@ -644,14 +644,11 @@ export class SepsisPredictiveEngine {
     const watchTh = this.ensemble.watchlist_threshold ?? th * 0.6;
     let tier = "Low Baseline Risk";
     let badgeClass = "badge-normal";
-    if (finalProb >= Math.min(0.85, th * 2.2)) {
+    if (finalProb >= th) {
       tier = "Critical Sepsis Warning";
       badgeClass = "badge-critical";
-    } else if (finalProb >= th) {
-      tier = "Elevated 6h Forecast";
-      badgeClass = "badge-warning";
     } else if (finalProb >= watchTh) {
-      tier = "Moderate Watch";
+      tier = "Watchlist Early Alert";
       badgeClass = "badge-warning";
     }
 

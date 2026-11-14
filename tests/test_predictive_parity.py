@@ -87,6 +87,34 @@ for (const pt of [phys.patients[0], phys.patients[phys.patients.length - 1], col
     }
   }
 }
+
+// Verify strict alignment with Two-Tier clinical policy across all cohort hours (fast pass skipping 79x ablation, plus 1 full-pass check per tier)
+const watchTh = model.ensemble.watchlist_threshold;
+const critTh = model.ensemble.decision_threshold;
+const seenTiers = new Set();
+for (const pt of [...phys.patients, ...coll.patients]) {
+  for (let h = 0; h < pt.timeline.length; h++) {
+    const pred = eng.predict(pt, h, true);
+    const expected = pred.probability >= critTh
+      ? ['badge-critical', 'Critical Sepsis Warning']
+      : (pred.probability >= watchTh
+          ? ['badge-warning', 'Watchlist Early Alert']
+          : ['badge-normal', 'Low Baseline Risk']);
+    if (pred.badgeClass !== expected[0] || pred.tier !== expected[1]) {
+      throw new Error(`Tier mismatch for ${pt.patient_id} h=${h}: p=${pred.probability} got (${pred.badgeClass}, ${pred.tier}) expected (${expected[0]}, ${expected[1]})`);
+    }
+    if (!seenTiers.has(pred.badgeClass)) {
+      seenTiers.add(pred.badgeClass);
+      const fullPred = eng.predict(pt, h, false);
+      if (fullPred.badgeClass !== expected[0] || fullPred.tier !== expected[1]) {
+        throw new Error(`Full-pass tier mismatch for ${pt.patient_id} h=${h}: got (${fullPred.badgeClass}, ${fullPred.tier})`);
+      }
+    }
+  }
+}
+if (!seenTiers.has('badge-normal') || !seenTiers.has('badge-warning') || !seenTiers.has('badge-critical')) {
+  throw new Error('Expected all three two-tier states across cohorts, saw: ' + Array.from(seenTiers).join(','));
+}
 console.log('JS_PARITY_OK');
 """
         proc = subprocess.run(

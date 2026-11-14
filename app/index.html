@@ -1840,12 +1840,19 @@
       if (predictiveEngine) {
         const pred = predictiveEngine.predict(activePatient, activeHourIndex);
         if (pred) {
+          const cardEl = document.getElementById("predictiveRiskCard");
+          if (cardEl) {
+            cardEl.classList.remove("tier-normal", "tier-warning", "tier-critical");
+            cardEl.classList.add(
+              pred.badgeClass === "badge-critical" ? "tier-critical"
+                : (pred.badgeClass === "badge-warning" ? "tier-warning" : "tier-normal")
+            );
+          }
+
           document.getElementById("predRiskPct").textContent = `${pred.percentage}%`;
           const barEl = document.getElementById("predRiskBar");
           barEl.style.width = `${pred.barWidthPct ?? pred.percentage}%`;
-          barEl.style.backgroundColor = pred.badgeClass === "badge-critical"
-            ? "var(--status-critical-border)"
-            : (pred.badgeClass === "badge-warning" ? "var(--status-warning-border)" : "var(--status-normal)");
+          barEl.style.backgroundColor = "";
 
           const badgeEl = document.getElementById("predRiskBadge");
           badgeEl.className = `exec-pill-badge ${pred.badgeClass}`;
@@ -1855,10 +1862,11 @@
             ? `PLE-ResNet (Uncal): ${pred.pNeuralPct}% (Spread +/-${pred.pFoldSpreadPct}%) | Watch >= ${pred.watchThresholdPct}% | Crit >= ${pred.thresholdPct}%`
             : `LogReg: ${pred.pLogRegPct}% | GBDT: ${pred.pTreesPct ?? pred.pStumpsPct}% | Alert >= ${pred.thresholdPct}%`;
 
+          const driverIconColor = pred.badgeClass === "badge-critical" ? "var(--status-critical)" : "var(--status-warning)";
           const driversEl = document.getElementById("predDriversList");
           if (pred.topDrivers.length > 0) {
             driversEl.innerHTML = pred.topDrivers.map(d =>
-              `<span class="predictive-driver-chip"><i class="bi bi-arrow-up-right-circle-fill" style="color:var(--status-warning);"></i> ${d.label}: ${d.rawValue} (${d.zScore >= 0 ? "+" : ""}${d.zScore} SD)</span>`
+              `<span class="predictive-driver-chip"><i class="bi bi-arrow-up-right-circle-fill" style="color:${driverIconColor};"></i> ${d.label}: ${d.rawValue} (${d.zScore >= 0 ? "+" : ""}${d.zScore} SD)</span>`
             ).join("");
           } else {
             driversEl.innerHTML = '<span class="predictive-driver-chip"><i class="bi bi-check-circle-fill" style="color:var(--status-normal);"></i> All features within baseline range</span>';

@@ -2712,12 +2712,49 @@ header.clinical-header {
   margin-top: 22px;
   background: var(--bg-inset);
   border: 1.5px solid var(--border-strong);
-  border-left: 6px solid var(--clinical-blue);
+  border-left: 6px solid var(--status-normal);
   border-radius: 12px;
   padding: 18px 22px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.predictive-risk-card.tier-warning {
+  background: var(--status-warning-bg);
+  border-color: var(--status-warning-border);
+  border-left-color: var(--status-warning);
+}
+
+.predictive-risk-card.tier-warning .predictive-risk-pct {
+  color: var(--status-warning);
+}
+
+.predictive-risk-card.tier-warning .predictive-bar-fill {
+  background: var(--status-warning);
+}
+
+.predictive-risk-card.tier-critical {
+  background: var(--status-critical-bg);
+  border-color: var(--status-critical-border);
+  border-left-color: var(--status-critical);
+}
+
+.predictive-risk-card.tier-critical .predictive-risk-pct {
+  color: var(--status-critical);
+}
+
+.predictive-risk-card.tier-critical .predictive-bar-fill {
+  background: var(--status-critical);
+}
+
+[data-theme="dark"] .predictive-risk-card.tier-warning .predictive-bar-fill {
+  background: var(--status-warning-border);
+}
+
+[data-theme="dark"] .predictive-risk-card.tier-critical .predictive-bar-fill {
+  background: var(--status-critical-border);
 }
 
 .predictive-risk-header {
