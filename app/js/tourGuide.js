@@ -21,7 +21,7 @@ export const TOUR_STEPS = [
     pageStep: 1,
     title: "2. Hourly ICULOS Timeline Scrubber",
     badge: "Step 2 of 8 • Page 1",
-    content: "Scrub hour-by-hour through the patient's entire admission or press <strong><i class='bi bi-play-fill'></i> Play</strong> to observe vitals, lab trends, early warning risk forecasts, and sepsis progression unfold dynamically.",
+    content: "Scrub hour-by-hour through the patient's entire admission or press <strong><i class='bi bi-play-fill'></i> Play</strong> to observe vitals, lab trends, early warning risk forecasts, and sepsis progression unfold simultaneously inside the docked screen—and unlock <strong>Page 2</strong> in the top bar.",
     position: "bottom"
   },
   {
@@ -29,7 +29,7 @@ export const TOUR_STEPS = [
     pageStep: 1,
     title: "3. Page 1: Bedside Vitals & Dual-Unit Normalized Labs",
     badge: "Step 3 of 8 • Page 1",
-    content: "On <strong>Page 1</strong>, review full-screen vitals and critical labs. Notice automated dual-unit normalization (<strong>Lactate in both mmol/L and mg/dL</strong>), cohort-scaler Z-score de-standardization for partner windows, and <strong>Last-Observation-Carried-Forward (LOCF)</strong> stale lab tags for draws older than 6 hours.",
+    content: "On <strong>Page 1</strong>, review full-screen vitals and critical labs without scrolling. Notice automated dual-unit normalization (<strong>Lactate in both mmol/L and mg/dL</strong>), cohort-scaler Z-score de-standardization for partner windows, and <strong>Last-Observation-Carried-Forward (LOCF)</strong> stale lab tags for draws older than 6 hours.",
     position: "bottom"
   },
   {
@@ -51,27 +51,28 @@ export const TOUR_STEPS = [
     position: "bottom"
   },
   {
-    targetId: "hemodynamicTrajectorySvg",
-    pageStep: 1,
-    title: "6. Page 1: Longitudinal Trajectory & Target Plots",
-    badge: "Step 6 of 8 • Page 1",
-    content: "Continuous hemodynamic curves displaying <strong>Mean Arterial Pressure (MAP)</strong> with the <strong>65 mmHg target goal line</strong>, shaded red <strong>Hypoperfusion Danger Zone</strong>, Serum Lactate curve, and <strong>Sepsis-3 Onset</strong> marker. <em>Click anywhere on the curve to scrub to that hour!</em>",
-    position: "top"
+    targetId: "trajectoryCard",
+    subSelector: "#hemodynamicTrajectorySvg",
+    pageStep: 2,
+    title: "6. Page 2: Longitudinal Trajectory Explorer & Live Strip",
+    badge: "Step 6 of 8 • Page 2",
+    content: "Now on dedicated <strong>Page 2</strong>: view continuous <strong>MAP</strong> (65 mmHg target line), <strong>Serum Lactate</strong>, and <strong>SOFA Organ Progression</strong> side-by-side or individually, with a pinned <strong>Live Summary Strip</strong> above the plots. <em>Click any hour on a curve to scrub and unlock Page 3!</em>",
+    position: "bottom"
   },
   {
     targetId: "step2Card",
-    pageStep: 2,
-    title: "7. Page 2: 'What-If' Resuscitation & 5-Drug Safety Gates",
-    badge: "Step 7 of 8 • Page 2",
-    content: "On <strong>Page 2</strong>, simulate balanced crystalloid boluses (0–40 mL/kg), norepinephrine titration, and select from 5 empiric antimicrobials. The safety engine immediately alerts to <strong>nephrotoxic synergy (Vanc + Pip-Tazo)</strong>, <strong>neurotoxicity (Cefepime)</strong>, and <strong>AKI blocks (Gentamicin)</strong>.",
+    pageStep: 3,
+    title: "7. Page 3: 'What-If' Resuscitation & 5-Drug Safety Gates",
+    badge: "Step 7 of 8 • Page 3",
+    content: "On dedicated <strong>Page 3</strong>, simulate crystalloid boluses (0–40 mL/kg), norepinephrine titration, and 5 empiric antibiotics on the left while watching the Perfusion Gauge and scrollable <strong>Organ Safety Gates</strong> update side-by-side on the right. Every change unlocks <strong>Page 4</strong>.",
     position: "bottom"
   },
   {
     targetId: "step3Card",
-    pageStep: 3,
-    title: "8. Page 3: Evidence-Based RAG Note, Progress Notes & Citations",
-    badge: "Step 8 of 8 • Page 3",
-    content: "On <strong>Page 3</strong>, inspect the full-width consultation note, structured 5-drug dosing table, and (for clinical partner windows) the bedside <strong>ICU Progress Note</strong> and <strong>Scaler Bridge</strong>. <strong>Click any [SSC-2021-...] or [DOSE-...] citation pill</strong> to view verbatim guideline text, then click <strong>Copy Note to EHR</strong>.",
+    pageStep: 4,
+    title: "8. Page 4: Split-Screen RAG Plan, Progress Notes & Citations",
+    badge: "Step 8 of 8 • Page 4",
+    content: "On <strong>Page 4</strong>, inspect the synthesized consultation note, 5-drug dosing table, and <strong>Partner Progress Note</strong> tab on the left while clicking any <strong>[CHUNK-ID] citation pill</strong> to view verbatim guidelines right alongside it in the pinned right inspector.",
     position: "bottom"
   }
 ];
@@ -180,9 +181,9 @@ export class TourGuide {
       targetEl = document.querySelector(step.subSelector);
     }
 
-    // Scroll smoothly to target element
+    // Scroll target into view cleanly if outside viewport (no-op inside zero-scroll desktop shell)
     if (targetEl) {
-      targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      targetEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
       this.highlightElement(targetEl);
     }
 
