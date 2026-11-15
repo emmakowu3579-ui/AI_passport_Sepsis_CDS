@@ -168,10 +168,11 @@
         <div class="engine-select-pill">
           <label for="engineModeSelect" style="opacity:0.85; font-size:0.82rem; margin-right:4px;">Inference:</label>
           <select id="engineModeSelect" onchange="changeEngineMode(this.value)">
-            <option value="EXTRACTIVE_RAG">Standard CDS (Verified Guideline Rules)</option>
-            <option value="OLLAMA">Local AI Consultation (Ollama)</option>
-            <option value="WEBGPU">In-Browser Neural CDS (WebLLM)</option>
+            <option value="EXTRACTIVE_RAG">Standard CDS (Verified Rules)</option>
+            <option value="OLLAMA">Local AI Hybrid (Ollama)</option>
+            <option value="WEBGPU">WebGPU Neural (Rules Fallback)</option>
           </select>
+          <span id="engineRuntimeBadge" class="engine-runtime-badge runtime-rules" title="Active clinical synthesis runtime">Rules: Instant</span>
           <span id="gpuStatusIndicator" style="display:none;" aria-hidden="true"></span>
         </div>
 
@@ -788,6 +789,15 @@
             </div>
           </div>
 
+          <!-- Engine Provenance Banner (Makes Standard Rules vs Local AI Unmistakably Distinct) -->
+          <div id="aiStatusBanner" class="ai-status-banner ai-banner-rules" role="status" aria-live="polite">
+            <div class="ai-status-banner-left">
+              <span id="aiBannerTag" class="ai-provenance-tag"><i class="bi bi-shield-check"></i> Rule Engine</span>
+              <span id="aiBannerText">Standard Deterministic CDS (&lt; 5 ms) &bull; Fixed SSC-2021 &amp; Sepsis-3 logic with zero generative AI variation.</span>
+            </div>
+            <div id="aiBannerActions" style="display:flex; align-items:center; gap:6px; flex-shrink:0;"></div>
+          </div>
+
           <!-- Progressive Disclosure Tabs Strip -->
           <div class="rag-tabs-strip" role="tablist" aria-label="Recommendation sections">
             <button id="tabBtnBundle" class="rag-tab-btn active" role="tab" aria-selected="true" onclick="switchRagTab('bundleTab')">
@@ -813,7 +823,7 @@
             </button>
           </div>
 
-          <!-- Split-Screen Body: Left Scrollable Plan + Right Pinned Citation Inspector -->
+          <!-- Split-Screen Body: Left Scrollable Plan + Right Pinned 2-Tab Inspector & Copilot -->
           <div class="rag-split-workspace">
             <div class="rag-plan-pane">
               <div id="recommendationBox" style="display:flex; flex-direction:column; gap:14px;">
@@ -823,18 +833,66 @@
               </div>
             </div>
 
-            <aside class="rag-citation-pane" aria-label="Verifiable Literature Citation Inspector">
-              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; flex-shrink:0;">
-                <span style="font-size:0.96rem; font-weight:800; text-transform:uppercase; color:var(--clinical-blue); display:flex; align-items:center; gap:6px;">
+            <aside class="rag-citation-pane" aria-label="Citation Inspector and Real-Time Clinical Copilot">
+              <div class="right-pane-tab-bar" role="tablist" aria-label="Right inspector mode">
+                <button id="rightPaneTabCite" type="button" class="right-pane-tab-btn active" role="tab" aria-selected="true" onclick="switchRightPaneTab('cite')">
                   <i class="bi bi-journal-medical"></i> Citation Inspector
-                </span>
-                <span style="font-size:0.8rem; color:var(--text-muted);">Click any [CHUNK-ID] badge</span>
+                </button>
+                <button id="rightPaneTabChat" type="button" class="right-pane-tab-btn" role="tab" aria-selected="false" onclick="switchRightPaneTab('chat')">
+                  <i class="bi bi-chat-dots-fill"></i> Ask Clinical AI
+                  <span id="chatStatusPill" style="font-size:0.64rem; padding:1px 5px; border-radius:999px; background:rgba(124,58,237,0.14); color:#6d28d9;">Rule RAG</span>
+                </button>
               </div>
-              <div id="citationDrawer" class="citation-drawer-box">
-                Click any inline citation pill (e.g., <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-BUNDLE-01')"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>SSC-2021-BUNDLE-01</button> or <button type="button" class="citation-pill" onclick="inspectCitation('DOSE-VANC-01')"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>DOSE-VANC-01</button>) to inspect the verbatim guideline excerpt, evidence grade, and source publication.
+
+              <!-- Right Tab 1: Verifiable Literature Excerpt Inspector -->
+              <div id="citationInspectorPanel" class="right-pane-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; flex-shrink:0;">
+                  <span style="font-size:0.86rem; font-weight:800; text-transform:uppercase; color:var(--clinical-blue); display:flex; align-items:center; gap:5px;">
+                    <i class="bi bi-patch-check-fill"></i> Verifiable Source Excerpt
+                  </span>
+                  <span style="font-size:0.75rem; color:var(--text-muted);">Click any [CHUNK-ID] badge</span>
+                </div>
+                <div id="citationDrawer" class="citation-drawer-box">
+                  Click any inline citation pill (e.g., <button type="button" class="citation-pill" onclick="inspectCitation('SSC-2021-BUNDLE-01')"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>SSC-2021-BUNDLE-01</button> or <button type="button" class="citation-pill" onclick="inspectCitation('DOSE-VANC-01')"><i class="bi bi-journal-medical" style="margin-right:3px;"></i>DOSE-VANC-01</button>) to inspect the verbatim guideline excerpt, evidence grade, and source publication.
+                </div>
+                <div id="retrievedSourcesBar" class="retrieved-sources-bar">
+                  <span style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--text-dim);">Active Retrieved Sources:</span>
+                </div>
               </div>
-              <div id="retrievedSourcesBar" class="retrieved-sources-bar">
-                <span style="font-size:0.76rem; font-weight:800; text-transform:uppercase; color:var(--text-dim);">Active Retrieved Sources:</span>
+
+              <!-- Right Tab 2: Real-Time Grounded Clinical AI Copilot -->
+              <div id="aiCopilotPanel" class="right-pane-panel" style="display:none;">
+                <div class="ai-context-bar">
+                  <span id="aiChatContextSummary" class="ai-context-summary-text">Context: Active bedside trajectory</span>
+                  <button type="button" class="ai-clear-btn" onclick="clearAiChatHistory()" title="Clear conversation history">Clear</button>
+                </div>
+
+                <div class="ai-quick-chips" aria-label="Quick clinical questions">
+                  <button type="button" class="ai-quick-chip" onclick="askQuickClinicalPrompt('Explain the active Tier 1 6-hour predictive risk score and its top clinical drivers for this patient hour.')">Why 6h risk?</button>
+                  <button type="button" class="ai-quick-chip" onclick="askQuickClinicalPrompt('Review antimicrobial renal safety and active contraindication alerts given the current creatinine and SOFA score.')">Renal dosing?</button>
+                  <button type="button" class="ai-quick-chip" onclick="askQuickClinicalPrompt('Evaluate fluid resuscitation, norepinephrine titration, and refractory shock escalation for current MAP and lactate.')">Vasopressor plan?</button>
+                  <button type="button" class="ai-quick-chip" onclick="askQuickClinicalPrompt('Assess volume overload risk under the current What-If simulation and recommend safe hemodynamic targets.')">Overload risk?</button>
+                </div>
+
+                <div id="aiChatMessages" class="ai-chat-messages" aria-live="polite">
+                  <div class="ai-chat-msg ai-chat-msg-assistant">
+                    <div class="ai-chat-msg-meta">
+                      <span><i class="bi bi-stars"></i> Grounded Clinical Copilot</span>
+                      <span>Ready</span>
+                    </div>
+                    <div class="ai-chat-msg-body">
+                      Ask any bedside question about this patient&apos;s hemodynamics, renal dosing alerts, 6-hour risk drivers, or SSC-2021 guidelines. Queries run lexical retrieval across all 165 guideline chunks and stream from Ollama when online (or fall back to deterministic rule retrieval).
+                    </div>
+                  </div>
+                </div>
+
+                <form id="aiChatForm" class="ai-chat-form" onsubmit="submitAiCopilotQuery(event)">
+                  <input id="aiChatInput" type="text" class="ai-chat-input" placeholder="Ask about MAP, renal dosing, 6h drivers..." autocomplete="off" />
+                  <button id="aiChatSendBtn" type="submit" class="ai-chat-send-btn">
+                    <i class="bi bi-send-fill"></i> Ask
+                  </button>
+                  <button id="aiChatStopBtn" type="button" class="ai-clear-btn" style="display:none; padding:7px 9px;" onclick="stopAiChatStreaming()">Stop</button>
+                </form>
               </div>
             </aside>
           </div>
@@ -1353,6 +1411,11 @@
     let chartEngine = null;
     let authService = null;
     let tourGuide = null;
+    let currentRightPaneTab = "cite";
+    let aiChatHistory = [];
+    let lastPredictiveResult = null;
+    let lastRenderedSnapshot = null;
+    let isAiChatStreaming = false;
 
     // ========================================================================
     // Immediate Synchronous Window Handler Bindings
@@ -1366,8 +1429,14 @@
     window.applySimulationEffect = applySimulationEffect;
     window.changeEngineMode = changeEngineMode;
     window.cancelOllamaGeneration = cancelOllamaGeneration;
+    window.retryOllamaConnection = retryOllamaConnection;
     window.executeFullBenchmark = executeFullBenchmark;
     window.inspectCitation = inspectCitation;
+    window.switchRightPaneTab = switchRightPaneTab;
+    window.submitAiCopilotQuery = submitAiCopilotQuery;
+    window.askQuickClinicalPrompt = askQuickClinicalPrompt;
+    window.clearAiChatHistory = clearAiChatHistory;
+    window.stopAiChatStreaming = stopAiChatStreaming;
     window.copyConsultNoteToClipboard = copyConsultNoteToClipboard;
     window.toggleTheme = toggleTheme;
     window.switchAppMode = switchAppMode;
@@ -1408,9 +1477,13 @@
       vectorIndex = new LocalVectorIndex();
       await vectorIndex.load("data/knowledge_index.json");
 
-      // 5. Initialize Clinical Synthesizer & Detect WebGPU
+      // 5. Initialize Clinical Synthesizer & Probe Local Ollama Non-Blockingly
       synthesizer = new ClinicalSynthesizer(vectorIndex);
       updateGpuBadge();
+      synthesizer.checkOllamaStatus(true).then(() => {
+        updateGpuBadge();
+        updateEngineStatusUi({ state: synthesizer.currentMode === "OLLAMA" ? "ready" : "rules" });
+      });
 
       // 6. Load Predictive Model & Cohort Scaler Parameters
       try {
@@ -2013,9 +2086,11 @@
       // 5B. Tier 1 Early Warning Sepsis Prediction (6-Hour Forward Forecast)
       let latestPredSummary = "--%";
       let latestPredColor = "var(--text-primary)";
+      lastPredictiveResult = null;
       if (predictiveEngine) {
         const pred = predictiveEngine.predict(activePatient, activeHourIndex);
         if (pred) {
+          lastPredictiveResult = pred;
           latestPredSummary = `${pred.percentage}% (${pred.badgeClass === "badge-critical" ? "Crit" : (pred.badgeClass === "badge-warning" ? "Watch" : "Low")})`;
           latestPredColor = pred.badgeClass === "badge-critical"
             ? "var(--status-critical)"
@@ -2120,6 +2195,24 @@
         fluidBolusMlKg: fluidBolus
       });
       const retrievedChunks = vectorIndex ? vectorIndex.search(null, activeTriggers, 4) : [];
+
+      lastRenderedSnapshot = {
+        patientId: activePatient.patient_id || activePatient.short_id || activePatient.id,
+        age: Math.round(activePatient.demographics?.age || 0) || "--",
+        gender: activePatient.demographics?.gender || "--",
+        category: activePatient.category || "ICU",
+        hour: record.hour,
+        status: status.status,
+        sofa,
+        vitals,
+        labs,
+        prediction: lastPredictiveResult,
+        simulation: sim,
+        alerts,
+        activeTriggers,
+        progressNote: activePatient.progress_note || ""
+      };
+      updateAiChatContextBar();
 
       // 9. Render RAG Clinical Synthesis Note & 5-Drug Dosing Table
       renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs);
@@ -2334,17 +2427,24 @@
         let sectionsHtml = "";
         for (const sec of synth.sections) {
           const cleanHeading = sec.heading.replace(/^#{1,6}\s*/, "").trim();
-          const parsedBody = renderClinicalMarkdown(sec.body);
+          const safeBody = sec.isGenerativeAi ? escapeRawHtml(sec.body) : sec.body;
+          const parsedBody = renderClinicalMarkdown(safeBody);
           let extraTableHtml = "";
           if (sec.showTable || sec.id === "antimicrobialSec") {
             extraTableHtml = renderAntimicrobialTable(selectedDrugs, record.labs.creatinine_mg_dl || 0.9, alerts);
           }
 
+          const cardClass = sec.isGenerativeAi ? "ehr-section-card ehr-ai-section-card" : "ehr-section-card";
+          const aiTag = sec.isGenerativeAi
+            ? `<span class="ai-advisory-pill" style="margin-left:auto;"><i class="bi bi-stars"></i> AI Synthesis &bull; Advisory</span>`
+            : "";
+
           sectionsHtml += `
-            <div class="ehr-section-card">
+            <div class="${cardClass}">
               <div class="ehr-section-heading">
-                <i class="bi bi-file-earmark-medical-fill"></i>
-                <span>${cleanHeading}</span>
+                <i class="bi ${sec.isGenerativeAi ? "bi-stars" : "bi-file-earmark-medical-fill"}"></i>
+                <span>${escapeRawHtml(cleanHeading)}</span>
+                ${aiTag}
               </div>
               <div class="ehr-section-content">
                 ${parsedBody}
@@ -2466,20 +2566,149 @@
 
       for (const sec of visibleSections) {
         const secDiv = document.createElement("div");
-        secDiv.className = "clinical-section-block";
+        const isAi = !!(sec.isGenerativeAi || sec.id === "ollamaGenSec");
+        secDiv.className = isAi ? "clinical-section-block ollama-ai-section-block" : "clinical-section-block";
 
-        const parsedHtml = renderClinicalMarkdown(sec.body);
+        const rawBody = isAi ? escapeRawHtml(sec.body) : sec.body;
+        const parsedHtml = renderClinicalMarkdown(rawBody);
         let extraTableHtml = "";
         if (sec.showTable || sec.id === "antimicrobialSec" || currentRagTab === "antimicrobialTab") {
           extraTableHtml = renderAntimicrobialTable(selectedDrugs, record.labs.creatinine_mg_dl || 0.9, alerts);
         }
 
-        secDiv.innerHTML = `
-          <div class="clinical-section-header">${sec.heading}</div>
-          <div class="clinical-section-content">${parsedHtml}</div>
-          ${extraTableHtml}
-        `;
+        if (isAi) {
+          secDiv.innerHTML = `
+            <div class="ollama-ai-section-header">
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span class="ai-advisory-pill"><i class="bi bi-stars"></i> AI Synthesis &bull; Advisory Only</span>
+                <span style="font-size:0.96rem; font-weight:800; color:var(--text-heading);">${escapeRawHtml(sec.heading)}</span>
+              </div>
+              <span class="ollama-model-badge">${escapeRawHtml(sec.modelName || synthesizer?.ollamaStatus?.activeModel || "Ollama")}</span>
+            </div>
+            <div class="clinical-section-content">${parsedHtml}</div>
+            <div class="ai-advisory-disclaimer">
+              <i class="bi bi-shield-lock-fill"></i>
+              <span>Advisory LLM prose grounded in retrieved SSC-2021 chunks. Deterministic SOFA math, 5-drug dosing &amp; safety gates below remain invariant.</span>
+            </div>
+          `;
+        } else {
+          secDiv.innerHTML = `
+            <div class="clinical-section-header">${sec.heading}</div>
+            <div class="clinical-section-content">${parsedHtml}</div>
+            ${extraTableHtml}
+          `;
+        }
         box.appendChild(secDiv);
+      }
+    }
+
+    function escapeRawHtml(text = "") {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function updateEngineStatusUi({ state = "ready", synth = null, elapsedMs = null } = {}) {
+      if (!synthesizer) return;
+      const mode = synthesizer.currentMode;
+      const ollama = synthesizer.ollamaStatus || {};
+      const badgeEl = document.getElementById("engineRuntimeBadge");
+      const bannerEl = document.getElementById("aiStatusBanner");
+      const bannerTag = document.getElementById("aiBannerTag");
+      const bannerText = document.getElementById("aiBannerText");
+      const bannerActions = document.getElementById("aiBannerActions");
+      const chatPill = document.getElementById("chatStatusPill");
+
+      if (chatPill) {
+        if (ollama.online && ollama.activeModel) {
+          chatPill.textContent = `Ollama: ${ollama.activeModel}`;
+          chatPill.style.background = "rgba(124, 58, 237, 0.16)";
+          chatPill.style.color = "#6d28d9";
+        } else {
+          chatPill.textContent = "Rule RAG";
+          chatPill.style.background = "rgba(15, 118, 110, 0.14)";
+          chatPill.style.color = "#0f766e";
+        }
+      }
+
+      if (bannerActions) bannerActions.innerHTML = "";
+
+      if (mode === "OLLAMA") {
+        if (state === "streaming") {
+          if (badgeEl) {
+            badgeEl.className = "engine-runtime-badge runtime-ai-streaming";
+            badgeEl.textContent = "AI: Streaming...";
+            badgeEl.title = "Connecting to local Ollama daemon for neural SBAR synthesis";
+          }
+          if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-streaming";
+          if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-cpu-fill"></i> Ollama Streaming';
+          if (bannerText) bannerText.textContent = "Generating advisory neural SBAR synthesis via local Ollama while deterministic safety rules stay pinned below.";
+          return;
+        }
+
+        const isOfflineFallback = synth?.provenance === "OFFLINE_FALLBACK" || (!synth && ollama.checked && !ollama.online);
+        if (isOfflineFallback) {
+          if (badgeEl) {
+            badgeEl.className = "engine-runtime-badge runtime-ai-offline";
+            badgeEl.textContent = "AI: Offline -> Rules";
+            badgeEl.title = "Ollama daemon unreachable on /api/ollama or localhost:11434; deterministic rule engine active";
+          }
+          if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-offline";
+          if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Ollama Offline -> Rule Fallback';
+          if (bannerText) bannerText.textContent = "No Ollama daemon reachable at /api/ollama or localhost:11434. Showing deterministic guideline rules automatically.";
+          if (bannerActions) {
+            bannerActions.innerHTML = '<button type="button" class="ai-banner-retry-btn" onclick="retryOllamaConnection()"><i class="bi bi-arrow-clockwise"></i> Retry Ollama</button>';
+          }
+          return;
+        }
+
+        const activeModel = synth?.model || ollama.activeModel || "qwen2.5:1.5b";
+        const timeStr = elapsedMs !== null && elapsedMs !== undefined ? ` in ${elapsedMs} ms` : "";
+        if (badgeEl) {
+          badgeEl.className = "engine-runtime-badge runtime-ai-online";
+          badgeEl.textContent = ollama.online ? `AI: ${activeModel}` : "AI: Hybrid Mode";
+          badgeEl.title = `Hybrid Ollama (${activeModel}) + Deterministic Rules`;
+        }
+        if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-hybrid";
+        if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-stars"></i> Hybrid: AI SBAR + Rule Safety';
+        if (bannerText) {
+          bannerText.innerHTML = `<strong>${escapeRawHtml(activeModel)}</strong> synthesized the violet AI SBAR card${escapeRawHtml(timeStr)}. SOFA scores, dosing &amp; contraindications remain 100% deterministic.`;
+        }
+        return;
+      }
+
+      if (mode === "WEBGPU") {
+        if (badgeEl) {
+          badgeEl.className = "engine-runtime-badge runtime-rules";
+          badgeEl.textContent = "WebGPU -> Rules";
+          badgeEl.title = synthesizer.webgpuAvailable
+            ? "WebGPU hardware detected; offline bundle executes verified deterministic guideline rules"
+            : "WebGPU unavailable; deterministic rule engine active";
+        }
+        if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-rules";
+        if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-shield-check"></i> Rule Engine (WebGPU Fallback)';
+        if (bannerText) {
+          bannerText.textContent = "Offline WebLLM weights are not pre-bundled; running verified Deterministic Guideline Rules (< 5 ms). Select Local AI Hybrid (Ollama) for neural prose.";
+        }
+        return;
+      }
+
+      // Standard Deterministic CDS (EXTRACTIVE_RAG)
+      if (badgeEl) {
+        badgeEl.className = "engine-runtime-badge runtime-rules";
+        badgeEl.textContent = "Rules: Instant";
+        badgeEl.title = ollama.online
+          ? `Deterministic Rule Engine active (< 5 ms). Ollama (${ollama.activeModel}) is also online for Local AI Hybrid or Ask Clinical AI.`
+          : "Deterministic Rule Engine active (< 5 ms). Zero generative LLM calls.";
+      }
+      if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-rules";
+      if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-shield-check"></i> Deterministic Rule Engine';
+      if (bannerText) {
+        bannerText.innerHTML = ollama.online
+          ? `Fixed SSC-2021 &amp; Sepsis-3 synthesis (&lt; 5 ms, zero generative variation). <strong>Ollama (${escapeRawHtml(ollama.activeModel)})</strong> is online for Ask Clinical AI or Hybrid mode.`
+          : "Fixed SSC-2021 &amp; Sepsis-3 synthesis (&lt; 5 ms, zero generative variation). Switch to Local AI Hybrid (Ollama) or use Ask Clinical AI for Q&amp;A.";
       }
     }
 
@@ -2496,6 +2725,16 @@
       changeEngineMode("EXTRACTIVE_RAG");
       const modeSelect = document.getElementById("engineModeSelect");
       if (modeSelect) modeSelect.value = "EXTRACTIVE_RAG";
+    }
+
+    async function retryOllamaConnection() {
+      if (!synthesizer) return;
+      await synthesizer.checkOllamaStatus(true);
+      updateGpuBadge();
+      updateEngineStatusUi({ state: "ready" });
+      if (synthesizer.currentMode === "OLLAMA") {
+        renderCurrentState();
+      }
     }
 
     async function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs) {
@@ -2548,23 +2787,27 @@
       // If user is in EXTRACTIVE_RAG or WEBGPU mode, or if timeline is actively auto-playing, render immediately
       if (synthesizer.currentMode !== "OLLAMA" || playTimer !== null) {
         document.getElementById("confidencePill").textContent = baseSynth.confidence.label;
-        document.getElementById("latencyBadge").textContent = playTimer !== null ? "Timeline Playback (Instant CDS)" : "Extractive Clinical Guidance";
+        document.getElementById("latencyBadge").textContent = playTimer !== null
+          ? "Timeline Playback (Instant Rules)"
+          : `Deterministic Rules • ${baseSynth.elapsedMs} ms`;
         currentSynthState = { synth: baseSynth, selectedDrugs, record, sofa, status, alerts };
         renderActiveRagContent();
+        updateEngineStatusUi({ state: "ready", synth: baseSynth, elapsedMs: baseSynth.elapsedMs });
         return;
       }
 
       // 2. Ollama CPU Mode: Render base note immediately so user is never stuck
       currentSynthState = { synth: baseSynth, selectedDrugs, record, sofa, status, alerts };
       renderActiveRagContent();
+      updateEngineStatusUi({ state: "streaming" });
 
       const confPill = document.getElementById("confidencePill");
       const latencyBadge = document.getElementById("latencyBadge");
       const box = document.getElementById("recommendationBox");
 
-      confPill.textContent = "GENERATING WITH OLLAMA CPU...";
+      confPill.textContent = "HYBRID AI STREAMING (OLLAMA)...";
       confPill.className = "exec-pill-badge badge-warning";
-      latencyBadge.innerHTML = '<i class="bi bi-cpu-fill" style="color:var(--status-warning);"></i> Ollama Connecting (127.0.0.1:11434)...';
+      latencyBadge.innerHTML = '<i class="bi bi-cpu-fill" style="color:var(--status-warning);"></i> Resolving Ollama (/api/ollama or 127.0.0.1)...';
 
       // Inject the Live Streaming Card at the very top of recommendationBox
       const liveCard = document.createElement("div");
@@ -2574,15 +2817,15 @@
         <div class="ollama-live-header">
           <div class="ollama-live-title">
             <span class="ollama-pulsing-icon"><i class="bi bi-cpu-fill"></i></span>
-            <span>Framework 2B: Local LLM Active CPU Generation</span>
-            <span id="ollamaLiveModelBadge" class="ollama-model-badge">qwen2.5:1.5b</span>
+            <span>Local AI Hybrid: Streaming Advisory SBAR Narrative</span>
+            <span id="ollamaLiveModelBadge" class="ollama-model-badge">${escapeRawHtml(synthesizer.ollamaStatus?.activeModel || "qwen2.5:1.5b")}</span>
           </div>
           <div style="display:flex; align-items:center; gap:10px;">
             <span id="ollamaLiveTimer" class="ollama-timer-badge">
               <i class="bi bi-stopwatch-fill"></i> 0.0s elapsed
             </span>
             <button type="button" class="action-btn" style="padding:4px 10px; font-size:0.78rem;" onclick="cancelOllamaGeneration()">
-              <i class="bi bi-x-circle"></i> Use Instant Note
+              <i class="bi bi-x-circle"></i> Switch to Rules
             </button>
           </div>
         </div>
@@ -2590,14 +2833,14 @@
           <div id="ollamaProgressBar" class="ollama-progress-bar-fill"></div>
         </div>
         <div class="ollama-streaming-meta">
-          <span id="ollamaTokenCount"><i class="bi bi-activity"></i> Connecting to local model weights on CPU...</span>
-          <span style="color:var(--text-muted); font-size:0.8rem;">Est. completion: ~5–8 seconds</span>
+          <span id="ollamaTokenCount"><i class="bi bi-activity"></i> Probing Ollama daemon...</span>
+          <span style="color:var(--text-muted); font-size:0.8rem;">Deterministic safety gates stay pinned below</span>
         </div>
         <div id="ollamaLiveContent" class="ollama-live-content">
           <span class="ollama-cursor"></span> <em>Awaiting first token from local Ollama engine...</em>
         </div>
       `;
-      if (box) {
+      if (box && currentRagTab !== "consultNoteTab") {
         box.insertBefore(liveCard, box.firstChild);
       }
 
@@ -2616,7 +2859,7 @@
           progEl.style.width = `${pct}%`;
         }
         if (latencyBadge) {
-          latencyBadge.innerHTML = `<i class="bi bi-cpu-fill" style="color:var(--status-warning);"></i> Ollama CPU (${sec}s)`;
+          latencyBadge.innerHTML = `<i class="bi bi-cpu-fill" style="color:var(--status-warning);"></i> Ollama Streaming (${sec}s)`;
         }
       }, 100);
 
@@ -2630,7 +2873,7 @@
         if (modelBadge && data.model) modelBadge.textContent = data.model;
         if (tokEl) tokEl.innerHTML = `<i class="bi bi-activity" style="color:var(--clinical-blue);"></i> Streaming live: ${tokenCounter} tokens (${sec}s)`;
         if (contentEl) {
-          contentEl.innerHTML = renderClinicalMarkdown(data.fullText) + '<span class="ollama-cursor"></span>';
+          contentEl.innerHTML = renderClinicalMarkdown(escapeRawHtml(data.fullText)) + '<span class="ollama-cursor"></span>';
         }
       };
 
@@ -2654,31 +2897,47 @@
 
       confPill.textContent = finalSynth.confidence.label;
       confPill.className = "exec-pill-badge badge-normal";
-      latencyBadge.textContent = finalSynth.mode.includes("Fallback") ? "Instant Extractive Guidance (Ollama Offline)" : "Ollama Synthesis Complete";
+      latencyBadge.textContent = finalSynth.provenance === "OFFLINE_FALLBACK"
+        ? "Ollama Offline -> Deterministic Rules"
+        : `Hybrid AI (${finalSynth.model}) • ${finalSynth.elapsedMs} ms`;
 
-      // Cache state and re-render clean active tab content with generative section integrated
+      // Cache state and re-render clean active tab content with distinct AI section styling
       currentSynthState = { synth: finalSynth, selectedDrugs, record, sofa, status, alerts };
       renderActiveRagContent();
+      updateEngineStatusUi({ state: "ready", synth: finalSynth, elapsedMs: finalSynth.elapsedMs });
+      updateGpuBadge(true);
     }
 
     function inspectCitation(chunkId) {
+      const returnTab = currentRightPaneTab;
+      if (currentRightPaneTab !== "cite") {
+        switchRightPaneTab("cite");
+      }
+
       const drawer = document.getElementById("citationDrawer");
-      if (!vectorIndex) return;
+      if (!vectorIndex || !drawer) return;
       const chunk = vectorIndex.getChunkById(chunkId);
 
       if (!chunk) {
-        drawer.innerHTML = `<div style="color:var(--status-critical);">Citation [${chunkId}] not found in local index.</div>`;
+        drawer.innerHTML = `<div style="color:var(--status-critical);">Citation [${escapeRawHtml(chunkId)}] not found in local index.</div>`;
         return;
       }
 
+      const backToChatBtn = returnTab === "chat"
+        ? `<button type="button" class="ai-clear-btn" onclick="switchRightPaneTab('chat')"><i class="bi bi-arrow-left"></i> Back to Ask Clinical AI</button>`
+        : "";
+
       drawer.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
-          <strong style="color:var(--clinical-blue); font-size:0.92rem;">${chunk.id}: ${chunk.title}</strong>
-          <span style="font-size:0.74rem; background:var(--bg-card); padding:2px 8px; border-radius:4px; border:1px solid var(--border-subtle); font-weight:700;">${chunk.evidence_grade}</span>
+          <strong style="color:var(--clinical-blue); font-size:0.92rem;">${escapeRawHtml(chunk.id)}: ${escapeRawHtml(chunk.title)}</strong>
+          <div style="display:flex; align-items:center; gap:6px;">
+            ${backToChatBtn}
+            <span style="font-size:0.74rem; background:var(--bg-card); padding:2px 8px; border-radius:4px; border:1px solid var(--border-subtle); font-weight:700;">${escapeRawHtml(chunk.evidence_grade)}</span>
+          </div>
         </div>
-        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:6px;">Source: ${chunk.source}</div>
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:6px;">Source: ${escapeRawHtml(chunk.source)}</div>
         <div style="background:var(--bg-card); padding:10px 12px; border-radius:6px; border:1px solid var(--border-subtle); color:var(--text-primary); font-size:0.9rem; line-height:1.55;">
-          "${chunk.text}"
+          "${escapeRawHtml(chunk.text)}"
         </div>
       `;
       drawer.scrollTop = 0;
@@ -2744,10 +3003,14 @@
       });
     }
 
-    function updateGpuBadge() {
+    function updateGpuBadge(skipStatusUi = false) {
       const ind = document.getElementById("gpuStatusIndicator");
       if (ind) {
-        if (synthesizer && synthesizer.webgpuAvailable) {
+        if (synthesizer && synthesizer.currentMode === "OLLAMA") {
+          ind.textContent = synthesizer.ollamaStatus?.online
+            ? `Ollama Online (${synthesizer.ollamaStatus.activeModel})`
+            : "Ollama Offline";
+        } else if (synthesizer && synthesizer.webgpuAvailable) {
           ind.innerHTML = '<i class="bi bi-gpu-card" style="margin-right:3px;"></i>WebGPU Ready';
           ind.style.color = "#86efac";
         } else {
@@ -2759,28 +3022,219 @@
       if (devGpu && synthesizer) {
         devGpu.textContent = synthesizer.webgpuAvailable ? "Available (WebGPU)" : "Unavailable (CPU Fallback)";
       }
+      if (synthesizer && !skipStatusUi) {
+        updateEngineStatusUi({
+          state: "ready",
+          synth: currentSynthState?.synth || null,
+          elapsedMs: currentSynthState?.synth?.elapsedMs
+        });
+      }
     }
 
     function changeEngineMode(mode) {
-      if (synthesizer) {
-        synthesizer.setMode(mode);
-        const gpuInd = document.getElementById("gpuStatusIndicator");
-        if (gpuInd) {
-          if (mode === "OLLAMA") {
-            gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Ollama Active (127.0.0.1)';
-            gpuInd.style.color = "#fcd34d";
-          } else if (mode === "WEBGPU") {
-            updateGpuBadge();
-          } else {
-            gpuInd.innerHTML = '<i class="bi bi-cpu-fill" style="margin-right:3px;"></i>Instant CDS Active';
-            gpuInd.style.color = "#5eead4";
-          }
-        }
-        const devMode = document.getElementById("devActiveMode");
-        if (devMode) devMode.textContent = mode;
-        renderCurrentState();
-        revealStepPage(4, { markUpdated: activeStepPage !== 4, badgeText: "Updated" });
+      if (!synthesizer) return;
+      synthesizer.abortCurrentOllama();
+      if (ollamaTimerInterval) {
+        clearInterval(ollamaTimerInterval);
+        ollamaTimerInterval = null;
       }
+
+      synthesizer.setMode(mode);
+      if (mode === "OLLAMA" && currentRagTab !== "bundleTab" && currentRagTab !== "allTab" && currentRagTab !== "consultNoteTab") {
+        currentRagTab = "bundleTab";
+      }
+
+      const devMode = document.getElementById("devActiveMode");
+      if (devMode) devMode.textContent = mode;
+      updateGpuBadge();
+      renderCurrentState();
+      revealStepPage(4, { markUpdated: activeStepPage !== 4, badgeText: "Updated" });
+    }
+
+    // ------------------------------------------------------------------------
+    // Page 4 Right-Pane Tab Switcher & Grounded Real-Time Clinical Copilot
+    // ------------------------------------------------------------------------
+    function switchRightPaneTab(tabName) {
+      currentRightPaneTab = tabName === "chat" ? "chat" : "cite";
+      const citeBtn = document.getElementById("rightPaneTabCite");
+      const chatBtn = document.getElementById("rightPaneTabChat");
+      const citePanel = document.getElementById("citationInspectorPanel");
+      const chatPanel = document.getElementById("aiCopilotPanel");
+
+      const isChat = currentRightPaneTab === "chat";
+      if (citeBtn) {
+        citeBtn.classList.toggle("active", !isChat);
+        citeBtn.setAttribute("aria-selected", String(!isChat));
+      }
+      if (chatBtn) {
+        chatBtn.classList.toggle("active", isChat);
+        chatBtn.setAttribute("aria-selected", String(isChat));
+      }
+      if (citePanel) citePanel.style.display = isChat ? "none" : "flex";
+      if (chatPanel) chatPanel.style.display = isChat ? "flex" : "none";
+
+      if (isChat) {
+        updateAiChatContextBar();
+        const inputEl = document.getElementById("aiChatInput");
+        if (inputEl) inputEl.focus();
+      }
+    }
+
+    function updateAiChatContextBar() {
+      const el = document.getElementById("aiChatContextSummary");
+      if (!el || !lastRenderedSnapshot) return;
+      const snap = lastRenderedSnapshot;
+      const cr = snap.labs?.creatinine_mg_dl !== null && snap.labs?.creatinine_mg_dl !== undefined
+        ? snap.labs.creatinine_mg_dl
+        : "--";
+      const riskTxt = snap.prediction ? ` • 6h Risk ${snap.prediction.percentage}%` : "";
+      el.textContent = `${snap.patientId} Hr ${snap.hour} • SOFA ${snap.sofa?.total ?? 0} • MAP ${snap.vitals?.map ?? "--"} • Cr ${cr}${riskTxt}`;
+      el.title = `Grounded bedside snapshot: ${snap.status} | Alerts: ${(snap.alerts || []).length}`;
+    }
+
+    function setAiChatStreamingUi(streaming) {
+      isAiChatStreaming = streaming;
+      const sendBtn = document.getElementById("aiChatSendBtn");
+      const stopBtn = document.getElementById("aiChatStopBtn");
+      if (sendBtn) sendBtn.disabled = streaming;
+      if (stopBtn) stopBtn.style.display = streaming ? "inline-flex" : "none";
+    }
+
+    function clearAiChatHistory() {
+      if (synthesizer) synthesizer.abortCurrentChat();
+      setAiChatStreamingUi(false);
+      aiChatHistory = [];
+      const box = document.getElementById("aiChatMessages");
+      if (!box) return;
+      box.innerHTML = `
+        <div class="ai-chat-msg ai-chat-msg-assistant">
+          <div class="ai-chat-msg-meta">
+            <span><i class="bi bi-stars"></i> Grounded Clinical Copilot</span>
+            <span>Cleared</span>
+          </div>
+          <div class="ai-chat-msg-body">
+            Conversation cleared. Ask any question grounded in the current bedside physiology and 165-chunk SSC-2021 guideline index.
+          </div>
+        </div>
+      `;
+    }
+
+    function stopAiChatStreaming() {
+      if (synthesizer) synthesizer.abortCurrentChat();
+      setAiChatStreamingUi(false);
+    }
+
+    function askQuickClinicalPrompt(promptText) {
+      if (currentRightPaneTab !== "chat") {
+        switchRightPaneTab("chat");
+      }
+      const inputEl = document.getElementById("aiChatInput");
+      if (inputEl) {
+        inputEl.value = promptText;
+      }
+      submitAiCopilotQuery(null, promptText);
+    }
+
+    async function submitAiCopilotQuery(event, overrideText = null) {
+      if (event) event.preventDefault();
+      if (!synthesizer || isAiChatStreaming) return;
+
+      const inputEl = document.getElementById("aiChatInput");
+      const rawQuestion = overrideText !== null ? overrideText : (inputEl ? inputEl.value : "");
+      const question = String(rawQuestion || "").trim();
+      if (!question) return;
+
+      if (currentRightPaneTab !== "chat") {
+        switchRightPaneTab("chat");
+      }
+      if (inputEl && overrideText === null) {
+        inputEl.value = "";
+      } else if (inputEl) {
+        inputEl.value = "";
+      }
+
+      const msgBox = document.getElementById("aiChatMessages");
+      if (!msgBox) return;
+
+      // Append User Message Bubble (escaped to prevent HTML injection)
+      const userBubble = document.createElement("div");
+      userBubble.className = "ai-chat-msg ai-chat-msg-user";
+      userBubble.innerHTML = `
+        <div class="ai-chat-msg-meta" style="color:rgba(255,255,255,0.78);">
+          <span>Clinician Query</span>
+          <span>Hr ${escapeRawHtml(String(lastRenderedSnapshot?.hour ?? "--"))}</span>
+        </div>
+        <div class="ai-chat-msg-body">${escapeRawHtml(question)}</div>
+      `;
+      msgBox.appendChild(userBubble);
+
+      // Lexical BM25-style retrieval + active clinical trigger fusion across 165 chunks
+      const snap = lastRenderedSnapshot || {};
+      const queryChunks = vectorIndex
+        ? vectorIndex.searchByQueryAndTriggers(question, snap.activeTriggers || [], 4)
+        : [];
+
+      // Append Assistant Streaming Placeholder Bubble
+      const botBubble = document.createElement("div");
+      botBubble.className = "ai-chat-msg ai-chat-msg-assistant";
+      const metaLeft = document.createElement("span");
+      const metaRight = document.createElement("span");
+      const metaRow = document.createElement("div");
+      metaRow.className = "ai-chat-msg-meta";
+      metaLeft.innerHTML = '<i class="bi bi-cpu-fill"></i> Searching Guidelines &amp; Probing Ollama...';
+      metaRight.textContent = "Live";
+      metaRow.appendChild(metaLeft);
+      metaRow.appendChild(metaRight);
+
+      const bodyDiv = document.createElement("div");
+      bodyDiv.className = "ai-chat-msg-body";
+      bodyDiv.innerHTML = '<em>Retrieving relevant SSC-2021 evidence chunks...</em>';
+      botBubble.appendChild(metaRow);
+      botBubble.appendChild(bodyDiv);
+      msgBox.appendChild(botBubble);
+      msgBox.scrollTop = msgBox.scrollHeight;
+
+      setAiChatStreamingUi(true);
+      const result = await synthesizer.streamClinicalChat({
+        question,
+        history: aiChatHistory,
+        contextSnapshot: snap,
+        retrievedChunks: queryChunks,
+        onProgress: (prog) => {
+          metaLeft.innerHTML = `<i class="bi bi-stars"></i> Ollama (${escapeRawHtml(prog.model)})`;
+          metaRight.textContent = `${(prog.elapsedMs / 1000).toFixed(1)}s`;
+          bodyDiv.innerHTML = renderClinicalMarkdown(escapeRawHtml(prog.fullText)) + '<span class="ollama-cursor"></span>';
+          msgBox.scrollTop = msgBox.scrollHeight;
+        }
+      });
+      setAiChatStreamingUi(false);
+
+      if (result.aborted) {
+        metaLeft.innerHTML = '<i class="bi bi-stop-circle"></i> Query Stopped';
+        metaRight.textContent = `${result.elapsedMs} ms`;
+        if (!bodyDiv.textContent.trim() || bodyDiv.textContent.includes("Retrieving relevant")) {
+          bodyDiv.innerHTML = "<em>Generation stopped by clinician.</em>";
+        }
+        return;
+      }
+
+      if (!result.isAiGenerated) {
+        botBubble.classList.add("msg-offline");
+        metaLeft.innerHTML = '<i class="bi bi-shield-check"></i> Lexical Rule RAG (Ollama Offline)';
+      } else {
+        metaLeft.innerHTML = `<i class="bi bi-stars"></i> Ollama (${escapeRawHtml(result.model)})`;
+      }
+      metaRight.textContent = `${result.elapsedMs} ms`;
+      bodyDiv.innerHTML = renderClinicalMarkdown(escapeRawHtml(result.text));
+
+      aiChatHistory.push({ role: "user", content: question });
+      aiChatHistory.push({ role: "assistant", content: result.text });
+      if (aiChatHistory.length > 10) {
+        aiChatHistory = aiChatHistory.slice(-10);
+      }
+
+      msgBox.scrollTop = msgBox.scrollHeight;
+      updateGpuBadge();
     }
 
     async function executeFullBenchmark() {

@@ -70,9 +70,9 @@ export const TOUR_STEPS = [
   {
     targetId: "step3Card",
     pageStep: 4,
-    title: "8. Page 4: Split-Screen RAG Plan, Progress Notes & Citations",
+    title: "8. Page 4: RAG Plan, Engine Provenance & Clinical AI Copilot",
     badge: "Step 8 of 8 • Page 4",
-    content: "On <strong>Page 4</strong>, inspect the synthesized consultation note, 5-drug dosing table, and <strong>Partner Progress Note</strong> tab on the left while clicking any <strong>[CHUNK-ID] citation pill</strong> to view verbatim guidelines right alongside it in the pinned right inspector.",
+    content: "On <strong>Page 4</strong>, compare deterministic guideline rules vs. violet Ollama hybrid synthesis via the provenance banner, inspect any <strong>[CHUNK-ID] citation pill</strong> on the right, or switch to the <strong>Ask Clinical AI</strong> tab to query guidelines in real time.",
     position: "bottom"
   }
 ];

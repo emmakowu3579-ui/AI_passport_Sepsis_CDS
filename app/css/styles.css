@@ -3139,6 +3139,7 @@ header.clinical-header {
   body.workstation-shell-active .engine-select-pill {
     padding: 4px 8px;
     font-size: 0.74rem;
+    gap: 6px;
   }
 
   body.workstation-shell-active .engine-select-pill label {
@@ -3146,7 +3147,7 @@ header.clinical-header {
   }
 
   body.workstation-shell-active .engine-select-pill select {
-    max-width: 145px;
+    max-width: 132px;
     font-size: 0.74rem;
     text-overflow: ellipsis;
   }
@@ -3750,5 +3751,483 @@ header.clinical-header {
   body.workstation-shell-active .meta-tag.meta-hide-compact,
   body.workstation-shell-active .workflow-privacy-hint {
     display: none;
+  }
+}
+
+/* ============================================================================
+   Standard CDS vs. Local AI Provenance + Real-Time Clinical Copilot (Page 4)
+   ============================================================================ */
+.engine-runtime-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(15, 23, 42, 0.35);
+  color: #e2e8f0;
+}
+
+.engine-runtime-badge.runtime-rules {
+  background: rgba(13, 148, 136, 0.28);
+  border-color: rgba(94, 234, 212, 0.45);
+  color: #99f6e4;
+}
+
+.engine-runtime-badge.runtime-ai-online {
+  background: rgba(124, 58, 237, 0.38);
+  border-color: rgba(196, 181, 253, 0.65);
+  color: #ede9fe;
+}
+
+.engine-runtime-badge.runtime-ai-streaming {
+  background: rgba(217, 119, 6, 0.35);
+  border-color: rgba(252, 211, 77, 0.65);
+  color: #fef3c7;
+}
+
+.engine-runtime-badge.runtime-ai-offline {
+  background: rgba(234, 88, 12, 0.32);
+  border-color: rgba(253, 186, 116, 0.65);
+  color: #ffedd5;
+}
+
+/* Page 4 Provenance Banner Strip */
+.ai-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 24px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.ai-status-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ai-provenance-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-status-banner.ai-banner-rules {
+  background: #f0fdfa;
+  color: #0f766e;
+  border-bottom-color: #99f6e4;
+}
+.ai-status-banner.ai-banner-rules .ai-provenance-tag {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.ai-status-banner.ai-banner-hybrid {
+  background: #f5f3ff;
+  color: #5b21b6;
+  border-bottom-color: #ddd6fe;
+}
+.ai-status-banner.ai-banner-hybrid .ai-provenance-tag {
+  background: #6d28d9;
+  color: #ffffff;
+}
+
+.ai-status-banner.ai-banner-streaming {
+  background: #fffbeb;
+  color: #92400e;
+  border-bottom-color: #fde68a;
+}
+.ai-status-banner.ai-banner-streaming .ai-provenance-tag {
+  background: #d97706;
+  color: #ffffff;
+}
+
+.ai-status-banner.ai-banner-offline {
+  background: #fff7ed;
+  color: #9a3412;
+  border-bottom-color: #fed7aa;
+}
+.ai-status-banner.ai-banner-offline .ai-provenance-tag {
+  background: #c2410c;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .ai-status-banner.ai-banner-rules {
+  background: rgba(13, 148, 136, 0.14);
+  color: #99f6e4;
+  border-bottom-color: rgba(45, 212, 191, 0.3);
+}
+[data-theme="dark"] .ai-status-banner.ai-banner-hybrid {
+  background: rgba(124, 58, 237, 0.16);
+  color: #ddd6fe;
+  border-bottom-color: rgba(167, 139, 250, 0.35);
+}
+[data-theme="dark"] .ai-status-banner.ai-banner-streaming {
+  background: rgba(217, 119, 6, 0.16);
+  color: #fde68a;
+  border-bottom-color: rgba(251, 191, 36, 0.3);
+}
+[data-theme="dark"] .ai-status-banner.ai-banner-offline {
+  background: rgba(234, 88, 12, 0.18);
+  color: #fed7aa;
+  border-bottom-color: rgba(251, 146, 60, 0.35);
+}
+
+.ai-banner-retry-btn {
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  border-radius: 6px;
+  padding: 2px 9px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ai-banner-retry-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Unmistakably Distinct Generative AI Card vs Deterministic Rule Blocks */
+.ollama-ai-section-block {
+  background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%);
+  border: 1.5px solid rgba(124, 58, 237, 0.35);
+  border-left: 6px solid #7c3aed;
+  border-radius: 10px;
+  padding: 18px 22px;
+  box-shadow: 0 4px 14px rgba(109, 40, 217, 0.08);
+}
+
+[data-theme="dark"] .ollama-ai-section-block {
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.16) 0%, rgba(30, 58, 138, 0.16) 100%);
+  border-color: rgba(167, 139, 250, 0.45);
+  border-left-color: #a78bfa;
+}
+
+.ollama-ai-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1.5px solid rgba(124, 58, 237, 0.22);
+}
+
+.ai-advisory-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #6d28d9;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ai-advisory-disclaimer {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(124, 58, 237, 0.3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5b21b6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-theme="dark"] .ai-advisory-disclaimer {
+  color: #ddd6fe;
+}
+
+.ehr-ai-section-card {
+  border: 1.5px solid rgba(124, 58, 237, 0.4) !important;
+  border-left: 5px solid #7c3aed !important;
+  background: rgba(124, 58, 237, 0.04) !important;
+}
+
+/* Page 4 Right Pane Tab Switcher & Ask Clinical AI Copilot */
+.right-pane-tab-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 3px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.right-pane-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.right-pane-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.right-pane-tab-btn.active {
+  background: var(--bg-card);
+  color: var(--clinical-blue);
+  border-color: var(--border-strong);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.right-pane-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.ai-context-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 9px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.ai-context-summary-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ai-clear-btn {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ai-clear-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.ai-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.ai-quick-chip {
+  border: 1px solid rgba(109, 40, 217, 0.3);
+  background: rgba(124, 58, 237, 0.08);
+  color: #5b21b6;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.ai-quick-chip:hover {
+  background: #6d28d9;
+  color: #ffffff;
+  border-color: #6d28d9;
+}
+
+[data-theme="dark"] .ai-quick-chip {
+  background: rgba(139, 92, 246, 0.16);
+  color: #ddd6fe;
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+.ai-chat-messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-inset);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.ai-chat-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  line-height: 1.48;
+  word-break: break-word;
+}
+
+.ai-chat-msg-user {
+  align-self: flex-end;
+  max-width: 90%;
+  background: var(--clinical-navy);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.ai-chat-msg-assistant {
+  align-self: stretch;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid #7c3aed;
+}
+
+.ai-chat-msg-assistant.msg-offline {
+  border-left-color: #d97706;
+}
+
+.ai-chat-msg-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.69rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.ai-chat-msg-body .clinical-p {
+  font-size: 0.84rem;
+  line-height: 1.48;
+  margin-bottom: 5px;
+}
+
+.ai-chat-msg-body .clinical-action-list {
+  gap: 5px;
+  margin: 4px 0;
+}
+
+.ai-chat-msg-body .clinical-action-item {
+  padding: 6px 9px;
+  font-size: 0.82rem;
+  line-height: 1.44;
+  gap: 7px;
+  border-left-width: 3px;
+}
+
+.ai-chat-msg-body .action-icon {
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+.ai-chat-msg-body .citation-pill {
+  font-size: 0.74rem;
+  padding: 1px 6px;
+  margin: 0 2px;
+}
+
+.ai-chat-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ai-chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.ai-chat-input:focus {
+  border-color: #7c3aed;
+}
+
+.ai-chat-send-btn {
+  padding: 7px 11px;
+  border-radius: 7px;
+  border: 1px solid #6d28d9;
+  background: #6d28d9;
+  color: #ffffff;
+  font-size: 0.79rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-chat-send-btn:hover {
+  background: #5b21b6;
+}
+
+.ai-chat-send-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+@media (min-width: 1024px) and (min-height: 680px) {
+  body.workstation-shell-active #step4Page .ai-status-banner {
+    padding: 4px 18px;
+    font-size: 0.76rem;
   }
 }
