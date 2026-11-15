@@ -1416,6 +1416,7 @@
     let lastPredictiveResult = null;
     let lastRenderedSnapshot = null;
     let isAiChatStreaming = false;
+    let synthGenerationSeq = 0;
 
     // ========================================================================
     // Immediate Synchronous Window Handler Bindings
@@ -2622,12 +2623,19 @@
       const chatPill = document.getElementById("chatStatusPill");
 
       if (chatPill) {
-        if (ollama.online && ollama.activeModel) {
+        if (ollama.online && ollama.modelReady && ollama.activeModel) {
           chatPill.textContent = `Ollama: ${ollama.activeModel}`;
+          chatPill.title = `Connected via ${ollama.endpointLabel || ollama.baseUrl}`;
           chatPill.style.background = "rgba(124, 58, 237, 0.16)";
           chatPill.style.color = "#6d28d9";
+        } else if (ollama.online && !ollama.modelReady) {
+          chatPill.textContent = "Pulling Model";
+          chatPill.title = ollama.error || "Ollama daemon online; waiting for qwen2.5:1.5b download";
+          chatPill.style.background = "rgba(217, 119, 6, 0.16)";
+          chatPill.style.color = "#b45309";
         } else {
           chatPill.textContent = "Rule RAG";
+          chatPill.title = "Ollama offline; Ask Clinical AI uses deterministic lexical retrieval over SSC-2021";
           chatPill.style.background = "rgba(15, 118, 110, 0.14)";
           chatPill.style.color = "#0f766e";
         }
@@ -2640,11 +2648,49 @@
           if (badgeEl) {
             badgeEl.className = "engine-runtime-badge runtime-ai-streaming";
             badgeEl.textContent = "AI: Streaming...";
-            badgeEl.title = "Connecting to local Ollama daemon for neural SBAR synthesis";
+            badgeEl.title = `Streaming advisory SBAR via ${ollama.endpointLabel || "Ollama"}`;
           }
           if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-streaming";
           if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-cpu-fill"></i> Ollama Streaming';
-          if (bannerText) bannerText.textContent = "Generating advisory neural SBAR synthesis via local Ollama while deterministic safety rules stay pinned below.";
+          if (bannerText) {
+            bannerText.textContent = `Generating advisory neural SBAR via ${ollama.endpointLabel || "Ollama"} while deterministic safety rules stay pinned below.`;
+          }
+          return;
+        }
+
+        const isTimeout = synth?.provenance === "TIMEOUT_FALLBACK";
+        if (isTimeout) {
+          if (badgeEl) {
+            badgeEl.className = "engine-runtime-badge runtime-ai-offline";
+            badgeEl.textContent = "AI: Timeout -> Rules";
+            badgeEl.title = synth.fallbackReason || "Ollama timed out on CPU; deterministic rule fallback active";
+          }
+          if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-offline";
+          if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-hourglass-split"></i> Ollama CPU Timeout -> Rule Fallback';
+          if (bannerText) {
+            bannerText.textContent = `${synth.fallbackReason || "Ollama reached endpoint but generation timed out on CPU."} Deterministic guideline rules remain active.`;
+          }
+          if (bannerActions) {
+            bannerActions.innerHTML = '<button type="button" class="ai-banner-retry-btn" onclick="retryOllamaConnection()"><i class="bi bi-arrow-clockwise"></i> Retry Ollama</button>';
+          }
+          return;
+        }
+
+        const isModelPulling = synth?.provenance === "MODEL_PULLING" || (ollama.online && !ollama.modelReady);
+        if (isModelPulling) {
+          if (badgeEl) {
+            badgeEl.className = "engine-runtime-badge runtime-ai-offline";
+            badgeEl.textContent = "AI: Pulling Model";
+            badgeEl.title = "Ollama server is reachable, waiting for qwen2.5:1.5b download";
+          }
+          if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-offline";
+          if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-cloud-download-fill"></i> Ollama Model Downloading -> Rules';
+          if (bannerText) {
+            bannerText.textContent = `Ollama is online at ${ollama.endpointLabel || "/api/ollama"}, but qwen2.5:1.5b has not finished downloading yet. Showing deterministic rules.`;
+          }
+          if (bannerActions) {
+            bannerActions.innerHTML = '<button type="button" class="ai-banner-retry-btn" onclick="retryOllamaConnection()"><i class="bi bi-arrow-clockwise"></i> Check Model Ready</button>';
+          }
           return;
         }
 
@@ -2653,11 +2699,11 @@
           if (badgeEl) {
             badgeEl.className = "engine-runtime-badge runtime-ai-offline";
             badgeEl.textContent = "AI: Offline -> Rules";
-            badgeEl.title = "Ollama daemon unreachable on /api/ollama or localhost:11434; deterministic rule engine active";
+            badgeEl.title = "No Ollama daemon reachable at /api/ollama (server/Codespace) or localhost:11434";
           }
           if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-offline";
           if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Ollama Offline -> Rule Fallback';
-          if (bannerText) bannerText.textContent = "No Ollama daemon reachable at /api/ollama or localhost:11434. Showing deterministic guideline rules automatically.";
+          if (bannerText) bannerText.textContent = "No Ollama daemon reachable at /api/ollama (Docker/Codespace) or localhost:11434. Showing deterministic guideline rules automatically.";
           if (bannerActions) {
             bannerActions.innerHTML = '<button type="button" class="ai-banner-retry-btn" onclick="retryOllamaConnection()"><i class="bi bi-arrow-clockwise"></i> Retry Ollama</button>';
           }
@@ -2665,16 +2711,18 @@
         }
 
         const activeModel = synth?.model || ollama.activeModel || "qwen2.5:1.5b";
+        const whereStr = synth?.endpointLabel || ollama.endpointLabel || "";
         const timeStr = elapsedMs !== null && elapsedMs !== undefined ? ` in ${elapsedMs} ms` : "";
         if (badgeEl) {
           badgeEl.className = "engine-runtime-badge runtime-ai-online";
           badgeEl.textContent = ollama.online ? `AI: ${activeModel}` : "AI: Hybrid Mode";
-          badgeEl.title = `Hybrid Ollama (${activeModel}) + Deterministic Rules`;
+          badgeEl.title = `Hybrid Ollama (${activeModel}${whereStr ? " via " + whereStr : ""}) + Deterministic Rules`;
         }
         if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-hybrid";
         if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-stars"></i> Hybrid: AI SBAR + Rule Safety';
         if (bannerText) {
-          bannerText.innerHTML = `<strong>${escapeRawHtml(activeModel)}</strong> synthesized the violet AI SBAR card${escapeRawHtml(timeStr)}. SOFA scores, dosing &amp; contraindications remain 100% deterministic.`;
+          const viaBadge = whereStr ? ` via ${escapeRawHtml(whereStr)}` : "";
+          bannerText.innerHTML = `<strong>${escapeRawHtml(activeModel)}</strong>${viaBadge} synthesized the violet AI SBAR card${escapeRawHtml(timeStr)}. SOFA scores, dosing &amp; contraindications remain 100% deterministic.`;
         }
         return;
       }
@@ -2699,15 +2747,15 @@
       if (badgeEl) {
         badgeEl.className = "engine-runtime-badge runtime-rules";
         badgeEl.textContent = "Rules: Instant";
-        badgeEl.title = ollama.online
-          ? `Deterministic Rule Engine active (< 5 ms). Ollama (${ollama.activeModel}) is also online for Local AI Hybrid or Ask Clinical AI.`
+        badgeEl.title = ollama.online && ollama.modelReady
+          ? `Deterministic Rule Engine active (< 5 ms). Ollama (${ollama.activeModel} via ${ollama.endpointLabel}) is also online.`
           : "Deterministic Rule Engine active (< 5 ms). Zero generative LLM calls.";
       }
       if (bannerEl) bannerEl.className = "ai-status-banner ai-banner-rules";
       if (bannerTag) bannerTag.innerHTML = '<i class="bi bi-shield-check"></i> Deterministic Rule Engine';
       if (bannerText) {
-        bannerText.innerHTML = ollama.online
-          ? `Fixed SSC-2021 &amp; Sepsis-3 synthesis (&lt; 5 ms, zero generative variation). <strong>Ollama (${escapeRawHtml(ollama.activeModel)})</strong> is online for Ask Clinical AI or Hybrid mode.`
+        bannerText.innerHTML = ollama.online && ollama.modelReady
+          ? `Fixed SSC-2021 &amp; Sepsis-3 synthesis (&lt; 5 ms, zero generative variation). <strong>Ollama (${escapeRawHtml(ollama.activeModel)} via ${escapeRawHtml(ollama.endpointLabel || "")})</strong> is ready for Ask Clinical AI or Hybrid mode.`
           : "Fixed SSC-2021 &amp; Sepsis-3 synthesis (&lt; 5 ms, zero generative variation). Switch to Local AI Hybrid (Ollama) or use Ask Clinical AI for Q&amp;A.";
       }
     }
@@ -2739,6 +2787,7 @@
 
     async function renderSynthesis(record, sofa, status, alerts, retrievedChunks, sim, selectedDrugs) {
       if (!synthesizer) return;
+      const mySeq = ++synthGenerationSeq;
 
       if (ollamaTimerInterval) {
         clearInterval(ollamaTimerInterval);
@@ -2864,6 +2913,7 @@
       }, 100);
 
       const onProgress = (data) => {
+        if (mySeq !== synthGenerationSeq) return;
         tokenCounter++;
         const contentEl = document.getElementById("ollamaLiveContent");
         const modelBadge = document.getElementById("ollamaLiveModelBadge");
@@ -2890,6 +2940,10 @@
         onProgress
       );
 
+      if (mySeq !== synthGenerationSeq || finalSynth.aborted) {
+        return;
+      }
+
       if (ollamaTimerInterval) {
         clearInterval(ollamaTimerInterval);
         ollamaTimerInterval = null;
@@ -2897,9 +2951,15 @@
 
       confPill.textContent = finalSynth.confidence.label;
       confPill.className = "exec-pill-badge badge-normal";
-      latencyBadge.textContent = finalSynth.provenance === "OFFLINE_FALLBACK"
-        ? "Ollama Offline -> Deterministic Rules"
-        : `Hybrid AI (${finalSynth.model}) • ${finalSynth.elapsedMs} ms`;
+      if (finalSynth.provenance === "OFFLINE_FALLBACK") {
+        latencyBadge.textContent = "Ollama Offline -> Deterministic Rules";
+      } else if (finalSynth.provenance === "TIMEOUT_FALLBACK") {
+        latencyBadge.textContent = "Ollama CPU Timeout -> Deterministic Rules";
+      } else if (finalSynth.provenance === "MODEL_PULLING") {
+        latencyBadge.textContent = "Ollama Pulling Model -> Deterministic Rules";
+      } else {
+        latencyBadge.textContent = `Hybrid AI (${finalSynth.model}) • ${finalSynth.elapsedMs} ms`;
+      }
 
       // Cache state and re-render clean active tab content with distinct AI section styling
       currentSynthState = { synth: finalSynth, selectedDrugs, record, sofa, status, alerts };

@@ -20,7 +20,9 @@ export class ClinicalSynthesizer {
     this.ollamaStatus = {
       checked: false,
       online: false,
+      modelReady: false,
       baseUrl: null,
+      endpointLabel: null,
       models: [],
       activeModel: null,
       error: null
@@ -94,15 +96,21 @@ export class ClinicalSynthesizer {
         const preferred = probe.models.find(m => (m.name || "").includes("qwen"))
           || probe.models.find(m => (m.name || "").includes("llama"))
           || probe.models[0];
-        const activeModel = preferred ? preferred.name : "qwen2.5:1.5b";
+        const modelReady = modelNames.length > 0;
+        const activeModel = modelReady ? (preferred ? preferred.name : modelNames[0]) : null;
+        const endpointLabel = probe.baseUrl === "/api/ollama"
+          ? "Server Proxy (/api/ollama)"
+          : `Local Host (${probe.baseUrl.replace(/^https?:\/\//, "")})`;
         this.ollamaBaseUrl = probe.baseUrl;
         this.ollamaStatus = {
           checked: true,
           online: true,
+          modelReady,
           baseUrl: probe.baseUrl,
+          endpointLabel,
           models: modelNames,
           activeModel,
-          error: null
+          error: modelReady ? null : "Ollama daemon is online, but no models are installed yet (downloading qwen2.5:1.5b)"
         };
         return this.ollamaStatus;
       }
@@ -112,7 +120,9 @@ export class ClinicalSynthesizer {
     this.ollamaStatus = {
       checked: true,
       online: false,
+      modelReady: false,
       baseUrl: null,
+      endpointLabel: null,
       models: [],
       activeModel: null,
       error: "No reachable Ollama daemon at /api/ollama or localhost:11434"
@@ -285,8 +295,11 @@ export class ClinicalSynthesizer {
    */
   async synthesizeOllama(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation, onProgress) {
     this.abortCurrentOllama();
-    this.currentAbortController = new AbortController();
-    const signal = this.currentAbortController.signal;
+    const controller = new AbortController();
+    this.currentAbortController = controller;
+    const signal = controller.signal;
+    let timedOut = false;
+    let timeoutId = null;
 
     const startTime = performance.now();
     const extractive = this.synthesizeExtractiveNote(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation);
@@ -294,10 +307,18 @@ export class ClinicalSynthesizer {
     try {
       const statusInfo = await this.checkOllamaStatus(!this.ollamaBaseUrl);
       if (!statusInfo.online || !statusInfo.baseUrl) {
-        throw new Error(statusInfo.error || "Local Ollama server unreachable");
+        const offlineErr = new Error(statusInfo.error || "Local Ollama server unreachable");
+        offlineErr.isOffline = true;
+        throw offlineErr;
       }
 
-      const targetModel = statusInfo.activeModel || "qwen2.5:1.5b";
+      if (!statusInfo.modelReady || !statusInfo.activeModel) {
+        const pullErr = new Error("Ollama daemon is online, but no clinical model has finished downloading yet (qwen2.5:1.5b).");
+        pullErr.isModelMissing = true;
+        throw pullErr;
+      }
+
+      const targetModel = statusInfo.activeModel;
       const contextPrompt = `You are an expert ICU clinical decision support AI. Ground your advice strictly in these clinical guideline chunks and patient numbers. Do NOT invent vitals, labs, or chunk IDs:
 ${retrievedChunks.slice(0, 3).map(c => `[${c.id}] ${c.title}: ${c.text}`).join("\n\n")}
 
@@ -312,10 +333,17 @@ Provide a concise 3-bullet clinical SBAR recommendation note citing exact chunk 
 • Surviving Sepsis Campaign 1-hour bundle orders (cultures, empiric broad-spectrum coverage)
 • Renal safety adjustments and active contraindication precautions`;
 
-      // 25-second timeout safeguard to prevent hanging
-      const timeoutId = setTimeout(() => {
-        this.abortCurrentOllama();
-      }, 25000);
+      // 45-second timeout safeguard for cold-loading models on CPU VMs / Codespaces
+      timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, 45000);
+
+      if (signal.aborted) {
+        const abortErr = new Error("Request aborted");
+        abortErr.name = "AbortError";
+        throw abortErr;
+      }
 
       const response = await fetch(`${statusInfo.baseUrl}/api/generate`, {
         method: "POST",
@@ -333,10 +361,12 @@ Provide a concise 3-bullet clinical SBAR recommendation note citing exact chunk 
         })
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
-        throw new Error(`Ollama returned HTTP ${response.status}`);
+        const httpErr = new Error(`Ollama returned HTTP ${response.status}`);
+        if (response.status === 404) {
+          httpErr.isModelMissing = true;
+        }
+        throw httpErr;
       }
 
       const reader = response.body.getReader();
@@ -355,6 +385,7 @@ Provide a concise 3-bullet clinical SBAR recommendation note citing exact chunk 
             if (onProgress) {
               onProgress({
                 model: targetModel,
+                endpointLabel: statusInfo.endpointLabel,
                 token,
                 fullText: accumulatedText,
                 done: chunk.done || false,
@@ -385,6 +416,7 @@ Provide a concise 3-bullet clinical SBAR recommendation note citing exact chunk 
         handleLine(buffer);
       }
 
+      clearTimeout(timeoutId);
       const elapsedMs = performance.now() - startTime;
       const sections = [...extractive.sections];
 
@@ -394,6 +426,7 @@ Provide a concise 3-bullet clinical SBAR recommendation note citing exact chunk 
           tab: "bundleTab",
           isGenerativeAi: true,
           modelName: targetModel,
+          endpointLabel: statusInfo.endpointLabel,
           heading: `AI-Generated SBAR Consultation (Ollama • ${targetModel})`,
           body: accumulatedText.trim()
         });
@@ -405,6 +438,7 @@ Provide a concise 3-bullet clinical SBAR recommendation note citing exact chunk 
         engineLabel: `Local AI Hybrid • Ollama (${targetModel})`,
         isAiGenerated: true,
         baseUrl: statusInfo.baseUrl,
+        endpointLabel: statusInfo.endpointLabel,
         model: targetModel,
         confidence: extractive.confidence,
         rawText: accumulatedText,
@@ -413,21 +447,56 @@ Provide a concise 3-bullet clinical SBAR recommendation note citing exact chunk 
         retrievedChunks
       };
     } catch (e) {
-      if (e.name === "AbortError") {
-        console.log("[Synthesis] Ollama request was aborted or superseded.");
-      } else {
-        console.warn("[Synthesis] Ollama local connection failed, falling back to Standard Deterministic CDS:", e);
-        this.ollamaBaseUrl = null;
-        this.ollamaStatus = {
-          checked: true,
-          online: false,
-          baseUrl: null,
-          models: [],
-          activeModel: null,
-          error: e.message || "Ollama unreachable"
+      if (timeoutId) clearTimeout(timeoutId);
+
+      // Superseded or manually cancelled request must NOT report Ollama as offline
+      if (e.name === "AbortError" && !timedOut) {
+        return {
+          ...extractive,
+          aborted: true,
+          provenance: "ABORTED"
         };
       }
+
       const fallback = this.synthesizeExtractiveNote(patient, currentHour, vitals, labs, sofa, status, alerts, retrievedChunks, simulation);
+      if (e.name === "AbortError" && timedOut) {
+        fallback.mode = "EXTRACTIVE_RAG (Ollama Timeout Fallback)";
+        fallback.provenance = "TIMEOUT_FALLBACK";
+        fallback.engineLabel = "Ollama CPU Timeout -> Deterministic Rule Fallback Active";
+        fallback.isAiGenerated = false;
+        fallback.fallbackReason = `Ollama at ${this.ollamaStatus.endpointLabel || "local endpoint"} timed out after 45s on CPU`;
+        return fallback;
+      }
+
+      if (e.isModelMissing) {
+        this.ollamaStatus = {
+          ...this.ollamaStatus,
+          checked: true,
+          online: true,
+          modelReady: false,
+          activeModel: null,
+          error: e.message
+        };
+        fallback.mode = "EXTRACTIVE_RAG (Model Downloading)";
+        fallback.provenance = "MODEL_PULLING";
+        fallback.engineLabel = "Ollama Online (Pulling Model) -> Deterministic Rule Fallback";
+        fallback.isAiGenerated = false;
+        fallback.fallbackReason = e.message;
+        return fallback;
+      }
+
+      console.warn("[Synthesis] Ollama local connection failed, falling back to Standard Deterministic CDS:", e);
+      this.ollamaBaseUrl = null;
+      this.ollamaStatus = {
+        checked: true,
+        online: false,
+        modelReady: false,
+        baseUrl: null,
+        endpointLabel: null,
+        models: [],
+        activeModel: null,
+        error: e.message || "Ollama unreachable"
+      };
       fallback.mode = "EXTRACTIVE_RAG (Ollama Fallback)";
       fallback.provenance = "OFFLINE_FALLBACK";
       fallback.engineLabel = "Ollama Unreachable • Deterministic Rule Fallback Active";
@@ -435,7 +504,10 @@ Provide a concise 3-bullet clinical SBAR recommendation note citing exact chunk 
       fallback.fallbackReason = e.message || "Ollama unreachable";
       return fallback;
     } finally {
-      this.currentAbortController = null;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (this.currentAbortController === controller) {
+        this.currentAbortController = null;
+      }
     }
   }
 
@@ -536,7 +608,7 @@ ${chunkBlock || "No guideline chunks retrieved."}`;
       lines.push("• **Evidence Match:** No matching chunks found in the local guideline index; verify local `knowledge_index.json` load.");
     }
 
-    lines.push("• **Enable Live AI Synthesis:** Start Ollama (`docker compose --profile ollama up -d` or `ollama serve`) and select **Local AI Consultation (Ollama)** in the header.");
+    lines.push("• **Enable Live AI Synthesis:** Run all containers (`docker compose up -d`) or local `ollama serve` with `qwen2.5:1.5b` pulled, then select **Local AI Hybrid (Ollama)** in the header.");
     return lines.join("\n");
   }
 
@@ -545,8 +617,11 @@ ${chunkBlock || "No guideline chunks retrieved."}`;
    */
   async streamClinicalChat({ question, history = [], contextSnapshot = {}, retrievedChunks = [], onProgress }) {
     this.abortCurrentChat();
-    this.chatAbortController = new AbortController();
-    const signal = this.chatAbortController.signal;
+    const controller = new AbortController();
+    this.chatAbortController = controller;
+    const signal = controller.signal;
+    let timedOut = false;
+    let timeoutId = null;
     const startTime = performance.now();
 
     try {
@@ -562,16 +637,39 @@ ${chunkBlock || "No guideline chunks retrieved."}`;
         };
       }
 
-      const targetModel = statusInfo.activeModel || "qwen2.5:1.5b";
+      if (!statusInfo.modelReady || !statusInfo.activeModel) {
+        const pullingText = this.buildOfflineQueryAnswer(
+          question,
+          contextSnapshot,
+          retrievedChunks,
+          `Ollama online at ${statusInfo.endpointLabel}, pulling model`
+        );
+        return {
+          isAiGenerated: false,
+          provenance: "MODEL_PULLING",
+          model: "Pulling Model...",
+          elapsedMs: Math.round(performance.now() - startTime),
+          text: pullingText
+        };
+      }
+
+      const targetModel = statusInfo.activeModel;
       const systemPrompt = this.buildClinicalSystemContext(contextSnapshot, retrievedChunks);
       const safeHistory = (history || [])
         .filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
         .slice(-6)
         .map(m => ({ role: m.role, content: m.content.trim() }));
 
-      const timeoutId = setTimeout(() => {
-        this.abortCurrentChat();
-      }, 45000);
+      timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, 60000);
+
+      if (signal.aborted) {
+        const abortErr = new Error("Request aborted");
+        abortErr.name = "AbortError";
+        throw abortErr;
+      }
 
       const response = await fetch(`${statusInfo.baseUrl}/api/chat`, {
         method: "POST",
@@ -593,10 +691,12 @@ ${chunkBlock || "No guideline chunks retrieved."}`;
         })
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
-        throw new Error(`Ollama /api/chat returned HTTP ${response.status}`);
+        const httpErr = new Error(`Ollama /api/chat returned HTTP ${response.status}`);
+        if (response.status === 404) {
+          httpErr.isModelMissing = true;
+        }
+        throw httpErr;
       }
 
       const reader = response.body.getReader();
@@ -615,6 +715,7 @@ ${chunkBlock || "No guideline chunks retrieved."}`;
             if (onProgress) {
               onProgress({
                 model: targetModel,
+                endpointLabel: statusInfo.endpointLabel,
                 token,
                 fullText: accumulatedText,
                 done: !!chunk.done,
@@ -645,16 +746,20 @@ ${chunkBlock || "No guideline chunks retrieved."}`;
         handleChatLine(buffer);
       }
 
+      clearTimeout(timeoutId);
       return {
         isAiGenerated: true,
         provenance: "GENERATIVE_AI",
         model: targetModel,
         baseUrl: statusInfo.baseUrl,
+        endpointLabel: statusInfo.endpointLabel,
         elapsedMs: Math.round(performance.now() - startTime),
         text: accumulatedText.trim() || "No tokens generated by local Ollama model."
       };
     } catch (e) {
-      if (e.name === "AbortError") {
+      if (timeoutId) clearTimeout(timeoutId);
+
+      if (e.name === "AbortError" && !timedOut) {
         return {
           aborted: true,
           isAiGenerated: false,
@@ -664,11 +769,49 @@ ${chunkBlock || "No guideline chunks retrieved."}`;
           text: ""
         };
       }
+
+      if (e.name === "AbortError" && timedOut) {
+        const timeoutText = this.buildOfflineQueryAnswer(
+          question,
+          contextSnapshot,
+          retrievedChunks,
+          `Ollama at ${this.ollamaStatus.endpointLabel || "local endpoint"} timed out after 60s`
+        );
+        return {
+          isAiGenerated: false,
+          provenance: "TIMEOUT_FALLBACK",
+          model: "CPU Timeout -> Rule RAG",
+          elapsedMs: Math.round(performance.now() - startTime),
+          text: timeoutText
+        };
+      }
+
+      if (e.isModelMissing) {
+        this.ollamaStatus = {
+          ...this.ollamaStatus,
+          checked: true,
+          online: true,
+          modelReady: false,
+          activeModel: null,
+          error: e.message
+        };
+        const pullText = this.buildOfflineQueryAnswer(question, contextSnapshot, retrievedChunks, e.message);
+        return {
+          isAiGenerated: false,
+          provenance: "MODEL_PULLING",
+          model: "Pulling Model...",
+          elapsedMs: Math.round(performance.now() - startTime),
+          text: pullText
+        };
+      }
+
       this.ollamaBaseUrl = null;
       this.ollamaStatus = {
         checked: true,
         online: false,
+        modelReady: false,
         baseUrl: null,
+        endpointLabel: null,
         models: [],
         activeModel: null,
         error: e.message || "Connection interrupted"
@@ -682,7 +825,10 @@ ${chunkBlock || "No guideline chunks retrieved."}`;
         text: fallbackText
       };
     } finally {
-      this.chatAbortController = null;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (this.chatAbortController === controller) {
+        this.chatAbortController = null;
+      }
     }
   }
 }
